@@ -21,16 +21,12 @@ export const getQuestions = async (req, res) => {
 };
 // Create Question
 export const createQuestion = async (req, res) => {
-    console.log("REQ USER:", req.user); // 👈 debug
 
   try {
-    const { title, body } = req.body;
+    const { body } = req.body;
 
-    if (!title || !body) {
+    if ( !body) {
       return res.status(400).json({ message: "Title and body are required" });
-    }
-    if (title.length > 150) {
-      return res.status(400).json({ message: "Title cannot exceed 150 characters" });
     }
     if (body.length > 1000) {
       return res.status(400).json({ message: "Body cannot exceed 1000 characters" });
@@ -38,7 +34,6 @@ export const createQuestion = async (req, res) => {
 
     const question = await Question.create({
       author: req.user.id,
-      title,
       body,
       
     });
@@ -55,20 +50,13 @@ export const createQuestion = async (req, res) => {
 export const updateQuestion = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, body } = req.body;
+    const {  body } = req.body;
 
     const question = await Question.findById(id);
     if (!question) return res.status(404).json({ message: "Question not found" });
 
     if (question.author.toString() !== req.user.id.toString()) {
       return res.status(403).json({ message: "Not authorized to update this question" });
-    }
-
-    if (title) {
-      if (title.length > 150) {
-        return res.status(400).json({ message: "Title cannot exceed 150 characters" });
-      }
-      question.title = title;
     }
 
     if (body) {

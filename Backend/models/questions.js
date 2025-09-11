@@ -2,11 +2,6 @@ import mongoose from "mongoose";
 
 const QuestionSchema = new mongoose.Schema(
   {
-    title: {
-      type: String,
-      required: true,
-      trim: true,
-    },
     body: {
       type: String,
       required: true,

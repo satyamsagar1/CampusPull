@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import User from '../models/User.js';
+import User from '../models/user.js';
 import { signupSchema, loginSchema } from '../validators/authValidators.js';
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../utils/generateTokens.js';
 import {authMiddleware, requireRole} from '../middleware/authMiddleware.js';
@@ -34,7 +34,7 @@ router.post('/signup', async (req, res) => {
       });
     }
 
-    const { name, email, password, role, college, degree, graduationYear, profilePicture, phone, linkedin, bio, skills } = parsed.data;
+    const { name, email, password, role, college, degree, graduationYear, phone, linkedin, bio, skills } = parsed.data;
 
     const exists = await User.findOne({ email });
     if (exists) return res.status(409).json({ message: 'Email already registered' });
@@ -44,7 +44,7 @@ router.post('/signup', async (req, res) => {
     // <--- added all new fields here
     const userDoc = await User.create({
       name, email, passwordHash, role, college, degree, graduationYear,
-      profilePicture, phone, linkedin, bio, skills
+       phone, linkedin, bio, skills
     });
 
     const user = userDoc.toObject(); // <--- convert Mongoose doc to plain object
@@ -64,7 +64,6 @@ router.post('/signup', async (req, res) => {
         college: user.college,
         degree: user.degree,
         graduationYear: user.graduationYear,
-        profilePicture: user.profilePicture,
         phone: user.phone,
         linkedin: user.linkedin,
         bio: user.bio,

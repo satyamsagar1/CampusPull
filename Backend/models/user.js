@@ -11,7 +11,6 @@ const userSchema = new mongoose.Schema({
   graduationYear: { type: Number, required: true },
 
   // Optional fields
-  profilePicture: { type: String, default: '' },
   phone: { type: String, default: '' },
   linkedin: { type: String, default: '' },
   bio: { type: String, default: '' },

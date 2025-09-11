@@ -16,7 +16,7 @@ const app = express();
 
 // middlewares for security, CORS, JSON parsing, and cookie parsing
 app.use(helmet());
-app.use(cors({ origin: "http://localhost:5173", credentials: true }));
+app.use(cors({ origin: "http://localhost:4028", credentials: true }));
 app.use(express.json());
 app.use((req, res, next) => {
   mongoSanitize.sanitize(req.body);
