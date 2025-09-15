@@ -14,6 +14,7 @@ import Feed from "./pages/feed/Feed";
 import Auth from "./pages/Auth/Authpage";
 import { AuthProvider } from "./context/authContext";
 import { CommunityProvider } from "./context/communityContext";
+import { EventProvider } from "./context/eventContext"; // ✅ Import EventProvider
 import ProtectedRoute from "./components/ProtectedRoute";   // ✅ Import
 
 const Routes = () => {
@@ -22,7 +23,7 @@ const Routes = () => {
       <AuthProvider>
         <ErrorBoundary>
           <ScrollToTop />
-          <CommunityProvider>
+            
             <RouterRoutes>
               {/* Protected Pages */}
               <Route
@@ -69,7 +70,9 @@ const Routes = () => {
                 path="/community"
                 element={
                   <ProtectedRoute>
+                    <CommunityProvider>
                     <Community />
+                    </CommunityProvider>
                   </ProtectedRoute>
                 }
               />
@@ -77,7 +80,9 @@ const Routes = () => {
                 path="/events"
                 element={
                   <ProtectedRoute>
+                    <EventProvider> 
                     <Events />
+                     </EventProvider>
                   </ProtectedRoute>
                 }
               />
@@ -104,7 +109,7 @@ const Routes = () => {
               {/* Fallback */}
               <Route path="*" element={<NotFound />} />
             </RouterRoutes>
-          </CommunityProvider>
+           
         </ErrorBoundary>
       </AuthProvider>
     </BrowserRouter>

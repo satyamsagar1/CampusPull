@@ -31,7 +31,6 @@ const FilterSidebar = ({ filters, onFilterChange, onClearFilters, isMobile, onCl
         { value: 'electronics', label: 'Electronics', count: 98 },
         { value: 'mechanical', label: 'Mechanical Engineering', count: 87 },
         { value: 'civil', label: 'Civil Engineering', count: 76 },
-        { value: 'biotechnology', label: 'Biotechnology', count: 65 }
       ]
     },
     {
@@ -49,32 +48,8 @@ const FilterSidebar = ({ filters, onFilterChange, onClearFilters, isMobile, onCl
         { value: '8', label: '8th Semester', count: 167 }
       ]
     },
-    {
-      key: 'university',
-      title: 'University',
-      icon: 'GraduationCap',
-      options: [
-        { value: 'iit-delhi', label: 'IIT Delhi', count: 234 },
-        { value: 'iit-bombay', label: 'IIT Bombay', count: 198 },
-        { value: 'iisc-bangalore', label: 'IISc Bangalore', count: 167 },
-        { value: 'nit-trichy', label: 'NIT Trichy', count: 145 },
-        { value: 'bits-pilani', label: 'BITS Pilani', count: 123 },
-        { value: 'vit-vellore', label: 'VIT Vellore', count: 98 },
-        { value: 'srm-chennai', label: 'SRM Chennai', count: 87 },
-        { value: 'manipal', label: 'Manipal University', count: 76 }
-      ]
-    },
-    {
-      key: 'difficulty',
-      title: 'Difficulty Level',
-      icon: 'Target',
-      options: [
-        { value: 'beginner', label: 'Beginner', count: 456, color: 'text-green-600' },
-        { value: 'intermediate', label: 'Intermediate', count: 389, color: 'text-yellow-600' },
-        { value: 'advanced', label: 'Advanced', count: 234, color: 'text-red-600' },
-        { value: 'expert', label: 'Expert', count: 123, color: 'text-purple-600' }
-      ]
-    },
+   
+    
     {
       key: 'resourceType',
       title: 'Resource Type',
@@ -83,9 +58,7 @@ const FilterSidebar = ({ filters, onFilterChange, onClearFilters, isMobile, onCl
         { value: 'notes', label: 'Study Notes', count: 567 },
         { value: 'roadmaps', label: 'Career Roadmaps', count: 234 },
         { value: 'interview-pyqs', label: 'Interview PYQs', count: 345 },
-        { value: 'assignments', label: 'Assignments', count: 189 },
-        { value: 'projects', label: 'Project Ideas', count: 156 },
-        { value: 'tutorials', label: 'Video Tutorials', count: 123 }
+   
       ]
     }
   ];

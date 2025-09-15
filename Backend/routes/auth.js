@@ -25,6 +25,7 @@ const accessCookieOpts = {
 
 // --- SIGNUP ROUTE (updated) ---
 router.post('/signup', async (req, res) => {
+ 
   try {
     const parsed = signupSchema.safeParse(req.body);
     if (!parsed.success) {

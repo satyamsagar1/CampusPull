@@ -1,44 +1,23 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, PlusCircle } from "lucide-react";
+import { EventContext } from "../../context/EventContext";
 
 const EventPage = () => {
   const navigate = useNavigate();
-  const [events, setEvents] = useState([
-    {
-      id: 1,
-      title: "AI in Rural Development",
-      speaker: "Dr. Meera Nair",
-      banner: "https://source.unsplash.com/800x400/?technology,ai",
-      uniqueness: "Exploring how AI can empower rural workers",
-    },
-    {
-      id: 2,
-      title: "Sustainable Energy Workshop",
-      speaker: "Prof. Arjun Rao",
-      banner: "https://source.unsplash.com/800x400/?energy,green",
-      uniqueness: "Hands-on session on affordable renewable energy solutions",
-    },
-    {
-      id: 3,
-      title: "Future of Digital Payments",
-      speaker: "Ms. Ananya Gupta",
-      banner: "https://source.unsplash.com/800x400/?finance,technology",
-      uniqueness: "Understanding UPI 3.0 and secure digital payments",
-    },
-  ]);
+  const { events, createEvent } = useContext(EventContext);
 
   const [newEvent, setNewEvent] = useState({
     title: "",
-    speaker: "",
-    uniqueness: "",
+    description: "",
     banner: "",
+    date: "",
   });
 
   const handleAddEvent = () => {
-    if (!newEvent.title || !newEvent.speaker || !newEvent.uniqueness || !newEvent.banner) return;
-    setEvents([{ id: events.length + 1, ...newEvent }, ...events]);
-    setNewEvent({ title: "", speaker: "", uniqueness: "", banner: "" });
+    if (!newEvent.title || !newEvent.description || !newEvent.date) return;
+    createEvent(newEvent);
+    setNewEvent({ title: "", description: "", banner: "", date: "" });
   };
 
   return (
@@ -65,18 +44,16 @@ const EventPage = () => {
           onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })}
           className="w-full mb-2 p-2 border rounded-lg"
         />
-        <input
-          type="text"
-          placeholder="Speaker Name"
-          value={newEvent.speaker}
-          onChange={(e) => setNewEvent({ ...newEvent, speaker: e.target.value })}
+        <textarea
+          placeholder="Event Description"
+          value={newEvent.description}
+          onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
           className="w-full mb-2 p-2 border rounded-lg"
         />
         <input
-          type="text"
-          placeholder="Uniqueness (What makes it special?)"
-          value={newEvent.uniqueness}
-          onChange={(e) => setNewEvent({ ...newEvent, uniqueness: e.target.value })}
+          type="date"
+          value={newEvent.date}
+          onChange={(e) => setNewEvent({ ...newEvent, date: e.target.value })}
           className="w-full mb-2 p-2 border rounded-lg"
         />
         <input
@@ -98,12 +75,12 @@ const EventPage = () => {
       {/* Events List */}
       <div className="space-y-6">
         {events.map((event) => (
-          <div key={event.id} className="bg-white rounded-xl shadow-md overflow-hidden">
+          <div key={event._id} className="bg-white rounded-xl shadow-md overflow-hidden">
             <img src={event.banner} alt={event.title} className="w-full h-48 object-cover" />
             <div className="p-4">
               <h3 className="text-xl font-bold mb-1">{event.title}</h3>
-              <p className="text-gray-600 mb-1">🎤 Speaker: {event.speaker}</p>
-              <p className="text-gray-700 italic">✨ {event.uniqueness}</p>
+              <p className="text-gray-600 mb-1">{new Date(event.date).toDateString()}</p>
+              <p className="text-gray-700">{event.description}</p>
             </div>
           </div>
         ))}
