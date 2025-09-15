@@ -13,15 +13,16 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       // call /refresh to get new access token
-      const res = await axios.get("/auth/refresh", {
+      const res = await api.get("/auth/refresh", {
         withCredentials: true
       });
-      // store in memory if needed
-      // retry original request
-      originalRequest.headers.Authorization = `Bearer ${res.data.accessToken}`;
-      return axios(originalRequest);
+      if (newToken) {
+        api.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+      }
+      return api(originalRequest);
     }
-    return Promise.reject(error);
+    return Promise.reject(new Error(error.message || error));
   }
 );
 

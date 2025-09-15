@@ -9,6 +9,9 @@ import helmet from "helmet";
 import authRoutes from "./routes/auth.js";
 import feedRoutes from "./routes/feed.js";
 import communityRoutes from "./routes/community.js";
+import eventRoutes from "./routes/event.js";
+import connectionRoutes from "./routes/connection.js";
+import messageRoutes from "./routes/message.js";
 
 
 
@@ -35,6 +38,9 @@ app.use("/api/auth/signup", signupRateLimiter);
 app.use("/api/auth", authRoutes);
 app.use("/api/feed", feedRoutes);
 app.use("/api/community", communityRoutes);
+app.use("/api/event", eventRoutes);
+app.use("/api/connection", connectionRoutes);
+app.use("/api/message", messageRoutes);
 
 const PORT = process.env.PORT || 4000;
 conectDB().then(() => {

@@ -31,7 +31,6 @@ const FilterSidebar = ({ filters, onFilterChange, onClearFilters, isMobile, onCl
         { value: 'electronics', label: 'Electronics', count: 98 },
         { value: 'mechanical', label: 'Mechanical Engineering', count: 87 },
         { value: 'civil', label: 'Civil Engineering', count: 76 },
-        { value: 'biotechnology', label: 'Biotechnology', count: 65 }
       ]
     },
     {
@@ -49,6 +48,8 @@ const FilterSidebar = ({ filters, onFilterChange, onClearFilters, isMobile, onCl
         { value: '8', label: '8th Semester', count: 167 }
       ]
     },
+   
+    
     
     
     {
@@ -59,7 +60,7 @@ const FilterSidebar = ({ filters, onFilterChange, onClearFilters, isMobile, onCl
         { value: 'notes', label: 'Study Notes', count: 567 },
         { value: 'roadmaps', label: 'Career Roadmaps', count: 234 },
         { value: 'interview-pyqs', label: 'Interview PYQs', count: 345 },
-       
+   
       ]
     }
   ];

@@ -187,7 +187,7 @@ const Community = () => {
       })()}
 
       {/* New Post Input */}
-      <div className="bg-white shadow-md rounded-2xl p-4">
+      <div className="sticky bottom-0 bg-white shadow-md rounded-2xl p-4">
         <textarea
           className="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
           rows="3"
