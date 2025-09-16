@@ -11,7 +11,7 @@ import Community from "./pages/community/community";
 import Events from "./pages/events/events";   
 import Explore from "./pages/explore/Explore";
 import Feed from "./pages/feed/Feed";  
-import Auth from "./pages/Auth/Authpage";
+import Auth from "./pages/Auth/AuthPage";
 import { AuthProvider } from "./context/authContext";
 import { CommunityProvider } from "./context/communityContext";
 import { EventProvider } from "./context/eventContext"; // ✅ Import EventProvider
