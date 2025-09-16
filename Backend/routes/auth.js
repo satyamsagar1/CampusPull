@@ -81,6 +81,7 @@ router.post('/signup', async (req, res) => {
 // --- LOGIN, REFRESH, LOGOUT remain the same ---
 router.post('/login', async (req, res) => {
   try {
+    console.log("Login request body:", req.body);  // log incoming data
     const parsed = loginSchema.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({ 
