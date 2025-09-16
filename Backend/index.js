@@ -42,7 +42,7 @@ app.use("/api/event", eventRoutes);
 app.use("/api/connection", connectionRoutes);
 app.use("/api/message", messageRoutes);
 
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT;
 conectDB().then(() => {
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
