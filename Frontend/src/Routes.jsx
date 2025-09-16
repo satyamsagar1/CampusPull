@@ -1,21 +1,21 @@
 import React from "react";
 import { BrowserRouter, Routes as RouterRoutes, Route } from "react-router-dom";
-import ScrollToTop from "./components/ScrollToTop";
-import ErrorBoundary from "./components/ErrorBoundary";
-import NotFound from "./pages/NotFound";
-import AboutLinkMate from "./pages/about-link-mate";
-import ResourcesHub from "./pages/resources-hub";
-import Homepage from "./pages/homepage";
-import Profile from "./pages/profile/Profile"; 
-import Community from "./pages/community/Community"; 
-import Events from "./pages/events/Events";   
-import Explore from "./pages/explore/Explore";
-import Feed from "./pages/feed/Feed";  
-import Auth from "./pages/Auth/Authpage";
-import { AuthProvider } from "./context/authContext";
-import { CommunityProvider } from "./context/communityContext";
-import { EventProvider } from "./context/eventContext"; // ✅ Import EventProvider
-import ProtectedRoute from "./components/ProtectedRoute";   // ✅ Import
+import ScrollToTop from "./components/ScrollToTop.jsx";
+import ErrorBoundary from "./components/ErrorBoundary.jsx";
+import NotFound from "./pages/NotFound.jsx";
+import AboutLinkMate from "./pages/about-link-mate.jsx";
+import ResourcesHub from "./pages/resources-hub.jsx";
+import Homepage from "./pages/homepage.jsx";
+import Profile from "./pages/profile/Profile.jsx"; 
+import Community from "./pages/community/Community.jsx"; 
+import Events from "./pages/events/Events.jsx";   
+import Explore from "./pages/explore/Explore.jsx";
+import Feed from "./pages/feed/Feed.jsx";  
+import Auth from "./pages/Auth/Authpage.jsx";
+import { AuthProvider } from "./context/authContext.jsx";
+import { CommunityProvider } from "./context/communityContext.jsx";
+import { EventProvider } from "./context/eventContext.jsx"; // ✅ Import EventProvider
+import ProtectedRoute from "./components/ProtectedRoute.jsx";   // ✅ Import
 
 const Routes = () => {
   return (
