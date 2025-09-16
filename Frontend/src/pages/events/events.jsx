@@ -1,7 +1,7 @@
 import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, PlusCircle } from "lucide-react";
-import { EventContext } from "../../context/EventContext";
+import { EventContext } from "../../context/eventContext";
 
 const EventPage = () => {
   const navigate = useNavigate();
