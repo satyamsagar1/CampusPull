@@ -12,7 +12,7 @@ import Events from "./pages/events/events";
 import Explore from "./pages/explore/Explore";
 import Feed from "./pages/feed/Feed";  
 import Auth from "./pages/Auth/AuthPage";
-import { AuthProvider } from "./context/authContext";
+import { AuthProvider } from "./context/AuthContext";
 import { CommunityProvider } from "./context/communityContext";
 import { EventProvider } from "./context/eventContext"; // ✅ Import EventProvider
 import ProtectedRoute from "./components/ProtectedRoute";   // ✅ Import
