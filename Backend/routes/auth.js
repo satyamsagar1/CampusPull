@@ -7,18 +7,20 @@ import {authMiddleware, requireRole} from '../middleware/authMiddleware.js';
 const router = Router();
 
 // Cookie options for refresh token
+const isProd = process.env.NODE_ENV === "production";
+
 const refreshCookieOpts = {
   httpOnly: true,
-  secure: false,
-  sameSite: "lax",
+  secure: isProd,               // ✅ true in production, false in localhost
+  sameSite: isProd ? "None" : "Lax",
   path: "/",
   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
 };
 
 const accessCookieOpts = {
   httpOnly: true,
-  secure: false,
-  sameSite: "lax",
+  secure: isProd,               // ✅ true in production
+  sameSite: isProd ? "None" : "Lax",
   path: "/",
   maxAge: 15 * 60 * 1000, // 15 minutes
 };
