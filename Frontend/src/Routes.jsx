@@ -11,11 +11,15 @@ import Community from "./pages/community/community.jsx";
 import Events from "./pages/events/events.jsx";   
 import Explore from "./pages/explore/Explore.jsx";
 import Feed from "./pages/feed/Feed.jsx";  
+import Header from "./components/ui/Header.jsx";
 import Auth from "./pages/Auth/AuthPage.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import { CommunityProvider } from "./context/communityContext.jsx";
 import { EventProvider } from "./context/eventContext.jsx"; // ✅ Import EventProvider
 import ProtectedRoute from "./components/ProtectedRoute.jsx";   // ✅ Import
+import { ExploreProvider } from "./context/exploreContext.jsx";
+import { ProfileProvider } from "./context/profileContext.jsx";
+
 
 const Routes = () => {
   return (
@@ -23,6 +27,7 @@ const Routes = () => {
       <AuthProvider>
         <ErrorBoundary>
           <ScrollToTop />
+          
             
             <RouterRoutes>
               {/* Protected Pages */}
@@ -62,7 +67,9 @@ const Routes = () => {
                 path="/profile"
                 element={
                   <ProtectedRoute>
+                    <ProfileProvider>
                     <Profile />
+                    </ProfileProvider>
                   </ProtectedRoute>
                 }
               />
@@ -90,7 +97,9 @@ const Routes = () => {
                 path="/explore"
                 element={
                   <ProtectedRoute>
+                    <ExploreProvider>
                     <Explore />
+                    </ExploreProvider>
                   </ProtectedRoute>
                 }
               />

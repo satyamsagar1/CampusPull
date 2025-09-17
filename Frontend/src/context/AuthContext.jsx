@@ -3,7 +3,7 @@ import { createContext, useContext, useState, useEffect, useMemo } from "react";
 import api from "../utils/api";
 import { useNavigate } from "react-router-dom";
 
-const AuthContext = createContext();
+export const AuthContext = createContext();
 
 
 
@@ -11,6 +11,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true); // loading while checking auth
   const navigate = useNavigate();
+  const [accessToken, setAccessToken] = useState("");
 
   // --- LOGIN ---
   const login = async (credentials) => {
@@ -21,6 +22,7 @@ export const AuthProvider = ({ children }) => {
         { withCredentials: true } // important to receive refresh cookie
       );
       setUser(res.data.user);
+      setAccessToken(res.data.accessToken);
       navigate("/homepage", { replace: true });
     } catch (err) {
       console.error("Login failed:", err.response?.data || err.message);
@@ -37,6 +39,7 @@ export const AuthProvider = ({ children }) => {
         { withCredentials: true }
       );
       setUser(res.data.user);
+      setAccessToken(res.data.accessToken);
       navigate("/homepage", { replace: true });
     } catch (err) {
       console.error("Signup failed:", err.response?.data || err.message);
@@ -56,7 +59,10 @@ export const AuthProvider = ({ children }) => {
       console.error("Logout failed:", err);
     } finally {
       setUser(null);
+      setAccessToken("");
       navigate("/auth", { replace: true });
+      window.location.reload(); 
+      
     }
   };
 
@@ -71,13 +77,14 @@ export const AuthProvider = ({ children }) => {
           { withCredentials: true } // send cookie
         );
 
-        const accessToken = refreshRes.data.accessToken;
+        const newToken = refreshRes.data.accessToken;
+        setAccessToken(newToken);
 
         // 2. Fetch current user using access token
         const userRes = await api.get(
           "/auth/me",
           {
-            headers: { Authorization: `Bearer ${accessToken}` },
+            headers: { Authorization: `Bearer ${newToken}` },
             withCredentials: true,
           }
         );
@@ -86,23 +93,26 @@ export const AuthProvider = ({ children }) => {
       } catch (err) {
         console.error("Auth check failed:", err.response?.data || err.message);
         setUser(null); // not logged in
+        setAccessToken("");
       } finally {
         setLoading(false);
       }
     };
 
     fetchUser();
-  }, []);
+  }, [location.pathname]);
 
   const contextValue = useMemo(
     () => ({
       user,
       loading,
+      accessToken,
+      setAccessToken,
       login,
       signup,
       logout,
     }),
-    [user, loading]
+    [user, accessToken,loading]
   );
 
   return (
@@ -113,3 +123,5 @@ export const AuthProvider = ({ children }) => {
 };
 
 export const useAuth = () => useContext(AuthContext);
+
+

@@ -82,8 +82,7 @@ router.post('/signup', async (req, res) => {
 
 // --- LOGIN, REFRESH, LOGOUT remain the same ---
 router.post('/login', async (req, res) => {
-  try {
-    console.log("Login request body:", req.body);  // log incoming data
+  try { 
     const parsed = loginSchema.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({ 
@@ -175,12 +174,34 @@ router.get('/student-dashboard',
 router.post('/logout', async (req, res) => {
   try {
     const token = req.cookies?.linkmate_rft;
+
+    // Invalidate tokenVersion if token exists
     if (token) {
-      // Bump tokenVersion to invalidate all outstanding refresh tokens
-      const payload = (() => { try { return verifyRefreshToken(token); } catch { return null; } })();
-      if (payload?.sub) await User.findByIdAndUpdate(payload.sub, { $inc: { tokenVersion: 1 } });
+      try {
+        const payload = verifyRefreshToken(token);
+        if (payload?.sub) await User.findByIdAndUpdate(payload.sub, { $inc: { tokenVersion: 1 } });
+      } catch {
+        // invalid token, ignore
+      }
     }
-    res.clearCookie('linkmate_rft', { path: '/api/auth/refresh' });
+
+     // Clear cookies explicitly for localhost and production
+    const cookieOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+      path: "/",
+    };
+
+    res.clearCookie("linkmate_rft", cookieOptions);
+    res.clearCookie("linkmate_at", cookieOptions);
+
+    // Prevent caching
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
+    res.setHeader("Surrogate-Control", "no-store");
+
     return res.json({ message: 'Logged out' });
   } catch (err) {
     console.error('Logout error', err);

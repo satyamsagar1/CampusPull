@@ -2,8 +2,13 @@ import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom'; // ✅ useNavigate added
 import Icon from '../AppIcon';
 import Button from './Button';
+import { useAuth } from '../../context/authContext';
+import { ExploreProvider } from 'context/exploreContext';
 
 const Header = () => {
+
+  const { logout } = useAuth(); // ✅ get logout function
+
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate(); // ✅ navigate for logout redirect
@@ -21,12 +26,6 @@ const Header = () => {
   const isActivePath = (path) => location?.pathname === path;
 
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
-
-  // ✅ Logout function
-  const handleLogout = () => {
-    localStorage.removeItem('token'); // or any auth clearing logic
-    navigate('/auth'); // redirect to login page
-  };
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-brand-sm">
@@ -75,7 +74,7 @@ const Header = () => {
 
             {/* ✅ Desktop Logout Button */}
             <button
-              onClick={handleLogout}
+              onClick={logout}
               className="flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-inter font-medium text-red-600 hover:bg-red-100 hover:text-red-700 transition-all duration-300"
             >
               <Icon name="LogOut" size={18} />
@@ -123,7 +122,7 @@ const Header = () => {
               {/* ✅ Mobile Logout Button */}
               <button
                 onClick={() => {
-                  handleLogout();
+                  logout();
                   setIsMobileMenuOpen(false);
                 }}
                 className="flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-inter font-medium text-red-600 hover:bg-red-100 hover:text-red-700 transition-all duration-300 w-full"

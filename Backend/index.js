@@ -12,7 +12,7 @@ import communityRoutes from "./routes/community.js";
 import eventRoutes from "./routes/event.js";
 import connectionRoutes from "./routes/connection.js";
 import messageRoutes from "./routes/message.js";
-
+import profileRoutes from "./routes/profile.js";
 
 
 const app = express();
@@ -41,6 +41,7 @@ app.use("/api/community", communityRoutes);
 app.use("/api/event", eventRoutes);
 app.use("/api/connection", connectionRoutes);
 app.use("/api/message", messageRoutes);
+app.use("/api/profile", profileRoutes);
 
 const PORT = process.env.PORT;
 conectDB().then(() => {
