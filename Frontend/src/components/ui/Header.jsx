@@ -3,7 +3,6 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'; // ✅ useNav
 import Icon from '../AppIcon';
 import Button from './Button';
 import { useAuth } from '../../context/authContext';
-import { ExploreProvider } from 'context/exploreContext';
 
 const Header = () => {
 
@@ -21,6 +20,7 @@ const Header = () => {
     { name: 'Events', path: '/events', icon: 'Calendar' },
     { name: 'Profile', path: '/profile', icon: 'User' },
     { name: 'Explore', path: '/explore', icon: 'Compass' },
+     { name: 'Chat', path: '/chatPage', icon: 'MessageSquare' }, 
   ];
 
   const isActivePath = (path) => location?.pathname === path;

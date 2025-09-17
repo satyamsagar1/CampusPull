@@ -11,7 +11,6 @@ import Community from "./pages/community/community.jsx";
 import Events from "./pages/events/events.jsx";   
 import Explore from "./pages/explore/Explore.jsx";
 import Feed from "./pages/feed/Feed.jsx";  
-import Header from "./components/ui/Header.jsx";
 import Auth from "./pages/Auth/AuthPage.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import { CommunityProvider } from "./context/communityContext.jsx";
@@ -19,12 +18,14 @@ import { EventProvider } from "./context/eventContext.jsx"; // ✅ Import EventP
 import ProtectedRoute from "./components/ProtectedRoute.jsx";   // ✅ Import
 import { ExploreProvider } from "./context/exploreContext.jsx";
 import { ProfileProvider } from "./context/profileContext.jsx";
-
+import { ChatProvider } from "./context/chatContext.jsx";
+import ChatPage from "./pages/chat/chatPage.jsx";  // ✅ Import ChatProvider 
 
 const Routes = () => {
   return (
     <BrowserRouter>
       <AuthProvider>
+         <ChatProvider>
         <ErrorBoundary>
           <ScrollToTop />
           
@@ -44,6 +45,14 @@ const Routes = () => {
                 element={
                   <ProtectedRoute>
                     <Homepage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/chatPage"
+                element={
+                  <ProtectedRoute>
+                    <ChatPage />
                   </ProtectedRoute>
                 }
               />
@@ -120,6 +129,7 @@ const Routes = () => {
             </RouterRoutes>
            
         </ErrorBoundary>
+        </ChatProvider>
       </AuthProvider>
     </BrowserRouter>
   );

@@ -117,12 +117,18 @@ export const getConnections = async (req, res) => {
     const connections = await Connection.find({
       $or: [
         { requester: userId, status: "accepted" },
-        { receiver: userId, status: "accepted" }
+        { recipient: userId, status: "accepted" }
       ]
     }).populate("requester", "name email profilePic year skills")
     .populate("recipient", "name email profilePic year skills");
 
-    res.json(connections);
+    const connectedUsers = connections.map((conn) => {
+      return conn.requester._id.toString() === userId
+        ? conn.recipient
+        : conn.requester;
+    });
+
+    res.json(connectedUsers);
   } catch (err) {
     res.status(500).json({ message: "Error fetching connections", error: err.message });
   }
