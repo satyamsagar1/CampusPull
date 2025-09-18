@@ -5,7 +5,7 @@ import { sendMessage, getMessages, markAsRead, getChatList } from '../controller
 const router = express.Router();
 
 router.post('/', authMiddleware, sendMessage);
-router.patch('/:id/read', authMiddleware, markAsRead);
+router.patch('/read/:id', authMiddleware, markAsRead);
 router.get('/chatlist/:userId', authMiddleware, getChatList);
 router.get('/:userId1/:userId2', authMiddleware, getMessages);
 

@@ -1,5 +1,6 @@
 import Connection from "../models/connectionModel.js";
 import user from "../models/user.js";
+import mongoose from "mongoose";
 
 //Suggest Users to Connect
 
@@ -59,7 +60,6 @@ export const sendConnectionRequest = async (req, res) => {
     try {
         const { recipientId } = req.body;
         const requesterId = req.user.id;
-        console.log(typeof recipientId, recipientId); 
 
         //prevent duplicate requests
         const existingRequest = await Connection.findOne({
@@ -108,6 +108,27 @@ export const respondToConnectionRequest = async (req, res) => {
         res.status(500).json({ message: error.message });
     }       
 };
+
+export const getPendingRequests = async (req, res) => {
+  try {
+
+    const userId = req.user.id;
+
+    const requests = await Connection.find({
+      $or: [
+    { recipient: userId, status: "pending" }, // incoming
+    { requester: userId, status: "pending" }  // outgoing
+  ]
+}).populate("requester", "name email college degree skills")
+ .populate("recipient", "name email college degree skills");
+    // populate requester details to show in UI
+
+    res.status(200).json(requests);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 
 // Get user's connections
 export const getConnections = async (req, res) => {

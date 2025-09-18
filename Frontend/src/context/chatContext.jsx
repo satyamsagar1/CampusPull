@@ -13,7 +13,7 @@ export const ChatProvider = ({ children }) => {
   const [activeChat, setActiveChat] = useState(null);
   const [chatList, setChatList] = useState([]);
 
-  // Connect socket
+  // ----------------- SOCKET CONNECTION -----------------
   useEffect(() => {
     if (!user?._id) return;
 
@@ -23,137 +23,165 @@ export const ChatProvider = ({ children }) => {
     setSocket(newSocket);
 
     // Online users
-    const handleOnlineUsers = (users) => setOnlineUsers(users);
+    newSocket.on("getOnlineUsers", setOnlineUsers);
 
-    // Incoming messages
-    const handleNewMessage = (message) => {
+    // ----------------- HELPERS -----------------
+    const markMessageAsReadInState = (prev, messageId) => {
+      const updated = { ...prev };
+      Object.keys(updated).forEach(chatId => {
+        updated[chatId] = updated[chatId].map(m =>
+          m._id === messageId ? { ...m, read: true } : m
+        );
+      });
+      return updated;
+    };
+
+    // ----------------- SOCKET EVENTS -----------------
+    newSocket.on("newMessage", message => {
       if (!message?.sender || !message?.recipient) return;
-      const chatId = message.sender === user._id ? message.recipient : message.sender;
 
-      setMessages((prev) => ({
+      // Determine chatId and chatName
+      const chatId = message.sender._id === user._id ? message.recipient._id : message.sender._id;
+      const chatName = message.sender._id === user._id ? message.recipient.name : message.sender.name;
+
+      // Update messages state
+      setMessages(prev => ({
         ...prev,
         [chatId]: prev[chatId] ? [...prev[chatId], message] : [message],
       }));
-    };
 
-    // Message read event
-    const handleMessageRead = (messageId) => {
-      setMessages((prev) => {
-        const updated = { ...prev };
-        Object.keys(updated).forEach((chatId) => {
-          updated[chatId] = updated[chatId].map((m) =>
-            m._id === messageId ? { ...m, read: true } : m
+      // Update chat list dynamically
+      setChatList(prev => {
+        const existing = prev.find(c => c.chatWith._id === chatId);
+        if (existing) {
+          return prev.map(c =>
+            c.chatWith._id === chatId
+              ? { ...c, lastMessage: message.content, lastMessageTime: message.createdAt }
+              : c
           );
-        });
-        return updated;
+        } else {
+          return [
+            { chatWith: { _id: chatId, name: chatName || "Unknown" }, lastMessage: message.content, lastMessageTime: message.createdAt },
+            ...prev,
+          ];
+        }
       });
-    };
+    });
 
-    newSocket.on("getOnlineUsers", handleOnlineUsers);
-    newSocket.on("newMessage", handleNewMessage);
-    newSocket.on("messageRead", handleMessageRead);
+    newSocket.on("messageRead", messageId => {
+      setMessages(prev => markMessageAsReadInState(prev, messageId));
+    });
 
     return () => {
-      newSocket.off("getOnlineUsers", handleOnlineUsers);
-      newSocket.off("newMessage", handleNewMessage);
-      newSocket.off("messageRead", handleMessageRead);
+      newSocket.off("getOnlineUsers");
+      newSocket.off("newMessage");
+      newSocket.off("messageRead");
       newSocket.disconnect();
     };
-  }, [user]);
+  }, [user?._id]);
 
-  // Fetch chat list
+  // ----------------- FETCH CHAT LIST -----------------
   useEffect(() => {
     if (!user?._id) return;
+    let isMounted = true;
 
-    api
-      .get(`/message/chatlist/${user._id}`)
-      .then((res) => setChatList(res.data))
-      .catch((err) => console.error("Error fetching chat list:", err));
-  }, [user]);
+    const fetchChats = async () => {
+      try {
+        const res = await api.get(`/message/chatlist/${user._id}`);
+        if (isMounted) setChatList(res.data || []);
+      } catch (err) {
+        console.error("Error fetching chat list:", err);
+      }
+    };
 
-  // Load messages for a user
-  const loadMessages = async (recipientId) => {
+    fetchChats();
+    return () => { isMounted = false; };
+  }, [user?._id]);
+
+  // ----------------- LOAD MESSAGES -----------------
+  const loadMessages = async recipientId => {
     if (!user?._id || !recipientId) return;
     try {
       const res = await api.get(`/message/${user._id}/${recipientId}`);
-      setMessages((prev) => ({
+      setMessages(prev => ({
         ...prev,
         [recipientId]: res.data || [],
       }));
-
-      // Mark unread messages as read
-      markMessagesAsRead(recipientId);
     } catch (err) {
       console.error("Error loading messages:", err);
     }
   };
 
-  // Send a message
+  // ----------------- SEND MESSAGE -----------------
   const sendMessage = async (recipientId, text) => {
     if (!user?._id || !recipientId || !text?.trim()) return;
 
-    const newMsg = {
-      sender: user._id,
-      recipient: recipientId,
-      content: text.trim(),
-    };
-
+    const newMsg = { sender: user._id, recipient: recipientId, content: text.trim() };
     try {
       const res = await api.post("/message", newMsg);
 
-      if (socket) socket.emit("sendMessage", res.data);
-
-      setMessages((prev) => ({
+      // Update messages state
+      setMessages(prev => ({
         ...prev,
-        [recipientId]: prev[recipientId]
-          ? [...prev[recipientId], res.data]
-          : [res.data],
+        [recipientId]: prev[recipientId] ? [...prev[recipientId], res.data] : [res.data],
       }));
+
+      // Update chatList
+      setChatList(prev => {
+        const existing = prev.find(c => c.chatWith._id === recipientId);
+        const name = existing?.chatWith?.name || res.data.recipient.name || "Unknown";
+        if (existing) {
+          return prev.map(c =>
+            c.chatWith._id === recipientId
+              ? { ...c, lastMessage: res.data.content, lastMessageTime: res.data.createdAt }
+              : c
+          );
+        } else {
+          return [
+            { chatWith: { _id: recipientId, name }, lastMessage: res.data.content, lastMessageTime: res.data.createdAt },
+            ...prev,
+          ];
+        }
+      });
+
+      // Emit to socket
+      socket?.emit("sendMessage", res.data);
     } catch (err) {
       console.error("Error sending message:", err);
     }
   };
 
-  // Mark all unread messages from recipient as read
-  const markAsRead = async (recipientId) => {
+  // ----------------- MARK AS READ -----------------
+  const markAsRead = async recipientId => {
     if (!user?._id || !messages[recipientId]) return;
 
-    const unreadMessages = messages[recipientId].filter(
-      (msg) => msg.recipient === user._id && !msg.read
-    );
+    const unread = messages[recipientId].filter(m => m.recipient === user._id && !m.read);
 
-    for (const msg of unreadMessages) {
+    for (const msg of unread) {
       try {
-        await api.patch(`/message/${msg._id}/read`);
-        // Update local state
-        setMessages((prev) => ({
+        await api.patch(`/message/read/${msg._id}`);
+        setMessages(prev => ({
           ...prev,
-          [recipientId]: prev[recipientId].map((m) =>
-            m._id === msg._id ? { ...m, read: true } : m
-          ),
+          [recipientId]: prev[recipientId].map(m => (m._id === msg._id ? { ...m, read: true } : m)),
         }));
-        // Notify sender via socket
-        socket?.emit("messageRead", msg._id);
+        socket?.emit("messageRead", msg._id, msg.sender._id);
       } catch (err) {
-        console.error("Error marking message as read:", err);
+        console.error(err);
       }
     }
   };
 
-  const contextValue = useMemo(
-    () => ({
-      socket,
-      onlineUsers,
-      messages,
-      activeChat,
-      setActiveChat,
-      sendMessage,
-      chatList,
-      loadMessages,
-      markAsRead,
-    }),
-    [socket, onlineUsers, messages, activeChat, chatList]
-  );
+  const contextValue = useMemo(() => ({
+    socket,
+    onlineUsers,
+    messages,
+    activeChat,
+    setActiveChat,
+    chatList,
+    loadMessages,
+    sendMessage,
+    markAsRead,
+  }), [socket, onlineUsers, messages, activeChat, chatList]);
 
   return <ChatContext.Provider value={contextValue}>{children}</ChatContext.Provider>;
 };

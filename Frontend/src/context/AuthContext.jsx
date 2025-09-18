@@ -67,40 +67,29 @@ export const AuthProvider = ({ children }) => {
   };
 
   // --- FETCH USER ON PAGE LOAD (refresh token flow) ---
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        // 1. Call refresh route to get new access token
-        const refreshRes = await api.post(
-          "/auth/refresh",
-          {},
-          { withCredentials: true } // send cookie
-        );
+ useEffect(() => {
+  const fetchUser = async () => {
+    try {
+      const refreshRes = await api.post("/auth/refresh", {}, { withCredentials: true });
+      const newToken = refreshRes.data.accessToken;
 
-        const newToken = refreshRes.data.accessToken;
-        setAccessToken(newToken);
+      setAccessToken(newToken);
+      api.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
 
-        // 2. Fetch current user using access token
-        const userRes = await api.get(
-          "/auth/me",
-          {
-            headers: { Authorization: `Bearer ${newToken}` },
-            withCredentials: true,
-          }
-        );
+      const userRes = await api.get("/auth/me", { withCredentials: true });
+      setUser(userRes.data.user);
+    } catch (err) {
+      console.error("Auth check failed:", err.response?.data || err.message);
+      setUser(null);
+      setAccessToken("");
+      // navigate("/login"); // optional
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        setUser(userRes.data.user);
-      } catch (err) {
-        console.error("Auth check failed:", err.response?.data || err.message);
-        setUser(null); // not logged in
-        setAccessToken("");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUser();
-  }, [location.pathname]);
+  fetchUser();
+}, []); // only run once on mount
 
   const contextValue = useMemo(
     () => ({

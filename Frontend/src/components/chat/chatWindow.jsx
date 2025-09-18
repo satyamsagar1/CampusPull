@@ -1,118 +1,87 @@
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useChat } from "../../context/ChatContext";
 import { useAuth } from "../../context/AuthContext";
-import Icon from "../AppIcon";
 
-const ChatWindow = ({ recipientId }) => {
+const ChatWindow = ({ recipientId, recipientName }) => {
+  const { messages, sendMessage, loadMessages, markAsRead } = useChat();
   const { user } = useAuth();
-  const { messages, loadMessages, sendMessage, chatList, onlineUsers, markAsRead } = useChat();
   const [newMessage, setNewMessage] = useState("");
-  const scrollRef = useRef(null);
 
-  // Load messages when recipient changes
+  // Load messages + mark unread as read
   useEffect(() => {
-    if (recipientId) {
-      loadMessages(recipientId);
-      markAsRead(recipientId); 
+    if (!recipientId || !user?._id) return;
 
-      // Mark all received messages as read
-      const receivedMessages = messages[recipientId]?.filter(
-        (msg) => msg.recipient === user._id && !msg.read
+    const fetchMessages = async () => {
+      await loadMessages(recipientId);
+
+      const unread = messages[recipientId]?.filter(
+        msg => msg.recipient === user._id && !msg.read
       );
-      receivedMessages?.forEach((msg) => markAsRead(msg._id));
-    }
-  }, [recipientId]);
 
-  // Auto-scroll to bottom when messages update
-  useEffect(() => {
-    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages[recipientId]?.length]);
+      if (unread?.length > 0) {
+        await markAsRead(recipientId);
+      }
+    };
 
-  // Get recipient info
-  const recipient = chatList.find(c => c.chatWith?._id === recipientId)?.chatWith;
+    fetchMessages();
+  }, [recipientId, user?._id, messages]);
 
-  const handleSend = (e) => {
-    e.preventDefault();
-    if (!newMessage.trim() || !recipientId) return;
-    sendMessage(recipientId, newMessage.trim());
+  const handleSend = async () => {
+    if (!newMessage.trim()) return;
+    await sendMessage(recipientId, newMessage);
     setNewMessage("");
   };
 
-  const isOnline = onlineUsers.includes(recipientId);
-
-  if (!recipientId || !recipient) {
-    return (
-      <div className="flex-1 flex items-center justify-center text-gray-400">
-        Select a chat to start messaging
-      </div>
-    );
-  }
-
   return (
-    <div className="flex flex-col h-full border-l border-gray-200">
+    <div className="flex flex-col h-full bg-white rounded-xl shadow-lg overflow-hidden">
       {/* Header */}
-      <div className="flex items-center px-4 py-3 border-b border-gray-200 bg-white">
-        <div className="relative flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
-            <span className="text-white font-bold">{recipient.name?.charAt(0) || "?"}</span>
-          </div>
-          <div>
-            <h3 className="text-sm font-medium text-gray-800">{recipient.name}</h3>
-            <p className="text-xs text-gray-500 flex items-center gap-1">
-              {isOnline && <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>}
-              {isOnline ? "Online" : "Offline"}
-            </p>
-          </div>
-        </div>
+      <div className="px-4 py-2 bg-blue-600 text-white font-semibold">
+        Chat with {recipientName || "User"}
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2 bg-gray-50">
-        {messages[recipientId]?.length ? (
-          messages[recipientId].map((msg, idx) => {
-            const isSender = msg.sender === user._id;
-            const isLast = idx === messages[recipientId].length - 1;
+      <div className="flex-1 p-4 overflow-y-auto space-y-3">
+  {(!messages || !messages[recipientId]) ? (
+    <p className="text-gray-400 text-sm text-center mt-4">Loading messages...</p>
+  ) : messages[recipientId].length === 0 ? (
+    <p className="text-gray-400 text-sm text-center mt-4">No messages yet</p>
+  ) : (
+    messages[recipientId].map((msg, index) => {
+      const isSender = msg.sender === user?._id;
+      const messageTime = msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "";
 
-            return (
-              <div
-                key={msg._id || idx}
-                ref={isLast ? scrollRef : null}
-                className={`flex ${isSender ? "justify-end" : "justify-start"}`}
-              >
-                <div className={`max-w-xs md:max-w-md px-3 py-2 rounded-lg ${isSender ? "bg-academic-blue text-white" : "bg-white border"}`}>
-                  {msg.content}
-                  <div className="flex items-center justify-end text-xs text-gray-400 mt-1 gap-1">
-                    <span>
-                      {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                    </span>
-                    {isSender && (
-                      <span className="text-blue-500">
-                        {msg.read ? "✔✔" : "✔"}
-                      </span>
-                    )}
-                  </div>
-                </div>
+      return (
+        <div key={msg._id || index} className={`flex ${isSender ? "justify-end" : "justify-start"}`}>
+          <div className={`p-3 rounded-lg max-w-xs shadow ${isSender ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-800"}`}>
+            <p>{msg.content || ""}</p>
+            {isSender && (
+              <div className="text-xs text-right mt-1 flex items-center justify-end gap-1">
+                <span>{messageTime}</span>
+                <span>{msg.read ? "✔✔" : "✔"}</span>
               </div>
-            );
-          })
-        ) : (
-          <p className="text-gray-400 text-sm text-center mt-4">No messages yet</p>
-        )}
-      </div>
+            )}
+          </div>
+        </div>
+      );
+    })
+  )}
+</div>
+
 
       {/* Input */}
-      <form onSubmit={handleSend} className="flex items-center px-4 py-3 border-t border-gray-200 bg-white">
+      <div className="p-3 border-t flex items-center gap-2">
         <input
           type="text"
-          value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
           placeholder="Type a message..."
-          className="flex-1 px-4 py-2 border rounded-full focus:outline-none focus:ring focus:border-academic-blue"
+          className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+          value={newMessage}
+          onChange={e => setNewMessage(e.target.value)}
+          onKeyDown={e => e.key === "Enter" && handleSend()}
         />
-        <button type="submit" className="ml-2 bg-academic-blue text-white px-4 py-2 rounded-full hover:bg-indigo-600 transition">
-          <Icon name="Send" size={20} />
+        <button onClick={handleSend} className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">
+          Send
         </button>
-      </form>
+      </div>
     </div>
   );
 };

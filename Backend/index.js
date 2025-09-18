@@ -13,9 +13,9 @@ import eventRoutes from "./routes/event.js";
 import connectionRoutes from "./routes/connection.js";
 import messageRoutes from "./routes/message.js";
 import profileRoutes from "./routes/profile.js";
-import { Server } from "socket.io";
 import http from "http";
-import Message from "./models/message.js"; // import Message model
+import {initSocket}  from "./socket.js";
+
 
 const app = express();
 const server = http.createServer(app);
@@ -30,7 +30,10 @@ app.use((req, res, next) => {
   next();
 });
 app.use(cookieParser());
-app.use(generalrateLimiter);
+// app.use(generalrateLimiter);
+
+const io=initSocket(server);
+app.set("io", io); // make io accessible in routes/controllers via req.app.get("io")
 
 app.get("/health", (_, res) => res.json({ ok: true, ts: Date.now() }));
 
@@ -46,53 +49,6 @@ app.use("/api/event", eventRoutes);
 app.use("/api/connection", connectionRoutes);
 app.use("/api/message", messageRoutes);
 app.use("/api/profile", profileRoutes);
-
-// -------------------- SOCKET.IO --------------------
-const io = new Server(server, {
-  cors: {
-    origin: "*", // replace with frontend URL in production
-    methods: ["GET", "POST"],
-  },
-});
-
-// Store connected users
-let onlineUsers = new Map();
-
-io.on("connection", (socket) => {
-  const userId = socket.handshake.query.userId;
-  if (userId) {
-    onlineUsers.set(userId, socket.id);
-    io.emit("getOnlineUsers", Array.from(onlineUsers.keys()));
-  }
-
-  // Receive and forward messages
-  socket.on("sendMessage", (msg) => {
-    const recipientSocket = onlineUsers.get(msg.recipient);
-    if (recipientSocket) {
-      io.to(recipientSocket).emit("newMessage", msg);
-    }
-  });
-
-  // Message read event
-  socket.on("messageRead", async (messageId) => {
-    try {
-      const message = await Message.findById(messageId);
-      if (message) {
-        const senderSocket = onlineUsers.get(message.sender.toString());
-        if (senderSocket) {
-          io.to(senderSocket).emit("messageRead", messageId);
-        }
-      }
-    } catch (err) {
-      console.error("Error in messageRead socket:", err.message);
-    }
-  });
-
-  socket.on("disconnect", () => {
-    onlineUsers.delete(userId);
-    io.emit("getOnlineUsers", Array.from(onlineUsers.keys()));
-  });
-});
 
 // -------------------- START SERVER --------------------
 const PORT = process.env.PORT || 5000;
