@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useChat } from "../../context/ChatContext";
+import { useChat } from "../../context/chatContext";
 import { useAuth } from "../../context/AuthContext";
 
 const ChatSidebar = ({ setActiveChat }) => {
