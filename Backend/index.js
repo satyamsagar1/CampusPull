@@ -22,7 +22,7 @@ const server = http.createServer(app);
 
 // -------------------- MIDDLEWARES --------------------
 app.use(helmet());
-app.use(cors({ origin: process.env.CLIENT_ORIGIN, credentials: true }));
+app.use(cors({ origin: process.env.CLIENT_ORIGIN || "*", credentials: true }));
 app.use(express.json());
 app.use((req, res, next) => {
   mongoSanitize.sanitize(req.body);
@@ -50,7 +50,7 @@ app.use("/api/profile", profileRoutes);
 // -------------------- SOCKET.IO --------------------
 const io = new Server(server, {
   cors: {
-    origin: "*", // replace with frontend URL in production
+    origin: process.env.CLIENT_ORIGIN || "*", // ✅ frontend origin (change in production)
     methods: ["GET", "POST"],
   },
 });
@@ -100,9 +100,19 @@ const PORT = process.env.PORT || 5000;
 conectDB()
   .then(() => {
     server.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
+      console.log(`✅ Server running on port ${PORT}`);
+    });
+
+    // Handle port already in use
+    server.on("error", (err) => {
+      if (err.code === "EADDRINUSE") {
+        console.error(`❌ Port ${PORT} is already in use. Please stop the other process or change PORT in .env`);
+        process.exit(1);
+      } else {
+        console.error("❌ Server error:", err);
+      }
     });
   })
   .catch((err) => {
-    console.error("Failed to connect to the database", err);
+    console.error("❌ Failed to connect to the database", err);
   });

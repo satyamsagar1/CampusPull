@@ -1,11 +1,9 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Heart, MessageCircle, Trash2, Edit } from "lucide-react";
+import { Heart, MessageCircle, Trash2, Edit } from "lucide-react";
 import { useCommunity } from "../../context/communityContext";
 import AnswerCard from "../../components/ui/answerCard"; // ✅ Import AnswerCard
 
 const Community = () => {
-  const navigate = useNavigate();
   const {
     posts,
     createPost,
@@ -22,11 +20,10 @@ const Community = () => {
   const [newPost, setNewPost] = useState("");
   const [editingPostId, setEditingPostId] = useState(null);
   const [editingPostBody, setEditingPostBody] = useState("");
-  const [answerInput, setAnswerInput] = useState({}); 
+  const [answerInput, setAnswerInput] = useState({});
   const [editingAnswerId, setEditingAnswerId] = useState(null);
   const [editingAnswerBody, setEditingAnswerBody] = useState("");
   const [expandedPosts, setExpandedPosts] = useState({});
-
 
   const handlePost = () => {
     if (newPost.trim() === "") return;
@@ -44,7 +41,7 @@ const Community = () => {
   const handleAnswerPost = (postId) => {
     if (!answerInput[postId]?.trim()) return;
     answerPost(postId, answerInput[postId]);
-    setAnswerInput(prev => ({ ...prev, [postId]: "" }));
+    setAnswerInput((prev) => ({ ...prev, [postId]: "" }));
   };
 
   const handleUpdateAnswer = (answerId) => {
@@ -54,17 +51,23 @@ const Community = () => {
     setEditingAnswerBody("");
   };
 
+  // ✅ Helper to format date & time
+  const formatDateTime = (dateString) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    return date.toLocaleString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 p-4 flex flex-col">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <button
-          onClick={() => navigate("/homepage")}
-          className="flex items-center space-x-2 bg-white px-3 py-2 rounded-lg shadow hover:bg-gray-100"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          <span>Back</span>
-        </button>
+      {/* Header (Back button removed ✅) */}
+      <div className="flex items-center justify-center mb-6">
         <h1 className="text-2xl font-bold text-white">LinkMate Community</h1>
       </div>
 
@@ -72,20 +75,35 @@ const Community = () => {
       {(() => {
         let feedContent;
         if (loading) {
-          feedContent = <p className="text-white text-center">Loading posts...</p>;
+          feedContent = (
+            <p className="text-white text-center">Loading posts...</p>
+          );
         } else if (posts.length === 0) {
-          feedContent = <p className="text-white text-center">No posts yet. Be the first!</p>;
+          feedContent = (
+            <p className="text-white text-center">
+              No posts yet. Be the first!
+            </p>
+          );
         } else {
-          feedContent = posts.map(post => (
+          feedContent = posts.map((post) => (
             <div key={post._id} className="bg-white p-4 rounded-xl shadow-md">
-              {/* Post Author */}
-              <div className="flex items-center space-x-3 mb-2">
-                <img
-                  src={post.author?.avatar || "https://i.pravatar.cc/40"}
-                  alt={post.author?.name || "Anonymous"}
-                  className="w-10 h-10 rounded-full"
-                />
-                <p className="font-semibold">{post.author?.name || "Anonymous"}</p>
+              {/* Post Author + DateTime */}
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center space-x-3">
+                  <img
+                    src={post.author?.avatar || "https://i.pravatar.cc/40"}
+                    alt={post.author?.name || "Anonymous"}
+                    className="w-10 h-10 rounded-full"
+                  />
+                  <div>
+                    <p className="font-semibold">
+                      {post.author?.name || "Anonymous"}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {formatDateTime(post.createdAt)}
+                    </p>
+                  </div>
+                </div>
               </div>
 
               {/* Post Body */}
@@ -128,40 +146,58 @@ const Community = () => {
                   <span>{post.answers?.length || 0}</span>
                 </button>
 
-                <button onClick={() => { setEditingPostId(post._id); setEditingPostBody(post.body) }} className="hover:text-yellow-500">
-                  <Edit className="w-5 h-5"/>
+                <button
+                  onClick={() => {
+                    setEditingPostId(post._id);
+                    setEditingPostBody(post.body);
+                  }}
+                  className="hover:text-yellow-500"
+                >
+                  <Edit className="w-5 h-5" />
                 </button>
 
-                <button onClick={() => deletePost(post._id)} className="hover:text-red-600">
-                  <Trash2 className="w-5 h-5"/>
+                <button
+                  onClick={() => deletePost(post._id)}
+                  className="hover:text-red-600"
+                >
+                  <Trash2 className="w-5 h-5" />
                 </button>
               </div>
 
               {/* Answers List */}
               <div className="ml-6 space-y-2">
-                {post.answers?.slice(0, expandedPosts[post._id] ? post.answers.length : 2).map(ans => (
-                  <AnswerCard
-                    key={ans._id}
-                    ans={ans}
-                    editingAnswerId={editingAnswerId}
-                    editingAnswerBody={editingAnswerBody}
-                    setEditingAnswerId={setEditingAnswerId}
-                    setEditingAnswerBody={setEditingAnswerBody}
-                    likeAnswer={likeAnswer}
-                    deleteAnswer={deleteAnswer}
-                    handleUpdateAnswer={handleUpdateAnswer}
-                  />
-                ))}
+                {post.answers
+                  ?.slice(
+                    0,
+                    expandedPosts[post._id] ? post.answers.length : 2
+                  )
+                  .map((ans) => (
+                    <AnswerCard
+                      key={ans._id}
+                      ans={ans}
+                      editingAnswerId={editingAnswerId}
+                      editingAnswerBody={editingAnswerBody}
+                      setEditingAnswerId={setEditingAnswerId}
+                      setEditingAnswerBody={setEditingAnswerBody}
+                      likeAnswer={likeAnswer}
+                      deleteAnswer={deleteAnswer}
+                      handleUpdateAnswer={handleUpdateAnswer}
+                    />
+                  ))}
 
                 {post.answers?.length > 2 && !expandedPosts[post._id] && (
                   <button
                     className="text-blue-600 text-sm mt-1"
                     onClick={() =>
-                      setExpandedPosts(prev => ({ ...prev, [post._id]: true }))
+                      setExpandedPosts((prev) => ({
+                        ...prev,
+                        [post._id]: true
+                      }))
                     }
                   >
                     View {post.answers.length - 2} more answers
-                  </button>)}
+                  </button>
+                )}
 
                 {/* New Answer Input */}
                 <div className="flex mt-2">
@@ -170,7 +206,12 @@ const Community = () => {
                     placeholder="Write an answer..."
                     className="w-full border rounded-lg p-2 mr-2"
                     value={answerInput[post._id] || ""}
-                    onChange={(e) => setAnswerInput(prev => ({ ...prev, [post._id]: e.target.value }))}
+                    onChange={(e) =>
+                      setAnswerInput((prev) => ({
+                        ...prev,
+                        [post._id]: e.target.value
+                      }))
+                    }
                   />
                   <button
                     onClick={() => handleAnswerPost(post._id)}
@@ -183,7 +224,11 @@ const Community = () => {
             </div>
           ));
         }
-        return <div className="flex-1 overflow-y-auto space-y-4 mb-4">{feedContent}</div>;
+        return (
+          <div className="flex-1 overflow-y-auto space-y-4 mb-4">
+            {feedContent}
+          </div>
+        );
       })()}
 
       {/* New Post Input */}
