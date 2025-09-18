@@ -81,7 +81,7 @@ export const markAsRead = async (req, res) => {
 // Get chat list (all connected users with last message if exists)
 export const getChatList = async (req, res) => {
   try {
-    const userId = new mongoose.Types.ObjectId(req.user.id.toString());
+    const userId = mongoose.Types.ObjectId.createFromHexString(req.user.id.toString());
 
     // Get accepted connections
     const connections = await Connection.find({

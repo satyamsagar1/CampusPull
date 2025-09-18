@@ -30,7 +30,7 @@ app.use((req, res, next) => {
   next();
 });
 app.use(cookieParser());
-// app.use(generalrateLimiter);
+app.use(generalrateLimiter);
 
 const io=initSocket(server);
 app.set("io", io); // make io accessible in routes/controllers via req.app.get("io")
