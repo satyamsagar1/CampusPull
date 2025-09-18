@@ -1,6 +1,7 @@
 import { useState } from "react";
 import ChatSidebar from "../../components/chat/chatSidebar";
 import ChatWindow from "../../components/chat/chatWindow";
+import { useChat } from "../../context/chatContext";
 
 const ChatPage = () => {
   const [activeChat, setActiveChat] = useState(null);
