@@ -1,10 +1,21 @@
 import React, { useState, useContext } from "react";
-import { useNavigate } from "react-router-dom";
-import { ArrowLeft, PlusCircle } from "lucide-react";
+import { PlusCircle } from "lucide-react";
 import { EventContext } from "../../context/eventContext";
 
+// ✅ Helper to format date & time
+const formatDateTime = (dateString) => {
+  if (!dateString) return "";
+  const date = new Date(dateString);
+  return date.toLocaleString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
+
 const EventPage = () => {
-  const navigate = useNavigate();
   const { events, createEvent } = useContext(EventContext);
 
   const [newEvent, setNewEvent] = useState({
@@ -14,23 +25,29 @@ const EventPage = () => {
     date: "",
   });
 
+  const [previewImage, setPreviewImage] = useState(null);
+
+  // ✅ Handle local file upload
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const imgUrl = URL.createObjectURL(file);
+      setPreviewImage(imgUrl);
+      setNewEvent({ ...newEvent, banner: imgUrl }); // store local preview
+    }
+  };
+
   const handleAddEvent = () => {
     if (!newEvent.title || !newEvent.description || !newEvent.date) return;
     createEvent(newEvent);
     setNewEvent({ title: "", description: "", banner: "", date: "" });
+    setPreviewImage(null);
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 p-4">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <button
-          onClick={() => navigate("/homepage")}
-          className="flex items-center space-x-2 bg-white px-3 py-2 rounded-lg shadow hover:bg-gray-100"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          <span>Back</span>
-        </button>
+      <div className="flex items-center justify-center mb-6">
         <h1 className="text-2xl font-bold text-white">LinkMate Events</h1>
       </div>
 
@@ -47,22 +64,35 @@ const EventPage = () => {
         <textarea
           placeholder="Event Description"
           value={newEvent.description}
-          onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
+          onChange={(e) =>
+            setNewEvent({ ...newEvent, description: e.target.value })
+          }
           className="w-full mb-2 p-2 border rounded-lg"
         />
         <input
-          type="date"
+          type="datetime-local"
           value={newEvent.date}
           onChange={(e) => setNewEvent({ ...newEvent, date: e.target.value })}
           className="w-full mb-2 p-2 border rounded-lg"
         />
+
+        {/* Local file upload */}
         <input
-          type="text"
-          placeholder="Banner Image URL"
-          value={newEvent.banner}
-          onChange={(e) => setNewEvent({ ...newEvent, banner: e.target.value })}
-          className="w-full mb-2 p-2 border rounded-lg"
+          type="file"
+          accept="image/*"
+          onChange={handleImageUpload}
+          className="w-full mb-2"
         />
+
+        {/* Image preview */}
+        {previewImage && (
+          <img
+            src={previewImage}
+            alt="Preview"
+            className="w-full h-40 object-cover rounded-lg mb-2"
+          />
+        )}
+
         <button
           onClick={handleAddEvent}
           className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
@@ -75,11 +105,20 @@ const EventPage = () => {
       {/* Events List */}
       <div className="space-y-6">
         {events.map((event) => (
-          <div key={event._id} className="bg-white rounded-xl shadow-md overflow-hidden">
-            <img src={event.banner} alt={event.title} className="w-full h-48 object-cover" />
+          <div
+            key={event._id}
+            className="bg-white rounded-xl shadow-md overflow-hidden"
+          >
+            {event.banner && (
+              <img
+                src={event.banner}
+                alt={event.title}
+                className="w-full h-48 object-cover"
+              />
+            )}
             <div className="p-4">
               <h3 className="text-xl font-bold mb-1">{event.title}</h3>
-              <p className="text-gray-600 mb-1">{new Date(event.date).toDateString()}</p>
+              <p className="text-gray-600 mb-1">{formatDateTime(event.date)}</p>
               <p className="text-gray-700">{event.description}</p>
             </div>
           </div>

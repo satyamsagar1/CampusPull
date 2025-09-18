@@ -11,7 +11,7 @@ import {
   FaCertificate,
   FaFolderOpen,
 } from "react-icons/fa";
-import { ProfileContext } from "../../context/ProfileContext";
+import { ProfileContext } from "../../context/profileContext";
 
 export default function Profile() {
   const { profile, loading, error, updateProfile } = useContext(ProfileContext);

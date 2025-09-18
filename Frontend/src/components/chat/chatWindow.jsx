@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useChat } from "../../context/ChatContext";
+import { useEffect, useRef, useState } from "react";
+import { useChat } from "../../context/chatContext";
 import { useAuth } from "../../context/AuthContext";
 
 const ChatWindow = ({ recipientId, recipientName }) => {

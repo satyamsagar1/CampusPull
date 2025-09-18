@@ -1,26 +1,25 @@
 import React, { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom'; // ✅ useNavigate added
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Icon from '../AppIcon';
 import Button from './Button';
-import { useAuth } from '../../context/authContext';
+import { useAuth } from '../../context/AuthContext';
 
 const Header = () => {
-
-  const { logout } = useAuth(); // ✅ get logout function
-
+  const { logout } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
-  const navigate = useNavigate(); // ✅ navigate for logout redirect
+  const navigate = useNavigate();
 
   const navigationItems = [
     { name: 'Home', path: '/homepage', icon: 'Home' },
+    { name: 'Feed', path: '/feed', icon: 'Newspaper' }, // ✅ Feed Added
     { name: 'Resources Hub', path: '/resources-hub', icon: 'BookOpen' },
     { name: 'About LinkMate', path: '/about-link-mate', icon: 'Info' },
     { name: 'Community', path: '/community', icon: 'Users' },
     { name: 'Events', path: '/events', icon: 'Calendar' },
     { name: 'Profile', path: '/profile', icon: 'User' },
     { name: 'Explore', path: '/explore', icon: 'Compass' },
-     { name: 'Chat', path: '/chatPage', icon: 'MessageSquare' }, 
+    { name: 'Chat', path: '/chatPage', icon: 'MessageSquare' },
   ];
 
   const isActivePath = (path) => location?.pathname === path;
