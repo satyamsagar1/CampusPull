@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect, useContext, useMemo, useCallback } from "react";
-import { AuthContext } from "./authContext";
+import { AuthContext } from "./AuthContext";
 import api from "../utils/api";
 
 export const ExploreContext = createContext();
