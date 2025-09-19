@@ -1,8 +1,7 @@
-import React, { useState, useContext } from "react";
+import React, { useState } from "react";
 import { PlusCircle } from "lucide-react";
-import { EventContext } from "../../context/eventContext";
 
-// ✅ Helper to format date & time
+// ✅ Date format helper
 const formatDateTime = (dateString) => {
   if (!dateString) return "";
   const date = new Date(dateString);
@@ -16,30 +15,37 @@ const formatDateTime = (dateString) => {
 };
 
 const EventPage = () => {
-  const { events, createEvent } = useContext(EventContext);
-
+  const [events, setEvents] = useState([]);
   const [newEvent, setNewEvent] = useState({
     title: "",
     description: "",
     banner: "",
     date: "",
   });
-
   const [previewImage, setPreviewImage] = useState(null);
 
-  // ✅ Handle local file upload
+  // ✅ File upload
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
       const imgUrl = URL.createObjectURL(file);
       setPreviewImage(imgUrl);
-      setNewEvent({ ...newEvent, banner: imgUrl }); // store local preview
+      setNewEvent({ ...newEvent, banner: imgUrl });
     }
   };
 
+  // ✅ Event add
   const handleAddEvent = () => {
     if (!newEvent.title || !newEvent.description || !newEvent.date) return;
-    createEvent(newEvent);
+
+    const eventToAdd = {
+      ...newEvent,
+      id: Date.now(),
+    };
+
+    setEvents([eventToAdd, ...events]); // list me push karega
+
+    // reset form
     setNewEvent({ title: "", description: "", banner: "", date: "" });
     setPreviewImage(null);
   };
@@ -76,7 +82,7 @@ const EventPage = () => {
           className="w-full mb-2 p-2 border rounded-lg"
         />
 
-        {/* Local file upload */}
+        {/* File upload */}
         <input
           type="file"
           accept="image/*"
@@ -84,7 +90,7 @@ const EventPage = () => {
           className="w-full mb-2"
         />
 
-        {/* Image preview */}
+        {/* Preview */}
         {previewImage && (
           <img
             src={previewImage}
@@ -106,7 +112,7 @@ const EventPage = () => {
       <div className="space-y-6">
         {events.map((event) => (
           <div
-            key={event._id}
+            key={event.id}
             className="bg-white rounded-xl shadow-md overflow-hidden"
           >
             {event.banner && (
