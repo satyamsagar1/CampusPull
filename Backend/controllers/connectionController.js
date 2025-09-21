@@ -1,6 +1,5 @@
 import Connection from "../models/connectionModel.js";
 import user from "../models/user.js";
-import mongoose from "mongoose";
 
 //Suggest Users to Connect
 
