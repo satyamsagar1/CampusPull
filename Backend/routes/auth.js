@@ -128,9 +128,11 @@ router.post('/refresh', async (req, res) => {
     // Refresh token rotation guard
     if (payload.tv !== user.tokenVersion) return res.status(401).json({ message: 'Refresh token revoked' });
 
-    const newAccess = signAccessToken(user._id);
-    const newRefresh = signRefreshToken(user._id, user.tokenVersion);
+    const userDoc = await User.findById(payload.id)
+    const newAccess = signAccessToken(userDoc);
+    const newRefresh = signRefreshToken(userDoc, user.tokenVersion);
     res.cookie('linkmate_rft', newRefresh, refreshCookieOpts);
+    res.cookie("linkmate_at", newAccess, accessCookieOpts);
 
     return res.json({ accessToken: newAccess });
   } catch (err) {

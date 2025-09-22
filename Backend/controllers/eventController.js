@@ -44,7 +44,7 @@ export const createEvent = async (req, res) => {
       date: new Date(date),
       createdBy: req.user.id,
       media: req.file?.path || null, // multer already uploaded
-      mediaPublicId: req.file.filename || null,
+      mediaPublicId: req.file?.filename || null,
     });
 
     res.status(201).json(event);
@@ -103,7 +103,7 @@ export const updateEvent = async (req, res) => {
       }
 
       event.media = req.file.path;           // new URL
-      event.mediaPublicId = req.file.filename // new public_id
+      event.mediaPublicId = req.file?.filename || null // new public_id
     }
 
     await event.save();
