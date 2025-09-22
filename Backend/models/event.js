@@ -5,6 +5,7 @@ const eventSchema = new mongoose.Schema({
   description: { type: String },
   date: { type: Date, required: true },
   media:{type: String, default: null},
+  mediaPublicId: {type:String},
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
 },
   {timestamps:true}
