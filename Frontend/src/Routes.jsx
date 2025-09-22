@@ -21,6 +21,7 @@ import { ProfileProvider } from "./context/profileContext.jsx";
 import { ChatProvider } from "./context/chatContext.jsx";
 import ChatPage from "./pages/chat/chatPage.jsx";  
 import Header from "./components/ui/Header.jsx";   // ✅ Header import
+import { FeedProvider } from "./context/feedContext.jsx";
 
 // ✅ Wrapper to always show Header with protected pages
 const ProtectedLayout = ({ children }) => {
@@ -145,7 +146,9 @@ const Routes = () => {
                 element={
                   <ProtectedRoute>
                     <ProtectedLayout>
+                      <FeedProvider>
                       <Feed />
+                      </FeedProvider>
                     </ProtectedLayout>
                   </ProtectedRoute>
                 }
