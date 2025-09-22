@@ -1,28 +1,37 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL ,
-  withCredentials: true, // required to send HTTP-only cookies
+  baseURL: import.meta.env.VITE_API_BASE_URL,
+  withCredentials: true, // required for HTTP-only cookies
 });
 
-// Optional: interceptor to refresh access token automatically
 api.interceptors.response.use(
-  response => response,
+  (response) => response,
   async (error) => {
     const originalRequest = error.config;
+
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
-      // call /refresh to get new access token
-      const res = await api.get("/auth/refresh", {
-        withCredentials: true
-      });
-      if (newToken) {
-        api.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
-        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+      try {
+        // Must be POST, not GET
+        const res = await api.post("/auth/refresh", {}, { withCredentials: true });
+        const newToken = res.data.accessToken;
+
+        if (newToken) {
+          api.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
+          originalRequest.headers["Authorization"] = `Bearer ${newToken}`;
+        }
+
+        return api(originalRequest); // retry the failed request
+      } catch (refreshErr) {
+        console.error("Token refresh failed:", refreshErr.response?.data || refreshErr.message);
+        // optional: redirect to login if refresh fails
+        window.location.href = "/auth"; 
+        return Promise.reject(refreshErr);
       }
-      return api(originalRequest);
     }
-    return Promise.reject(new Error(error.message || error));
+
+    return Promise.reject(error);
   }
 );
 

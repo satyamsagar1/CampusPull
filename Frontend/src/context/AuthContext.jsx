@@ -60,8 +60,7 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setUser(null);
       setAccessToken("");
-      navigate("/auth", { replace: true });
-      window.location.reload(); 
+      navigate("/auth", { replace: true }); 
       
     }
   };
@@ -90,6 +89,34 @@ export const AuthProvider = ({ children }) => {
 
   fetchUser();
 }, []); // only run once on mount
+
+useEffect(() => {
+  if (!accessToken) return;
+
+  // refresh 1 minute before expiry (14 min mark)
+  const timer = setTimeout(async () => {
+    try {
+      const res = await api.post("/auth/refresh", {}, { withCredentials: true });
+      const newToken = res.data.accessToken;
+      setAccessToken(newToken);
+      api.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
+    } catch (err) {
+      console.error("Scheduled refresh failed:", err);
+    }
+  }, 14 * 60 * 1000);
+
+  return () => clearTimeout(timer);
+}, [accessToken]);
+
+useEffect(() => {
+  if (accessToken) {
+    api.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;
+  } else {
+    delete api.defaults.headers.common["Authorization"];
+  }
+}, [accessToken]);
+
+
 
   const contextValue = useMemo(
     () => ({
