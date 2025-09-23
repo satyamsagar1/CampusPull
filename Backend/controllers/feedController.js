@@ -4,17 +4,48 @@ import cloudinary from "../config/cloudinary.js";
 // ------------------- GET FEED -------------------
 export const getFeed = async (req, res) => {
   try {
+    // Fetch posts, populate authors, comments, replies, and original posts if shared
     const posts = await Post.find()
       .populate("author", "name role")
-      .populate("comments.user", "name role")
+      .populate({
+        path: "comments.user",
+        select: "name role"
+      })
+      .populate({
+        path: "comments.replies.user",
+        select: "name role"
+      })
+      .populate({
+        path: "originalPost",
+        populate: { path: "author", select: "name role" }
+      })
       .sort({ createdAt: -1 })
       .lean();
 
-    const formattedPosts = posts.map(post => ({
-      ...post,
-      likesCount: post.likes?.length || 0,
-      commentsCount: post.comments?.length || 0,
-    }));
+    // Format posts with likesCount, commentsCount, sharedCount, comment/reply likesCount
+    const formattedPosts = await Promise.all(
+      posts.map(async (post) => {
+        const sharedCount = await Post.countDocuments({ originalPost: post._id });
+
+        // Format comments and replies with likesCount
+        const formattedComments = post.comments.map((c) => ({
+          ...c,
+          likesCount: c.likes?.length || 0,
+          replies: c.replies?.map((r) => ({
+            ...r,
+            likesCount: r.likes?.length || 0
+          })) || []
+        }));
+
+        return {
+          ...post,
+          likesCount: post.likes?.length || 0,
+          commentsCount: post.comments?.length || 0,
+          sharedCount,
+          comments: formattedComments
+        };
+      })
+    );
 
     res.json(formattedPosts);
   } catch (err) {
@@ -22,6 +53,7 @@ export const getFeed = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch feed" });
   }
 };
+
 
 // ------------------- CREATE POST -------------------
 export const createPost = async (req, res) => {
@@ -108,7 +140,7 @@ export const deletePost = async (req, res) => {
     }
 
     // Delete media if exists
-    if (post.media && post.media.includes("linkmate_posts")) {
+    if (post.media?.includes("linkmate_posts")) {
       try {
         const publicId = post.media.split("/").pop().split(".")[0];
         await cloudinary.uploader.destroy(`linkmate_posts/${publicId}`);
@@ -170,3 +202,81 @@ export const commentPost = async (req, res) => {
     res.status(500).json({ error: "Failed to comment on post" });
   }
 };
+
+export const likeComment = async (req, res) => {
+  try {
+    const { postId, commentId, replyId } = req.params;
+    const userId = req.user.id;
+
+    const post = await Post.findById(postId);
+    if (!post) return res.status(404).json({ error: "Post not found" });
+
+    if (replyId) {
+      const reply = post.comments.id(commentId).replies.id(replyId);
+      if (!reply) return res.status(404).json({ error: "Reply not found" });
+
+      if (!reply.likes.includes(userId)) reply.likes.push(userId);
+      else reply.likes = reply.likes.filter(u => u.toString() !== userId);
+    } else {
+      const comment = post.comments.id(commentId);
+      if (!comment) return res.status(404).json({ error: "Comment not found" });
+
+      if (!comment.likes.includes(userId)) comment.likes.push(userId);
+      else comment.likes = comment.likes.filter(u => u.toString() !== userId);
+    }
+
+    await post.save();
+    res.json(post.comments);
+  } catch (err) {
+    console.error("[FeedController] Like Comment Error:", err);
+    res.status(500).json({ error: "Failed to like comment" });
+  }
+};
+
+
+export const replyToComment = async (req, res) => {
+  try {
+    const { postId, commentId } = req.params;
+    const { text } = req.body;
+    if (!text?.trim()) return res.status(400).json({ error: "Reply required" });
+
+    const post = await Post.findById(postId);
+    if (!post) return res.status(404).json({ error: "Post not found" });
+
+    const parentComment = post.comments.id(commentId);
+    if (!parentComment) return res.status(404).json({ error: "Comment not found" });
+
+    parentComment.replies.push({ user: req.user.id, text });
+    await post.save();
+
+    const populated = await post.populate("comments.user comments.replies.user");
+    res.json(populated.comments);
+  } catch (err) {
+    console.error("[FeedController] Reply Error:", err);
+    res.status(500).json({ error: "Failed to reply to comment" });
+  }
+};
+
+
+export const sharePost = async (req, res) => {
+  try {
+    const { id } = req.params; // original post id
+    const { sharedContent } = req.body;
+
+    const original = await Post.findById(id);
+    if (!original) return res.status(404).json({ error: "Original post not found" });
+
+    const sharedPost = await Post.create({
+      author: req.user.id,
+      sharedBy: req.user.id,
+      originalPost: original._id,
+      sharedContent: sharedContent || "",
+    });
+
+    res.status(201).json(sharedPost);
+  } catch (err) {
+    console.error("[FeedController] Share Post Error:", err);
+    res.status(500).json({ error: "Failed to share post" });
+  }
+};
+
