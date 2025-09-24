@@ -84,7 +84,7 @@ export default function Profile() {
 
   // AI Resume Builder
   const generateResume = () => {
-    const resumeData = `
+    const resumeData = `'
 📌 Name: ${profile.name || ""}
 🎯 Role: ${profile.role || ""}
 

@@ -1,11 +1,12 @@
 // pages/Explore.jsx
 import React, { useContext } from "react";
-import { FaSearch, FaUserCircle, FaLinkedin, FaEnvelope } from "react-icons/fa";
+import { FaSearch, FaUserCircle, FaLinkedin, FaEnvelope, FaUserPlus } from "react-icons/fa";
 import { ExploreContext } from "../../context/exploreContext";
 
 export default function Explore() {
-  const { suggestions, search, setSearch, loading, error, sendRequest } =
-    useContext(ExploreContext);
+  const { suggestions, search, setSearch, loading, error, sendRequest, requests } =
+  useContext(ExploreContext);
+
 
   return (
     <div className="p-10 bg-gray-50 min-h-screen">
@@ -16,6 +17,47 @@ export default function Explore() {
       <p className="text-center text-gray-600 mb-8">
         Search and connect with students & alumni of LinkeMate
       </p>
+      {/* Pending Requests Bar */}
+<div className="bg-blue-50 p-3 rounded-lg shadow mb-6">
+  <h2 className="text-blue-700 font-semibold mb-2">Pending Requests</h2>
+  {requests.length > 0 ? (
+    <div className="flex flex-wrap gap-3">
+      {requests.map((req) => (
+        <div
+          key={req._id}
+          className="px-4 py-2 bg-white rounded-full shadow text-sm text-gray-700"
+        >
+          {req.name || "Unknown User"}
+        </div>
+      ))}
+    </div>
+  ) : (
+    <p className="text-gray-500 text-sm">No pending requests</p>
+  )}
+</div>
+
+
+      {/* ===== Requests Bar ===== */}
+      <div className="bg-white shadow-md rounded-xl p-4 mb-10">
+        <h2 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+          <FaUserPlus className="mr-2 text-blue-600" /> Pending Requests
+        </h2>
+
+        {requests && requests.length > 0 ? (
+          <div className="flex gap-3 overflow-x-auto">
+            {requests.map((req) => (
+              <div
+                key={req._id}
+                className="px-4 py-2 bg-blue-50 text-blue-700 rounded-full shadow-sm text-sm font-medium"
+              >
+                {req.name}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-gray-500 text-sm">No pending requests.</p>
+        )}
+      </div>
 
       {/* Search Bar */}
       <div className="flex justify-center mb-10">
