@@ -2,11 +2,11 @@ import React from "react";
 
 const TeamProfiles = () => {
   const team = [
-    { name: "Sanskriti", role: "Frontend Developer" },
-    { name: "Sakshi Sharma", role: "Backend Developer" },
-    { name: "Zaid", role: "UI/UX Designer" },
-    { name: "Satyam Sagar", role: "Database Engineer" },
-    { name: "Shoiab", role: "Project Coordinator" },
+    { name: "Sanskriti", role: "Frontend Developer", image: "/assets/images/myphoto.jpg" },
+    { name: "Sakshi Sharma", role: "Backend Developer", image: "/assets/images/sakshi.jpg" },
+    { name: "Zaid", role: "Frontend Developer", image: "/assets/images/zaid.jpg" },
+    { name: "Satyam Sagar", role: "Database Engineer", image: "/assets/images/satyam.jpg" },
+    { name: "Shoiab", role: "UI/UX Designer", image: "/assets/images/shoiab.jpg" },
   ];
 
   return (
@@ -20,9 +20,18 @@ const TeamProfiles = () => {
             key={index}
             className="bg-white shadow-lg rounded-2xl p-6 text-center transform transition hover:scale-105"
           >
-            <div className="w-20 h-20 mx-auto bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-2xl font-bold mb-4">
-              {member.name[0]}
+            {/* Gradient border + Image */}
+            <div className="w-24 h-24 mx-auto rounded-full bg-gradient-to-r from-blue-500 to-purple-500 p-[3px] shadow-lg mb-4">
+              <div className="w-full h-full rounded-full overflow-hidden">
+                <img
+                  src={member.image}
+                  alt={member.name}
+                  className="w-full h-full object-cover"
+                />
+              </div>
             </div>
+
+            {/* Name & Role */}
             <h3 className="text-xl font-semibold text-gray-800">
               {member.name}
             </h3>
