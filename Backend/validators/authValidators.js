@@ -12,7 +12,17 @@ export const signupSchema = z.object({
   graduationYear: z.number().int().min(1900).max(2100),
 
   // Optional fields
-  profilePicture: z.string().url().optional(),
+  profilePicture: z.string().refine(
+    (val) => {
+      try {
+        new URL(val);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    { message: "Invalid URL format" }
+  ).optional(),
   phone: z.string().optional(),
   linkedin: z.string().url().optional(),
   bio: z.string().optional(),
