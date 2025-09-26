@@ -1,6 +1,6 @@
 import React, { useState, useContext, useEffect } from "react";
 import { PlusCircle, Edit2, Trash2, Check } from "lucide-react";
-import { EventContext } from "../../context/EventContext";
+import { EventContext } from "../../context/eventContext";
 import { AuthContext } from "../../context/AuthContext";
 
 const formatDateTime = (dateString) => {
