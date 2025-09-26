@@ -3,7 +3,7 @@ import ChatSidebar from "../../components/chat/chatSidebar";
 import ChatWindow from "../../components/chat/chatWindow";
 
 const ChatPage = () => {
-  const { chatList, activeChat, setActiveChat } = useChat();
+  const { chatList, activeChat } = useChat();
   const activeChatData = chatList.find(c => c.chatWith?._id === activeChat);
 
   return (
