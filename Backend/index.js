@@ -2,7 +2,7 @@ import "dotenv/config";
 import express from "express";
 import mongoSanitize from "express-mongo-sanitize";
 import cors from "cors";
-import { generalrateLimiter, loginLimiter, signupRateLimiter } from "./middleware/rateLimiter.js";
+import { loginLimiter, signupRateLimiter } from "./middleware/rateLimiter.js";
 import cookieParser from "cookie-parser";
 import { conectDB } from "./config/db.js";
 import helmet from "helmet";
@@ -30,7 +30,7 @@ app.use((req, res, next) => {
   next();
 });
 app.use(cookieParser());
-app.use(generalrateLimiter);
+// app.use(generalrateLimiter);
 
 const io=initSocket(server);
 app.set("io", io); // make io accessible in routes/controllers via req.app.get("io")
