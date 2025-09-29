@@ -12,7 +12,7 @@ export default function HeroSection() {
         transition={{ duration: 0.8 }}
         className="text-4xl md:text-6xl font-bold mb-6"
       >
-        Welcome to LinkMate
+        Welcome to CampusPull
       </motion.h1>
 
       <motion.p
