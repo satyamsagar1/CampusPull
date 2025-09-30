@@ -14,7 +14,7 @@ const Header = () => {
     { name: 'Home', path: '/homepage', icon: 'Home' },
     { name: 'Feed', path: '/feed', icon: 'Newspaper' }, // ✅ Feed Added
     { name: 'Resources Hub', path: '/resources-hub', icon: 'BookOpen' },
-    { name: 'About LinkMate', path: '/about-link-mate', icon: 'Info' },
+    { name: 'About CampusPull', path: '/about-link-mate', icon: 'Info' },
     { name: 'Community', path: '/community', icon: 'Users' },
     { name: 'Events', path: '/events', icon: 'Calendar' },
     { name: 'Profile', path: '/profile', icon: 'User' },
@@ -43,7 +43,7 @@ const Header = () => {
               </div>
               <div className="hidden sm:block">
                 <h1 className="text-xl font-poppins font-bold text-wisdom-charcoal group-hover:text-academic-blue transition-colors duration-300">
-                  LinkMate
+                  CampusPull
                 </h1>
                 <p className="text-xs text-insight-gray font-inter">Knowledge Without Boundaries</p>
               </div>
