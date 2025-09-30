@@ -296,41 +296,41 @@ const ResourcesHub = () => {
     {
       id: 1,
       company: {
-        name: "Google",
+        name: " TCS",
         logo: "https://images.unsplash.com/photo-1573804633927-bfcbcd909acd?w=100&h=100&fit=crop"
       },
       role: "Software Engineer",
-      companyTier: "faang",
-      difficulty: "hard",
+      companyTier: "Service Bsed",
+      difficulty: "medium",
       sampleQuestion: `Design a distributed cache system that can handle millions of requests per second. Consider consistency, availability, and partition tolerance. How would you handle cache invalidation and ensure data consistency across multiple nodes?`,
-      totalQuestions: 45,
-      successRate: 23,
-      attempts: 1890,
-      topics: ["System Design", "Distributed Systems", "Caching", "Scalability", "Consistency Models"],
-      pdfUrl: "https://drive.google.com/file/d/1M7uhGEnw5_taUjZHV-Q_4rJso7eW4xP4/view?usp=sharing",
+      totalQuestions: 30,
+      successRate: 80,
+      attempts: 50,
+      topics: ["DSA,WEB DEVLOPMENT"],
+      pdfUrl: "https://drive.google.com/file/d/1bF-JA9b3lpXzy2zJwYdxYaR60aAYWgZj/view?usp=sharing",
       contributor: {
-        name: "Amit Verma",
-        avatar: "https://randomuser.me/api/portraits/men/34.jpg",
+        name: "Campuspull",
+        avatar: "https://drive.google.com/file/d/15O0rnqx6BrN9fuDF39ROk6WqGOzd8rcL/view?usp=sharing",
         verified: true
       }
     },
     {
       id: 2,
       company: {
-        name: "Microsoft",
-        logo: "https://images.unsplash.com/photo-1633419461186-7d40a38105ec?w=100&h=100&fit=crop"
+        name: "Accenture",
+        logo: "https://www.google.com/imgres?q=accenture&imgurl=https%3A%2F%2Flookaside.fbsbx.com%2Flookaside%2Fcrawler%2Fmedia%2F%3Fmedia_id%3D100064480072637&imgrefurl=https%3A%2F%2Fwww.facebook.com%2FAccentureUS%2F&docid=OexEP7yleg66eM&tbnid=L0z8xojiLBV2fM&vet=12ahUKEwjYntLVyICQAxU81TgGHcTHNSAQM3oECBMQAA..i&w=800&h=800&hcb=2&ved=2ahUKEwjYntLVyICQAxU81TgGHcTHNSAQM3oECBMQAAp"
       },
       role: "Software Development Engineer",
-      companyTier: "faang",
+      companyTier: "Sevice Based",
       difficulty: "medium",
       sampleQuestion: `Given a binary tree, write a function to determine if it's a valid binary search tree. What's the time and space complexity of your solution? Can you optimize it further?`,
-      totalQuestions: 38,
-      successRate: 45,
-      attempts: 2340,
-      topics: ["Data Structures", "Binary Trees", "BST", "Recursion", "Tree Traversal"],
-      pdfUrl: "https://drive.google.com/file/d/1SnspQgdPwRNZpI1Q4-jxg0tTy8VWZejE/view?usp=sharing",
+      totalQuestions: 30,
+      successRate: 90,
+      attempts: 50,
+      topics: ["Data Structures", "WEB DEVLOPMENT"],
+      pdfUrl: "https://drive.google.com/file/d/1wvAv4jr-3e2H0Gvjieq56vPK9QO1s57H/view?usp=sharing",
       contributor: {
-        name: "Neha Joshi",
+        name: "Campuspull",
         avatar: "https://randomuser.me/api/portraits/women/56.jpg",
         verified: true
       }
@@ -338,19 +338,20 @@ const ResourcesHub = () => {
     {
       id: 3,
       company: {
-        name: "Flipkart",
+        name: "WIPRO",
         logo: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=100&h=100&fit=crop"
       },
       role: "Senior Software Engineer",
       companyTier: "unicorn",
       difficulty: "medium",
-      sampleQuestion: `Design an e-commerce recommendation system. How would you handle real-time recommendations, cold start problems, and scalability? Discuss the trade-offs between different recommendation algorithms.`,
-      totalQuestions: 32,
-      successRate: 38,
-      attempts: 1560,
-      topics: ["Machine Learning", "Recommendation Systems", "Collaborative Filtering", "Content-Based Filtering", "Real-time Systems"],
+      sampleQuestion: ` How would you handle real-time recommendations, cold start problems, and scalability? Discuss the trade-offs between different recommendation algorithms.`,
+      totalQuestions: 30,
+      successRate: 85,
+      attempts: 60,
+      topics: ["DSA ,WEB DEV"],
+      pdfUrl: "https://drive.google.com/file/d/1edroQkac1Yzw7QrPHnZjlvstr2EitTlP/view?usp=sharing",
       contributor: {
-        name: "Rajesh Kumar",
+        name: "Campuspull",
         avatar: "https://randomuser.me/api/portraits/men/67.jpg",
         verified: true
       }
@@ -358,19 +359,20 @@ const ResourcesHub = () => {
     {
       id: 4,
       company: {
-        name: "Infosys",
+        name: "Contevolve",
         logo: "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=100&h=100&fit=crop"
       },
-      role: "Technology Analyst",
+      role: "Trainee",
       companyTier: "established",
       difficulty: "easy",
       sampleQuestion: `Explain the difference between SQL and NoSQL databases. When would you choose one over the other? Provide examples of use cases for each type of database.`,
-      totalQuestions: 28,
-      successRate: 67,
-      attempts: 3210,
+      totalQuestions: 5,
+      successRate: 70,
+      attempts: 10,
       topics: ["Databases", "SQL", "NoSQL", "Database Design", "ACID Properties"],
+      pdfUrl : "https://drive.google.com/file/d/1TejWpaNQ22BvlhSP9HoEeHKCUi0qJZ8o/view?usp=sharing",
       contributor: {
-        name: "Pooja Sharma",
+        name: "Campuspull",
         avatar: "https://randomuser.me/api/portraits/women/23.jpg",
         verified: false
       }
@@ -378,19 +380,20 @@ const ResourcesHub = () => {
     {
       id: 5,
       company: {
-        name: "Zomato",
+        name: "BlackOrange",
         logo: "https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=100&h=100&fit=crop"
       },
-      role: "Backend Developer",
+      role: "Trainee",
       companyTier: "startup",
       difficulty: "medium",
       sampleQuestion: `Design a food delivery system like Zomato. How would you handle real-time order tracking, restaurant management, and delivery optimization? Consider scalability and user experience.`,
-      totalQuestions: 25,
-      successRate: 42,
-      attempts: 890,
+      totalQuestions: 5,
+      successRate: 80,
+      attempts: 80,
       topics: ["System Design", "Real-time Systems", "Geolocation", "Optimization", "Microservices"],
+      pdfUrl : "https://drive.google.com/file/d/17KBnRSUpXbOFF_icFkK4ngcg8NSSl742/view?usp=sharing",
       contributor: {
-        name: "Karan Singh",
+        name: "Capuspull",
         avatar: "https://randomuser.me/api/portraits/men/89.jpg",
         verified: true
       }
