@@ -150,6 +150,7 @@ const ResourcesHub = () => {
       title: "Full Stack Developer",
       duration: "6-8 months",
       difficulty: "Intermediate",
+      image: "/assets/images/roadmap.png", // 👈 image for this roadmap
       milestones: [
         {
           id: 1,
@@ -218,17 +219,17 @@ const ResourcesHub = () => {
         }
       ],
       mentor: {
-        name: "Rohit Sharma",
-        avatar: "https://randomuser.me/api/portraits/men/45.jpg",
+        name: "campus pull",
         verified: true
       },
       followers: 1234
     },
-    {
+   {
       id: 2,
       title: "Data Science Career Path",
       duration: "8-12 months",
-      difficulty: "Advanced",
+      difficulty: "Intermediate",
+      image: "/assets/images/dsroadmap.jpg", // 👈 another roadmap image
       milestones: [
         {
           id: 1,
@@ -284,12 +285,12 @@ const ResourcesHub = () => {
         }
       ],
       mentor: {
-        name: "Dr. Sneha Agarwal",
-        avatar: "https://randomuser.me/api/portraits/women/78.jpg",
+        name: "campus pulll",
         verified: true
       },
       followers: 2156
     }
+    
   ];
 
   const mockPYQs = [
