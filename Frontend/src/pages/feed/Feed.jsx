@@ -1,6 +1,6 @@
 // src/components/Feed/Feed.jsx
 import React, { useState, useRef } from "react";
-import { useFeed } from "../../context/FeedContext";
+import { useFeed } from "../../context/feedContext";
 
 export default function Feed() {
   const { feed, createPost, likePost, commentPost, replyToComment, likeComment, sharePost, loading } = useFeed();

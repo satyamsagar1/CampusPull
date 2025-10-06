@@ -9,10 +9,10 @@ const InterviewPYQSection = ({ pyqs }) => {
 
   const companyTiers = [
     { value: 'all', label: 'All Companies', count: pyqs?.length },
-    { value: 'faang', label: 'FAANG', count: pyqs?.filter(p => p?.companyTier === 'faang')?.length, color: 'text-red-600' },
-    { value: 'unicorn', label: 'Unicorns', count: pyqs?.filter(p => p?.companyTier === 'unicorn')?.length, color: 'text-purple-600' },
-    { value: 'established', label: 'Established', count: pyqs?.filter(p => p?.companyTier === 'established')?.length, color: 'text-blue-600' },
-    { value: 'startup', label: 'Startups', count: pyqs?.filter(p => p?.companyTier === 'startup')?.length, color: 'text-green-600' }
+    { value: 'tcs', label: 'TCS', count: pyqs?.filter(p => p?.companyTier === 'tcs')?.length, color: 'text-blue-600' },
+    { value: 'accenture', label: 'Accenture', count: pyqs?.filter(p => p?.companyTier === 'accenture')?.length, color: 'text-purple-600' },
+    { value: 'convolve', label: 'Convolve', count: pyqs?.filter(p => p?.companyTier === 'convolve')?.length, color: 'text-orange-600' },
+    { value: 'blackorange', label: 'Black Orange', count: pyqs?.filter(p => p?.companyTier === 'blackorange')?.length, color: 'text-red-600' }
   ];
 
   const difficultyLevels = [
@@ -39,12 +39,12 @@ const InterviewPYQSection = ({ pyqs }) => {
 
   const getCompanyTierBadge = (tier) => {
     const badges = {
-      faang: { label: 'FAANG', color: 'bg-red-100 text-red-700 border-red-200' },
-      unicorn: { label: 'Unicorn', color: 'bg-purple-100 text-purple-700 border-purple-200' },
-      established: { label: 'Established', color: 'bg-blue-100 text-blue-700 border-blue-200' },
-      startup: { label: 'Startup', color: 'bg-green-100 text-green-700 border-green-200' }
+      tcs: { label: 'TCS', color: 'bg-blue-100 text-blue-700 border-blue-200' },
+      accenture: { label: 'Accenture', color: 'bg-purple-100 text-purple-700 border-purple-200' },
+      convolve: { label: 'Convolve', color: 'bg-orange-100 text-orange-700 border-orange-200' },
+      blackorange: { label: 'Black Orange', color: 'bg-red-100 text-red-700 border-red-200' }
     };
-    return badges?.[tier] || badges?.established;
+    return badges?.[tier] || { label: 'Company', color: 'bg-gray-100 text-gray-700 border-gray-200' };
   };
 
   return (
@@ -65,6 +65,7 @@ const InterviewPYQSection = ({ pyqs }) => {
           </div>
         </div>
       </div>
+
       {/* Filters */}
       <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-brand-sm">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -114,6 +115,7 @@ const InterviewPYQSection = ({ pyqs }) => {
           </div>
         </div>
       </div>
+
       {/* PYQ Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {filteredPYQs?.map((pyq) => (
@@ -231,6 +233,7 @@ const InterviewPYQSection = ({ pyqs }) => {
           </div>
         ))}
       </div>
+
       {filteredPYQs?.length === 0 && (
         <div className="text-center py-12">
           <Icon name="Search" size={48} color="var(--color-insight-gray)" className="mx-auto mb-4" />

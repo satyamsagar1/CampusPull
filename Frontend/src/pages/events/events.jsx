@@ -1,158 +1,222 @@
-import React, { useState, useContext, useEffect } from "react";
-import { PlusCircle, Edit2, Trash2, Check } from "lucide-react";
-import { EventContext } from "../../context/EventContext";
-import { AuthContext } from "../../context/AuthContext";
+import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Calendar, Clock, Users, PlusCircle, X, Send } from "lucide-react";
 
-const formatDateTime = (dateString) => {
-  if (!dateString) return "";
-  const date = new Date(dateString);
-  return date.toLocaleString("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
+const EventsPage = () => {
+  const [events, setEvents] = useState([]);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newEvent, setNewEvent] = useState({
+    title: "",
+    date: "",
+    desc: "",
+    category: "",
   });
-};
+  const [chatMessages, setChatMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState("");
 
-const EventPage = () => {
-  const { user } = useContext(AuthContext);
-  const { events, loading, fetchEvents, createEvent, updateEvent, deleteEvent } = useContext(EventContext);
+  const handleCreateEvent = (e) => {
+    e.preventDefault();
+    if (!newEvent.title || !newEvent.date || !newEvent.desc) return;
+    setEvents([...events, { ...newEvent, attendees: 0 }]);
+    setNewEvent({ title: "", date: "", desc: "", category: "" });
+    setShowCreateModal(false);
+  };
 
-  const [newEvent, setNewEvent] = useState({ title: "", description: "", date: "", banner: null });
-  const [previewImage, setPreviewImage] = useState(null);
-
-  const [editingId, setEditingId] = useState(null);
-  const [editData, setEditData] = useState({ title: "", description: "", date: "", banner: null });
-
-  useEffect(() => {
-    fetchEvents();
-  }, []);
-
-  const handleImageUpload = (e, isEdit = false) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    if (isEdit) setEditData({ ...editData, banner: file });
-    else {
-      setPreviewImage(URL.createObjectURL(file));
-      setNewEvent({ ...newEvent, banner: file });
+  const handleSendMessage = () => {
+    if (newMessage.trim() !== "") {
+      setChatMessages([...chatMessages, { user: "You", text: newMessage }]);
+      setNewMessage("");
     }
   };
 
-  const handleSaveNewEvent = async () => {
-    if (!newEvent.title || !newEvent.description || !newEvent.date) return;
-    await createEvent({
-      title: newEvent.title,
-      description: newEvent.description,
-      date: newEvent.date,
-      bannerFile: newEvent.banner
-    });
-    setNewEvent({ title: "", description: "", date: "", banner: null });
-    setPreviewImage(null);
-  };
-
-  const handleStartEdit = (event) => {
-    setEditingId(event._id);
-    setEditData({
-      title: event.title || "",
-      description: event.description || "",
-      date: event.date ? new Date(event.date).toISOString().slice(0, 16) : "",
-      banner: null
-    });
-  };
-
-  const handleSaveEdit = async (id) => {
-    await updateEvent(id, {
-      title: editData.title,
-      description: editData.description,
-      date: editData.date,
-      bannerFile: editData.banner
-    });
-    setEditingId(null);
-    setEditData({ title: "", description: "", date: "", banner: null });
-  };
-
-  const handleCancelEdit = () => {
-    setEditingId(null);
-    setEditData({ title: "", description: "", date: "", banner: null });
-  };
-
-  // ---------- Render Event Content ----------
-  let eventContent;
-  if (loading) eventContent = <p className="text-center text-white">Loading events...</p>;
-  else if (events.length === 0) eventContent = <p className="text-center text-white">No events yet.</p>;
-  else {
-    eventContent = events.map((event) => {
-      const userId = user?._id || user?.id;
-      const isCreator = userId && event.createdBy?._id === userId;
-      const isEditing = editingId === event._id;
-
-      return (
-        <div key={event._id} className="bg-white rounded-xl shadow-md overflow-hidden">
-          {isEditing ? (
-            <div className="p-4 space-y-2">
-              <input type="text" value={editData.title} onChange={e => setEditData(prev => ({ ...prev, title: e.target.value }))} className="w-full p-2 border rounded-lg" />
-              <textarea value={editData.description} onChange={e => setEditData(prev => ({ ...prev, description: e.target.value }))} className="w-full p-2 border rounded-lg" />
-              <input type="datetime-local" value={editData.date} onChange={e => setEditData(prev => ({ ...prev, date: e.target.value }))} className="w-full p-2 border rounded-lg" />
-              <input type="file" accept="image/*" onChange={e => handleImageUpload(e, true)} className="w-full" />
-              {editData.banner && <img src={URL.createObjectURL(editData.banner)} alt="Preview" className="w-full h-40 object-cover rounded-lg" />}
-              {!editData.banner && event.media && <img src={event.media} alt="Current" className="w-full h-40 object-cover rounded-lg" />}
-              <div className="flex space-x-2 mt-2">
-                <button onClick={() => handleSaveEdit(event._id)} className="bg-green-600 text-white px-4 py-1 rounded-lg hover:bg-green-700 flex items-center space-x-1"><Check className="w-4 h-4" /><span>Save</span></button>
-                <button onClick={handleCancelEdit} className="bg-gray-400 text-white px-4 py-1 rounded-lg hover:bg-gray-500">Cancel</button>
-              </div>
-            </div>
-          ) : (
-            <>
-              {event.media && <img src={event.media} alt={event.title ?? ""} className="w-full h-48 object-cover" />}
-              <div className="p-4 flex justify-between items-start">
-                <div>
-                  <h3 className="text-xl font-bold mb-1">{event.title ?? "Untitled Event"}</h3>
-                  <p className="text-gray-600 mb-1">{formatDateTime(event.date ?? "")}</p>
-                  <p className="text-gray-700">{event.description ?? ""}</p>
-                </div>
-                {user && isCreator && (
-                  <div className="flex space-x-2">
-                    <button onClick={() => handleStartEdit(event)} className="text-blue-600 hover:text-blue-800"><Edit2 className="w-5 h-5" /></button>
-                    <button onClick={() => deleteEvent(event._id)} className="text-red-600 hover:text-red-800"><Trash2 className="w-5 h-5" /></button>
-                  </div>
-                )}
-              </div>
-            </>
-          )}
-        </div>
-      );
-    });
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 p-4">
-      <div className="flex items-center justify-center mb-6">
-        <h1 className="text-2xl font-bold text-white">LinkMate Events</h1>
+    <div className="min-h-screen bg-gradient-to-br from-indigo-600 to-pink-500 text-white py-16 px-6 relative">
+      {/* Header */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="text-center mb-12"
+      >
+        <h1 className="text-5xl font-extrabold mb-3">🎉 CampusPull Events</h1>
+        <p className="text-sky-100 text-lg">
+          Discover, Join & Create amazing events with Alumni & Students.
+        </p>
+      </motion.div>
+
+      {/* Search Bar */}
+      <div className="flex justify-center mb-10">
+        <input
+          type="text"
+          placeholder="Search events..."
+          className="w-full max-w-lg px-5 py-3 rounded-full text-slate-800 focus:outline-none shadow-md"
+        />
       </div>
 
-      {/* Role-based Create Event */}
-      {(user?.role === "admin" || user?.role === "alumni") && (
-        <div className="bg-white p-4 rounded-2xl shadow mb-6">
-          <h2 className="text-lg font-semibold mb-3">📌 Post a New Event</h2>
-          <input type="text" placeholder="Event Title" value={newEvent.title} onChange={e => setNewEvent({ ...newEvent, title: e.target.value })} className="w-full mb-2 p-2 border rounded-lg" />
-          <textarea placeholder="Event Description" value={newEvent.description} onChange={e => setNewEvent({ ...newEvent, description: e.target.value })} className="w-full mb-2 p-2 border rounded-lg" />
-          <input type="datetime-local" value={newEvent.date} onChange={e => setNewEvent({ ...newEvent, date: e.target.value })} className="w-full mb-2 p-2 border rounded-lg" />
-          <input type="file" accept="image/*" onChange={handleImageUpload} className="w-full mb-2" />
-          {previewImage && <img src={previewImage} alt="Preview" className="w-full h-40 object-cover rounded-lg mb-2" />}
-          <button onClick={handleSaveNewEvent} className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-            <PlusCircle className="w-5 h-5" />
-            <span>Post Event</span>
-          </button>
+      {/* Event Cards */}
+      {events.length === 0 ? (
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-center text-xl text-sky-100"
+        >
+          🚀 No events yet. Be the first to create one!
+        </motion.p>
+      ) : (
+        <div className="grid md:grid-cols-3 gap-10 max-w-7xl mx-auto">
+          {events.map((event, i) => (
+            <motion.div
+              key={i}
+              whileHover={{ scale: 1.05 }}
+              transition={{ duration: 0.3 }}
+              className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-6 shadow-lg hover:bg-white/20 transition-all"
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <Calendar className="text-pink-300" size={26} />
+                <h2 className="text-2xl font-semibold text-purple-300">
+                  {event.title}
+                </h2>
+              </div>
+              <p className="text-sky-50 mb-3 text-sm">{event.desc}</p>
+              <div className="text-sm text-sky-100 space-y-1 mb-4">
+                <p className="flex items-center gap-2">
+                  <Clock size={16} /> {event.date}
+                </p>
+                <p className="flex items-center gap-2">
+                  <Users size={16} /> {event.attendees} Attendees
+                </p>
+                {event.category && <p>📁 {event.category}</p>}
+              </div>
+              <button className="w-full py-2 bg-gradient-to-r from-sky-400 to-purple-400 text-slate-900 font-semibold rounded-full hover:from-sky-300 hover:to-purple-300 transition-all">
+                Join Event
+              </button>
+            </motion.div>
+          ))}
         </div>
       )}
 
-      {/* Event List */}
-      <div className="space-y-6">
-        {eventContent}
+      {/* Event Chat Box */}
+      <div className="max-w-4xl mx-auto mt-20 bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-6 shadow-lg">
+        <h2 className="text-2xl font-semibold mb-4 text-purple-300 flex items-center gap-2">
+          💬 Event Discussion Lounge
+        </h2>
+        <div className="h-60 overflow-y-auto bg-white/10 rounded-xl p-4 mb-4 space-y-2">
+          {chatMessages.length === 0 ? (
+            <p className="text-sky-200 text-sm text-center">
+              No messages yet. Start a conversation about upcoming events!
+            </p>
+          ) : (
+            chatMessages.map((msg, idx) => (
+              <div key={idx} className="bg-white/10 rounded-lg p-2 text-sm text-sky-50">
+                <strong className="text-purple-200">{msg.user}:</strong> {msg.text}
+              </div>
+            ))
+          )}
+        </div>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            placeholder="Share your event ideas..."
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
+            className="flex-1 px-4 py-2 rounded-full text-slate-900 focus:outline-none"
+          />
+          <button
+            onClick={handleSendMessage}
+            className="px-6 py-2 bg-gradient-to-r from-sky-400 to-purple-400 text-slate-900 font-semibold rounded-full hover:from-sky-300 hover:to-purple-300 transition-all flex items-center gap-1"
+          >
+            <Send size={18} /> Send
+          </button>
+        </div>
       </div>
+      
+
+      {/* Floating Create Event Button */}
+      <motion.button
+        onClick={() => setShowCreateModal(true)}
+        whileHover={{ scale: 1.1 }}
+        transition={{ duration: 0.3 }}
+        className="fixed bottom-8 right-8 bg-gradient-to-r from-purple-400 to-sky-400 text-slate-900 font-semibold rounded-full shadow-xl px-6 py-3 flex items-center gap-2 hover:from-purple-300 hover:to-sky-300"
+      >
+        <PlusCircle size={22} /> Create Event
+      </motion.button>
+
+      {/* Create Event Modal */}
+      <AnimatePresence>
+        {showCreateModal && (
+          <motion.div
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50 p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-8 max-w-md w-full text-white shadow-2xl relative"
+              initial={{ scale: 0.8 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.8 }}
+            >
+              <button
+                onClick={() => setShowCreateModal(false)}
+                className="absolute top-4 right-4 text-sky-200 hover:text-sky-100"
+              >
+                <X size={22} />
+              </button>
+
+              <h2 className="text-3xl font-bold mb-6 text-purple-300 text-center">
+                Create New Event
+              </h2>
+
+              <form onSubmit={handleCreateEvent} className="space-y-4">
+                <input
+                  type="text"
+                  placeholder="Event Title"
+                  value={newEvent.title}
+                  onChange={(e) =>
+                    setNewEvent({ ...newEvent, title: e.target.value })
+                  }
+                  className="w-full px-4 py-2 rounded-lg text-slate-900 focus:outline-none"
+                />
+                <input
+                  type="date"
+                  value={newEvent.date}
+                  onChange={(e) =>
+                    setNewEvent({ ...newEvent, date: e.target.value })
+                  }
+                  className="w-full px-4 py-2 rounded-lg text-slate-900 focus:outline-none"
+                />
+                <input
+                  type="text"
+                  placeholder="Category (e.g. Hackathon, Seminar)"
+                  value={newEvent.category}
+                  onChange={(e) =>
+                    setNewEvent({ ...newEvent, category: e.target.value })
+                  }
+                  className="w-full px-4 py-2 rounded-lg text-slate-900 focus:outline-none"
+                />
+                <textarea
+                  placeholder="Event Description"
+                  value={newEvent.desc}
+                  onChange={(e) =>
+                    setNewEvent({ ...newEvent, desc: e.target.value })
+                  }
+                  className="w-full px-4 py-2 rounded-lg text-slate-900 focus:outline-none"
+                  rows="3"
+                />
+                <button
+                  type="submit"
+                  className="w-full py-2 bg-gradient-to-r from-sky-400 to-purple-400 text-slate-900 font-semibold rounded-full hover:from-sky-300 hover:to-purple-300 transition-all"
+                >
+                  Create
+                </button>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
 
-export default EventPage;
+export default EventsPage;

@@ -9,13 +9,13 @@ const AlumniSpotlight = () => {
   const alumniStories = [
     {
       id: 1,
-      name: "Rajesh Kumar",
-      currentRole: "Senior Software Engineer",
-      company: "Microsoft",
+      name: "Swati Yadav",
+      currentRole: " Software Engineer",
+      company: "Black Orange",
       companyLogo: "https://images.pexels.com/photos/4164418/pexels-photo-4164418.jpeg?auto=compress&cs=tinysrgb&w=100",
       profileImage: "https://images.pexels.com/photos/3785079/pexels-photo-3785079.jpeg?auto=compress&cs=tinysrgb&w=400",
-      university: "IIT Bombay",
-      graduationYear: "2019",
+      university: "ABESIT",
+      graduationYear: "2026",
       mentorshipStatus: "Available",
       specialization: ["System Design", "Cloud Architecture", "Microservices"],
       quote: `The transition from college to corporate wasn't easy, but having the right guidance made all the difference. Now I want to be that bridge for the next generation.`,
@@ -27,8 +27,8 @@ const AlumniSpotlight = () => {
       beforeImage: "https://images.pexels.com/photos/3769021/pexels-photo-3769021.jpeg?auto=compress&cs=tinysrgb&w=300",
       journey: {
         college: "Computer Science Student",
-        firstJob: "Junior Developer at Startup",
-        current: "Senior Engineer at Microsoft"
+        firstJob: "IT Project Manager at Startup",
+        current: " Engineer at BlackOrange"
       },
       menteeCount: 23,
       responseTime: "< 2 hours",
@@ -36,13 +36,13 @@ const AlumniSpotlight = () => {
     },
     {
       id: 2,
-      name: "Ananya Sharma",
-      currentRole: "Product Manager",
-      company: "Google",
+      name: "Sakshi Sharma",
+      currentRole: "UI/UX Designer",
+      company: "Indilearn",
       companyLogo: "https://images.pexels.com/photos/3861958/pexels-photo-3861958.jpeg?auto=compress&cs=tinysrgb&w=100",
       profileImage: "https://images.pexels.com/photos/3769021/pexels-photo-3769021.jpeg?auto=compress&cs=tinysrgb&w=400",
-      university: "BITS Pilani",
-      graduationYear: "2018",
+      university: "ABESIT",
+      graduationYear: "2026",
       mentorshipStatus: "Available",
       specialization: ["Product Strategy", "User Research", "Data Analytics"],
       quote: `From engineering to product management - the journey taught me that technical skills are just the foundation. Understanding users and business impact is what creates real value.`,
@@ -128,7 +128,7 @@ const AlumniSpotlight = () => {
         {/* Section Header */}
         <div className="text-center mb-12">
           <h2 className="text-3xl sm:text-4xl font-poppins font-bold text-wisdom-charcoal mb-4">
-            Alumni Success Stories
+            Alumni and Placed Students Success Stories
           </h2>
           <p className="text-xl text-insight-gray font-inter max-w-2xl mx-auto">
             Learn from those who've walked the path before you. Connect with mentors who understand your journey.
