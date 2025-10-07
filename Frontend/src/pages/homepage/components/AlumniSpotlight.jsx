@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom'; // ✅ Added for navigation
 import Icon from '../../../components/AppIcon';
 import Image from '../../../components/AppImage';
 
 const AlumniSpotlight = () => {
+  const navigate = useNavigate(); // ✅ useNavigate instance
+
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
 
@@ -343,7 +346,10 @@ const AlumniSpotlight = () => {
 
         {/* View All Alumni Button */}
         <div className="text-center mt-12">
-          <button className="inline-flex items-center space-x-2 px-8 py-3 bg-white hover:bg-academic-blue text-academic-blue hover:text-white border-2 border-academic-blue font-inter font-medium rounded-lg transition-all duration-300 shadow-brand-md hover:shadow-brand-lg">
+          <button
+            onClick={() => navigate('/explore')} // ✅ Navigate to explore page
+            className="inline-flex items-center space-x-2 px-8 py-3 bg-white hover:bg-academic-blue text-academic-blue hover:text-white border-2 border-academic-blue font-inter font-medium rounded-lg transition-all duration-300 shadow-brand-md hover:shadow-brand-lg"
+          >
             <span>View All Alumni</span>
             <Icon name="Users" size={18} />
           </button>
