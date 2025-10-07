@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useContext, useMemo, useCallback } from "react";
+import React, { createContext, useState, useEffect, useContext, useMemo, useCallback } from "react"; 
 import { AuthContext } from "./AuthContext";
 import api from "../utils/api";
 
@@ -10,9 +10,7 @@ export const ExploreProvider = ({ children }) => {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
-  // ✅ New state for pending requests
-  const [requests, setRequests] = useState([]);
+  const [requests, setRequests] = useState([]); // pending incoming requests
 
   const fetchSuggestions = useCallback(async () => {
     if (!accessToken) return;
@@ -30,31 +28,6 @@ export const ExploreProvider = ({ children }) => {
     }
   }, [accessToken]);
 
-  // ✅ Send connection request
-  const sendRequest = useCallback(async (recipientId) => {
-    if (!accessToken) return;
-    try {
-      const { data } = await api.post(
-        "/connection/request",
-        { recipientId },
-        { headers: { Authorization: `Bearer ${accessToken}` } }
-      );
-
-      // Backend response ka user object ho sakta hai, 
-      // agar nahi hai to tum suggestions se nikal lo
-      const requestedUser =
-        suggestions.find((u) => u._id === recipientId) || { _id: recipientId };
-
-      // ✅ frontend state update
-      setRequests((prev) => [...prev, requestedUser]);
-      setSuggestions((prev) => prev.filter((user) => user._id !== recipientId));
-    } catch (err) {
-      console.error(err);
-      alert("Failed to send request");
-    }
-  }, [accessToken, suggestions]);
-
-  // ✅ Optional: fetch already pending requests from backend
   const fetchRequests = useCallback(async () => {
     if (!accessToken) return;
     try {
@@ -67,16 +40,62 @@ export const ExploreProvider = ({ children }) => {
     }
   }, [accessToken]);
 
+  const sendRequest = useCallback(async (recipientId) => {
+    if (!accessToken) return;
+    try {
+      await api.post(
+        "/connection/request",
+        { recipientId },
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      const requestedUser =
+        suggestions.find((u) => u._id === recipientId) || { _id: recipientId };
+      setRequests((prev) => [...prev, requestedUser]);
+      setSuggestions((prev) => prev.filter((user) => user._id !== recipientId));
+    } catch (err) {
+      console.error(err);
+      alert("Failed to send request");
+    }
+  }, [accessToken, suggestions]);
+
+  // Accept or Ignore request
+  const acceptRequest = useCallback(async (requestId) => {
+    if (!accessToken) return;
+    try {
+      await api.post(
+        "/connection/accept",
+        { requestId },
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      setRequests((prev) => prev.filter((req) => req._id !== requestId));
+    } catch (err) {
+      console.error(err);
+      alert("Failed to accept request");
+    }
+  }, [accessToken]);
+
+  const ignoreRequest = useCallback(async (requestId) => {
+    if (!accessToken) return;
+    try {
+      await api.post(
+        "/connection/ignore",
+        { requestId },
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      setRequests((prev) => prev.filter((req) => req._id !== requestId));
+    } catch (err) {
+      console.error(err);
+      alert("Failed to ignore request");
+    }
+  }, [accessToken]);
+
   const filteredSuggestions = suggestions.filter((user) => {
     if (!user) return false;
-
     const name = user?.name?.toLowerCase() || "";
     const college = user?.college?.toLowerCase() || "";
     const degree = user?.degree?.toLowerCase() || "";
     const skills = (user?.skills || []).map((s) => (s || "").toLowerCase());
-
     const query = search.toLowerCase();
-
     return (
       name.includes(query) ||
       college.includes(query) ||
@@ -88,22 +107,21 @@ export const ExploreProvider = ({ children }) => {
   useEffect(() => {
     if (!authLoading && accessToken) {
       fetchSuggestions();
-      fetchRequests(); // ✅ also load pending requests
+      fetchRequests();
     }
   }, [accessToken, fetchSuggestions, fetchRequests, authLoading]);
 
-  const contextValue = useMemo(
-    () => ({
-      suggestions: filteredSuggestions,
-      search,
-      setSearch,
-      loading,
-      error,
-      sendRequest,
-      requests, // ✅ expose requests to UI
-    }),
-    [filteredSuggestions, search, loading, error, sendRequest, requests]
-  );
+  const contextValue = useMemo(() => ({
+    suggestions: filteredSuggestions,
+    search,
+    setSearch,
+    loading,
+    error,
+    sendRequest,
+    requests,
+    acceptRequest,
+    ignoreRequest
+  }), [filteredSuggestions, search, loading, error, sendRequest, requests, acceptRequest, ignoreRequest]);
 
   return (
     <ExploreContext.Provider value={contextValue}>
