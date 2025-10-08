@@ -1,261 +1,287 @@
-import React, { useState, useRef } from "react";
-import { useFeed } from "../../context/feedContext";
-import { Heart, MessageCircle, Share2, Paperclip, Flame, TrendingUp, ThumbsUp } from "lucide-react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
+import {
+  Image as ImageIcon,
+  Video,
+  ThumbsUp,
+  MessageCircle,
+  Share2,
+  BarChart2,
+  Flame,
+  Hash,
+} from "lucide-react";
 
-export default function Feed() {
-  const {
-    feed,
-    createPost,
-    likePost,
-    commentPost,
-    replyToComment,
-    likeComment,
-    sharePost,
-    loading,
-  } = useFeed();
+const FeedPage = () => {
+  const [posts, setPosts] = useState([
+    {
+      id: 1,
+      user: "Ananya Sharma",
+      content: "Excited for the Tech Fest 2025! 🚀 #Innovation #CampusVibes",
+      media: "/images/techfest.jpg",
+      mediaType: "image",
+      likes: 12,
+      comments: 3,
+    },
+    {
+      id: 2,
+      user: "Rohan Verma",
+      content: "Should we have a coding marathon this weekend? 💻🔥 #Hackathon",
+      likes: 8,
+      comments: 5,
+      isPoll: true,
+      pollOptions: ["Yes, let's do it!", "Maybe next week", "Not interested"],
+    },
+  ]);
 
   const [newPost, setNewPost] = useState("");
-  const [newFile, setNewFile] = useState(null);
-  const fileInputRef = useRef(null);
+  const [newMedia, setNewMedia] = useState(null);
+  const [mediaType, setMediaType] = useState(null);
 
-  // Handle post creation
-  const handleAddPost = async () => {
-    if (!newPost.trim() && !newFile) return;
+  const handleMediaUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-    try {
-      await createPost(newPost, newFile); // send File object to backend
-      setNewPost("");
-      setNewFile(null);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-    } catch (err) {
-      console.error("Post creation failed:", err);
+    // Check file type
+    const type = file.type.startsWith("video") ? "video" : "image";
+    if (type === "video" && file.size > 120 * 1024 * 1024) {
+      alert("Please upload a video under 2 minutes (max ~120MB).");
+      return;
     }
+
+    setMediaType(type);
+    setNewMedia(URL.createObjectURL(file));
   };
 
-  // Dummy trending posts
-  const trendingPosts = [
-    { id: 1, title: "Amazing React Tips & Tricks", author: "John Doe", likes: 45 },
-    { id: 2, title: "UI/UX Best Practices 2024", author: "Jane Smith", likes: 38 },
-    { id: 3, title: "Web Development Trends", author: "Mike Johnson", likes: 32 },
-    { id: 4, title: "CSS Animation Magic", author: "Sarah Wilson", likes: 28 },
-    { id: 5, title: "JavaScript ES2024 Features", author: "Alex Brown", likes: 25 },
-  ];
-
-  // Dummy trending communities
-  const trendingCommunities = [
-    { id: 1, name: "React Devs", members: 120 },
-    { id: 2, name: "UI/UX Club", members: 85 },
-    { id: 3, name: "Node.js Enthusiasts", members: 75 },
-    { id: 4, name: "FullStack Learners", members: 60 },
-    { id: 5, name: "Design Masters", members: 50 },
-  ];
+  const handlePost = () => {
+    if (newPost.trim() === "" && !newMedia) return;
+    const newEntry = {
+      id: Date.now(),
+      user: "You",
+      content: newPost,
+      media: newMedia,
+      mediaType,
+      likes: 0,
+      comments: 0,
+    };
+    setPosts([newEntry, ...posts]);
+    setNewPost("");
+    setNewMedia(null);
+    setMediaType(null);
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-blue-100 to-indigo-50 p-6">
-      <div className="flex max-w-7xl mx-auto gap-6">
-        {/* Feed Section */}
-        <div className="flex-1 max-w-3xl space-y-6">
-          {/* Create Post */}
-          <motion.div
-            className="bg-gradient-to-r from-red-400 to-red-600 p-6 rounded-3xl shadow-2xl text-white"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            whileHover={{ scale: 1.005 }}
-          >
+    <div className="min-h-screen bg-gray-100 flex flex-col md:flex-row px-4 md:px-12 py-8 gap-8">
+      {/* Feed Section */}
+      <motion.div
+        className="flex-1"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
+        <h1 className="text-2xl font-semibold text-gray-800 mb-6">
+          Campus Feed
+        </h1>
+
+        {/* Create Post */}
+        <motion.div
+          className="bg-white rounded-2xl p-5 shadow-md border border-gray-200 mb-6"
+          whileHover={{ scale: 1.01 }}
+        >
+          <div className="flex items-start gap-3 mb-3">
+            <div className="w-10 h-10 bg-blue-500 text-white rounded-full flex items-center justify-center font-semibold">
+              Y
+            </div>
             <textarea
-              rows={3}
-              placeholder="Share your thoughts..."
+              placeholder="Start a post..."
               value={newPost}
               onChange={(e) => setNewPost(e.target.value)}
-              className="w-full bg-white bg-opacity-20 rounded-2xl p-4 focus:outline-none focus:ring-2 focus:ring-white/50 resize-none border border-white/20"
+              className="w-full bg-transparent outline-none text-gray-700 resize-none border-b border-gray-200 focus:border-blue-400 pb-2"
+              rows="2"
             />
-            <div className="flex items-center mt-4 gap-3">
-              <label className="flex items-center gap-2 cursor-pointer hover:bg-white/10 rounded-lg p-2">
-                <Paperclip size={18} /> Attach Media
+          </div>
+
+          {/* Media Preview */}
+          {newMedia && (
+            <div className="mb-3 rounded-xl overflow-hidden">
+              {mediaType === "video" ? (
+                <video
+                  src={newMedia}
+                  controls
+                  className="w-full rounded-xl max-h-80"
+                />
+              ) : (
+                <img
+                  src={newMedia}
+                  alt="Preview"
+                  className="rounded-xl max-h-80 object-cover"
+                />
+              )}
+            </div>
+          )}
+
+          <div className="flex items-center justify-between mt-2">
+            <div className="flex gap-4 text-gray-500 text-sm">
+              {/* Photo Upload */}
+              <label className="flex items-center gap-1 cursor-pointer hover:text-blue-500">
+                <ImageIcon size={18} />
                 <input
                   type="file"
-                  ref={fileInputRef}
+                  accept="image/*"
                   className="hidden"
-                  onChange={(e) => setNewFile(e.target.files[0])}
-                  accept="image/*,video/*"
+                  onChange={handleMediaUpload}
                 />
+                Photo
               </label>
-              <button
-                onClick={handleAddPost}
-                disabled={!newPost.trim() && !newFile}
-                className="ml-auto px-6 py-2 bg-white text-red-600 font-bold rounded-full hover:bg-red-50 disabled:opacity-50"
-              >
-                Post
-              </button>
-            </div>
 
-            {/* Media Preview */}
-            {newFile && (
-              <div className="mt-4 rounded-2xl overflow-hidden shadow-lg">
-                {newFile.type.startsWith("video") ? (
-                  <video src={URL.createObjectURL(newFile)} controls className="w-full rounded-2xl" />
-                ) : (
-                  <img src={URL.createObjectURL(newFile)} alt="Preview" className="w-full rounded-2xl" />
-                )}
-              </div>
-            )}
-          </motion.div>
-
-          {/* Feed */}
-          {loading ? (
-            <p className="text-center text-red-500">Loading posts...</p>
-          ) : feed.length === 0 ? (
-            <p className="text-center text-red-600">No posts yet.</p>
-          ) : (
-            <div className="space-y-6">
-              {feed.map((post) => (
-                <PostCard
-                  key={post._id}
-                  post={post}
-                  onLike={() => likePost(post._id)}
-                  onComment={(text) => commentPost(post._id, text)}
-                  onReply={(commentId, text) => replyToComment(post._id, commentId, text)}
-                  onLikeComment={(commentId, replyId) => likeComment(post._id, commentId, replyId)}
-                  onShare={(text) => sharePost(post._id, text)}
+              {/* Video Upload */}
+              <label className="flex items-center gap-1 cursor-pointer hover:text-blue-500">
+                <Video size={18} />
+                <input
+                  type="file"
+                  accept="video/*"
+                  className="hidden"
+                  onChange={handleMediaUpload}
                 />
-              ))}
+                Video
+              </label>
+
+              <span className="flex items-center gap-1 hover:text-blue-500 cursor-pointer">
+                <Hash size={18} /> Hashtag
+              </span>
             </div>
-          )}
-        </div>
 
-        {/* Sidebar */}
-        <div className="w-80 space-y-6 sticky top-6">
-          {/* Trending Posts */}
-          <TrendingBox title="🔥 Trending Posts" items={trendingPosts} redish={true} />
+            <button
+              onClick={handlePost}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-1.5 rounded-full text-sm font-medium transition"
+            >
+              Post
+            </button>
+          </div>
+        </motion.div>
 
-          {/* Trending Communities */}
-          <TrendingBox title="🔥 Trending Communities" items={trendingCommunities} redish={true} community />
+        {/* Posts */}
+        <div className="space-y-5">
+          {posts.map((post) => (
+            <motion.div
+              key={post.id}
+              className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 bg-blue-500 text-white rounded-full flex items-center justify-center font-semibold">
+                  {post.user.charAt(0)}
+                </div>
+                <div>
+                  <p className="font-semibold text-gray-800">{post.user}</p>
+                  <p className="text-xs text-gray-400">2h ago</p>
+                </div>
+              </div>
+
+              <p className="text-gray-800 mb-3 leading-relaxed">
+                {post.content}
+              </p>
+
+              {/* Media */}
+              {post.media && (
+                <div className="mb-3 rounded-xl overflow-hidden">
+                  {post.mediaType === "video" ? (
+                    <video
+                      src={post.media}
+                      controls
+                      className="w-full rounded-xl max-h-96"
+                    />
+                  ) : (
+                    <img
+                      src={post.media}
+                      alt="Post media"
+                      className="w-full rounded-xl"
+                    />
+                  )}
+                </div>
+              )}
+
+              {/* Poll */}
+              {post.isPoll && (
+                <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 mb-3">
+                  {post.pollOptions.map((opt, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center gap-2 p-2 hover:bg-gray-100 rounded-lg cursor-pointer text-gray-700"
+                    >
+                      <BarChart2 size={16} /> {opt}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex justify-between text-gray-500 mt-2 text-sm">
+                <span className="flex items-center gap-1 cursor-pointer hover:text-blue-500">
+                  <ThumbsUp size={18} /> {post.likes}
+                </span>
+                <span className="flex items-center gap-1 cursor-pointer hover:text-blue-500">
+                  <MessageCircle size={18} /> {post.comments}
+                </span>
+                <span className="flex items-center gap-1 cursor-pointer hover:text-blue-500">
+                  <Share2 size={18} /> Share
+                </span>
+              </div>
+            </motion.div>
+          ))}
         </div>
-      </div>
+      </motion.div>
+
+      {/* Trending Sidebar */}
+      <motion.div
+        className="w-full md:w-1/3 bg-white rounded-2xl p-5 shadow-md border border-gray-200 h-fit"
+        initial={{ opacity: 0, x: 30 }}
+        animate={{ opacity: 1, x: 0 }}
+      >
+        <h2 className="text-lg font-semibold mb-3 text-gray-800 flex items-center gap-2">
+          <Flame className="text-orange-500" size={18} /> Trending Topics
+        </h2>
+
+        <ul className="space-y-2">
+          {[
+            "#ReactJS",
+            "#TechFest2025",
+            "#Hackathon",
+            "#CampusVibes",
+            "#AIInnovation",
+          ].map((topic, i) => (
+            <li
+              key={i}
+              className="text-blue-600 font-medium cursor-pointer hover:underline"
+            >
+              {topic}
+            </li>
+          ))}
+        </ul>
+
+        <div className="mt-6">
+          <h2 className="text-lg font-semibold mb-3 text-gray-800 flex items-center gap-2">
+            🚀 Trending Communities
+          </h2>
+          <div className="space-y-2 text-sm">
+            {[
+              { name: "React Devs", members: 120 },
+              { name: "Design Squad", members: 95 },
+              { name: "AI Enthusiasts", members: 80 },
+            ].map((c, i) => (
+              <div
+                key={i}
+                className="flex justify-between text-gray-700 hover:bg-gray-50 p-2 rounded-lg cursor-pointer"
+              >
+                <span>{c.name}</span>
+                <span className="text-gray-400">{c.members} members</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </motion.div>
     </div>
   );
-}
+};
 
-// PostCard Component
-function PostCard({ post, onLike, onComment, onReply, onLikeComment, onShare }) {
-  const [commentText, setCommentText] = useState("");
-  const [replyText, setReplyText] = useState({});
-  const [shareText, setShareText] = useState("");
-  const [showComments, setShowComments] = useState(false);
-
-  const isHotPost = post.likesCount > 10;
-
-  const handleComment = () => {
-    if (!commentText.trim()) return;
-    onComment(commentText);
-    setCommentText("");
-  };
-
-  const handleReply = (commentId) => {
-    if (!replyText[commentId]?.trim()) return;
-    onReply(commentId, replyText[commentId]);
-    setReplyText((prev) => ({ ...prev, [commentId]: "" }));
-  };
-
-  const handleShare = () => {
-    if (!shareText.trim()) return;
-    onShare(shareText);
-    setShareText("");
-  };
-
-  return (
-    <motion.div
-      className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl p-6 border border-red-200 relative overflow-hidden"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      whileHover={{ scale: 1.02 }}
-    >
-      {isHotPost && (
-        <motion.div className="absolute top-4 right-4 flex items-center gap-1 bg-gradient-to-r from-orange-400 via-red-500 to-pink-500 text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg">
-          <Flame size={16} /> Hot
-        </motion.div>
-      )}
-
-      {/* Post Content */}
-      <p className="text-gray-800 font-medium mb-4">{post.content}</p>
-
-      {/* Media */}
-      {post.media && (
-        <motion.div className="mt-4 rounded-2xl overflow-hidden shadow-lg" whileHover={{ scale: 1.02 }}>
-          {post.media.endsWith(".mp4") ? (
-            <video src={post.media} controls className="w-full rounded-2xl" />
-          ) : (
-            <img src={post.media} alt="Post media" className="w-full rounded-2xl" />
-          )}
-        </motion.div>
-      )}
-
-      {/* Actions */}
-      <div className="flex items-center gap-4 text-gray-600 mt-4">
-        <button className="flex items-center gap-1 hover:text-red-500 transition-colors" onClick={onLike}>
-          <Heart size={20} />
-          {post.likesCount || 0}
-        </button>
-
-        <button className="flex items-center gap-1 hover:text-blue-500 transition-colors" onClick={() => setShowComments(!showComments)}>
-          <MessageCircle size={20} />
-          {post.commentsCount || 0}
-        </button>
-
-        <button className="flex items-center gap-1 hover:text-green-500 transition-colors" onClick={handleShare}>
-          <Share2 size={20} />
-          Share
-        </button>
-
-        {/* Extra reactions */}
-        <button className="flex items-center gap-1 hover:text-yellow-500 transition-colors">
-          <ThumbsUp size={20} />
-          Clap
-        </button>
-      </div>
-
-      {/* Comments Section */}
-      {showComments && (
-        <div className="mt-3">
-          <input
-            type="text"
-            value={commentText}
-            onChange={(e) => setCommentText(e.target.value)}
-            onKeyPress={(e) => e.key === "Enter" && handleComment()}
-            placeholder="Add a comment..."
-            className="w-full px-4 py-2 rounded-full border border-red-200 focus:outline-none focus:ring-2 focus:ring-red-400"
-          />
-        </div>
-      )}
-    </motion.div>
-  );
-}
-
-// TrendingBox Component
-function TrendingBox({ title, items, redish = false, community = false }) {
-  return (
-    <motion.div
-      className={`${redish ? "bg-red-50 border-red-200" : "bg-white/70 border-blue-200"} backdrop-blur-sm rounded-3xl shadow-xl p-6`}
-    >
-      <h2 className={`font-bold mb-4 flex items-center gap-2 ${redish ? "text-red-600" : "text-blue-600"}`}>
-        <TrendingUp className={redish ? "text-red-500" : "text-blue-500"} /> {title}
-      </h2>
-
-      <div className="space-y-3">
-        {items.map((item) => (
-          <div
-            key={item.id}
-            className={`${redish ? "border-red-100 bg-red-50" : "border-blue-100 bg-blue-50"} p-3 rounded-xl hover:shadow-lg cursor-pointer flex items-center justify-between`}
-          >
-            <p className="font-semibold">{community ? item.name : item.title}</p>
-            <div className="flex items-center gap-1 text-red-500">
-              <Flame size={16} />
-              <span className="text-xs font-medium">{community ? `${item.members} members` : `${item.likes} likes`}</span>
-            </div>
-          </div>
-        ))}
-      </div>
-    </motion.div>
-  );
-}
+export default FeedPage;

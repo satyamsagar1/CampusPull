@@ -66,9 +66,9 @@ const AlumniSpotlight = () => {
     },
     {
       id: 3,
-      name: "Vikram Singh",
+      name: "Samayak Vansh",
       currentRole: "Data Science Lead",
-      company: "Amazon",
+      company: "Black Orange",
       companyLogo: "https://images.pexels.com/photos/3184291/pexels-photo-3184291.jpeg?auto=compress&cs=tinysrgb&w=100",
       profileImage: "https://images.pexels.com/photos/3785079/pexels-photo-3785079.jpeg?auto=compress&cs=tinysrgb&w=400",
       university: "NIT Delhi",

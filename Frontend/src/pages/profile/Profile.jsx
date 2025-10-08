@@ -127,15 +127,7 @@ ${
 
 return (
   <div className="relative min-h-screen bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100">
-    {/* Back Button */}
-    <div className="absolute top-4 left-4 z-10">
-      <button
-        onClick={() => window.history.back()}
-        className="flex items-center gap-2 px-4 py-2 bg-white/80 text-gray-800 hover:bg-gray-200 rounded-lg shadow"
-      >
-        <FaArrowLeft /> Back
-      </button>
-    </div>
+   
 
     <div className="relative z-10 max-w-6xl mx-auto py-12 grid grid-cols-1 md:grid-cols-3 gap-6">
       {/* Sidebar */}

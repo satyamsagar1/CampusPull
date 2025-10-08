@@ -1,9 +1,19 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Calendar, Clock, Users, PlusCircle, X, Send } from "lucide-react";
+import {
+  Calendar,
+  Clock,
+  Users,
+  PlusCircle,
+  X,
+  Send,
+  Bookmark,
+  Sparkles,
+} from "lucide-react";
 
 const EventsPage = () => {
   const [events, setEvents] = useState([]);
+  const [joinedEvents, setJoinedEvents] = useState([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newEvent, setNewEvent] = useState({
     title: "",
@@ -14,14 +24,38 @@ const EventsPage = () => {
   const [chatMessages, setChatMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
 
+  // Load joined events from localStorage
+  useEffect(() => {
+    const savedJoined = JSON.parse(localStorage.getItem("joinedEvents")) || [];
+    setJoinedEvents(savedJoined);
+  }, []);
+
+  // Save joined events to localStorage whenever updated
+  useEffect(() => {
+    localStorage.setItem("joinedEvents", JSON.stringify(joinedEvents));
+  }, [joinedEvents]);
+
+  // Create new event
   const handleCreateEvent = (e) => {
     e.preventDefault();
     if (!newEvent.title || !newEvent.date || !newEvent.desc) return;
-    setEvents([...events, { ...newEvent, attendees: 0 }]);
+    setEvents([...events, { ...newEvent, attendees: 0, joined: false }]);
     setNewEvent({ title: "", date: "", desc: "", category: "" });
     setShowCreateModal(false);
   };
 
+  // Join Event logic
+  const handleJoinEvent = (index) => {
+    const updatedEvents = [...events];
+    if (!updatedEvents[index].joined) {
+      updatedEvents[index].attendees += 1;
+      updatedEvents[index].joined = true;
+      setJoinedEvents([...joinedEvents, updatedEvents[index]]);
+    }
+    setEvents(updatedEvents);
+  };
+
+  // Send Chat Message
   const handleSendMessage = () => {
     if (newMessage.trim() !== "") {
       setChatMessages([...chatMessages, { user: "You", text: newMessage }]);
@@ -30,7 +64,7 @@ const EventsPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-600 to-pink-500 text-white py-16 px-6 relative">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 text-white py-16 px-6 relative">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -38,9 +72,11 @@ const EventsPage = () => {
         transition={{ duration: 0.6 }}
         className="text-center mb-12"
       >
-        <h1 className="text-5xl font-extrabold mb-3">🎉 CampusPull Events</h1>
+        <h1 className="text-5xl font-extrabold mb-3">
+          🎉 CampusPull Events & Meetups
+        </h1>
         <p className="text-sky-100 text-lg">
-          Discover, Join & Create amazing events with Alumni & Students.
+          Join, Create, and Explore college events & alumni connections.
         </p>
       </motion.div>
 
@@ -48,7 +84,7 @@ const EventsPage = () => {
       <div className="flex justify-center mb-10">
         <input
           type="text"
-          placeholder="Search events..."
+          placeholder="🔍 Search events..."
           className="w-full max-w-lg px-5 py-3 rounded-full text-slate-800 focus:outline-none shadow-md"
         />
       </div>
@@ -67,8 +103,10 @@ const EventsPage = () => {
           {events.map((event, i) => (
             <motion.div
               key={i}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: i * 0.1 }}
               whileHover={{ scale: 1.05 }}
-              transition={{ duration: 0.3 }}
               className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-6 shadow-lg hover:bg-white/20 transition-all"
             >
               <div className="flex items-center gap-3 mb-4">
@@ -85,17 +123,53 @@ const EventsPage = () => {
                 <p className="flex items-center gap-2">
                   <Users size={16} /> {event.attendees} Attendees
                 </p>
-                {event.category && <p>📁 {event.category}</p>}
+                {event.category && (
+                  <span className="inline-block bg-purple-300/30 text-purple-100 text-xs px-3 py-1 rounded-full">
+                    {event.category}
+                  </span>
+                )}
               </div>
-              <button className="w-full py-2 bg-gradient-to-r from-sky-400 to-purple-400 text-slate-900 font-semibold rounded-full hover:from-sky-300 hover:to-purple-300 transition-all">
-                Join Event
+              <button
+                onClick={() => handleJoinEvent(i)}
+                disabled={event.joined}
+                className={`w-full py-2 font-semibold rounded-full transition-all ${
+                  event.joined
+                    ? "bg-green-400 text-slate-900 cursor-not-allowed"
+                    : "bg-gradient-to-r from-sky-400 to-purple-400 text-slate-900 hover:from-sky-300 hover:to-purple-300"
+                }`}
+              >
+                {event.joined ? "✅ Joined" : "Join Event"}
               </button>
             </motion.div>
           ))}
         </div>
       )}
 
-      {/* Event Chat Box */}
+      {/* My Joined Events Section */}
+      {joinedEvents.length > 0 && (
+        <div className="max-w-6xl mx-auto mt-20 bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-6 shadow-lg">
+          <h2 className="text-3xl font-semibold mb-6 text-purple-300 flex items-center gap-2">
+            <Bookmark /> My Joined Events
+          </h2>
+          <div className="grid md:grid-cols-2 gap-6">
+            {joinedEvents.map((evt, idx) => (
+              <motion.div
+                key={idx}
+                whileHover={{ scale: 1.03 }}
+                className="bg-white/10 p-4 rounded-xl border border-white/10"
+              >
+                <h3 className="text-xl font-semibold text-pink-200">
+                  {evt.title}
+                </h3>
+                <p className="text-sky-100 text-sm mt-1">{evt.date}</p>
+                <p className="text-sky-200 text-xs mt-2">{evt.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Event Discussion Chat */}
       <div className="max-w-4xl mx-auto mt-20 bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-6 shadow-lg">
         <h2 className="text-2xl font-semibold mb-4 text-purple-300 flex items-center gap-2">
           💬 Event Discussion Lounge
@@ -107,8 +181,12 @@ const EventsPage = () => {
             </p>
           ) : (
             chatMessages.map((msg, idx) => (
-              <div key={idx} className="bg-white/10 rounded-lg p-2 text-sm text-sky-50">
-                <strong className="text-purple-200">{msg.user}:</strong> {msg.text}
+              <div
+                key={idx}
+                className="bg-white/10 rounded-lg p-2 text-sm text-sky-50"
+              >
+                <strong className="text-purple-200">{msg.user}:</strong>{" "}
+                {msg.text}
               </div>
             ))
           )}
@@ -130,7 +208,6 @@ const EventsPage = () => {
           </button>
         </div>
       </div>
-      
 
       {/* Floating Create Event Button */}
       <motion.button
@@ -165,7 +242,7 @@ const EventsPage = () => {
               </button>
 
               <h2 className="text-3xl font-bold mb-6 text-purple-300 text-center">
-                Create New Event
+                <Sparkles className="inline mr-2" /> Create New Event
               </h2>
 
               <form onSubmit={handleCreateEvent} className="space-y-4">
