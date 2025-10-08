@@ -161,8 +161,8 @@ const ResourcesHub = () => {
           skills: ["HTML5", "CSS3", "JavaScript ES6", "Responsive Design"],
           completed: true,
           resources: [
-            { title: "MDN Web Docs", url: "#" },
-            { title: "JavaScript.info", url: "#" }
+            { title: "HTML , CSS", url: "https://youtu.be/G3e-cpL7ofc?si=HP22pcCIps8HuKJW" },
+            { title: "JavaScript", url: "https://youtu.be/a-wVHL0lpb0?si=S2ciVNd0lIrmGa_9" }
           ]
         },
         {
@@ -174,8 +174,8 @@ const ResourcesHub = () => {
           skills: ["React.js", "JSX", "Hooks", "State Management"],
           completed: false,
           resources: [
-            { title: "React Official Docs", url: "#" },
-            { title: "React Hooks Guide", url: "#" }
+            { title: "React Official Docs", url: "https://react.dev/learn" },
+            { title: "React Tutorial", url: "https://youtu.be/LuNPCSNr-nE?si=HNuvcN_nlo56Aywh" }
           ]
         },
         {
@@ -187,8 +187,8 @@ const ResourcesHub = () => {
           skills: ["Node.js", "Express.js", "REST APIs", "Authentication"],
           completed: false,
           resources: [
-            { title: "Node.js Documentation", url: "#" },
-            { title: "Express.js Guide", url: "#" }
+            { title: "Node.js Documentation", url: "https://nodejs.org/en/learn/getting-started/introduction-to-nodejs" },
+            { title: "Express.js tutorial", url: "https://youtu.be/fBzm9zja2Y8?si=2oPTWJED22mMzWo8" }
           ]
         },
         {
@@ -200,8 +200,8 @@ const ResourcesHub = () => {
           skills: ["MongoDB", "PostgreSQL", "Database Design", "ORMs"],
           completed: false,
           resources: [
-            { title: "MongoDB University", url: "#" },
-            { title: "PostgreSQL Tutorial", url: "#" }
+            { title: "MongoDB ", url: "https://youtu.be/tww-gbNPOcA?si=7a8f3n_heOpAgjAx" },
+            { title: "PostgreSQL Tutorial", url: "https://youtu.be/cnzka7kF5Zk?si=LUIp52DchwRPIT9Y" }
           ]
         },
         {
@@ -213,8 +213,8 @@ const ResourcesHub = () => {
           skills: ["Docker", "AWS", "CI/CD", "Monitoring"],
           completed: false,
           resources: [
-            { title: "Docker Documentation", url: "#" },
-            { title: "AWS Getting Started", url: "#" }
+            { title: "Docker", url: "https://youtu.be/exmSJpJvIPs?si=rN6XrkvpHlm4nPcA" },
+            { title: "AWS Getting Started", url: "https://youtu.be/sSRaakd95Nk?si=vOlxkDdlpzQ3jY26" }
           ]
         }
       ],
@@ -240,8 +240,8 @@ const ResourcesHub = () => {
           skills: ["Linear Algebra", "Statistics", "Probability", "Calculus"],
           completed: true,
           resources: [
-            { title: "Khan Academy Statistics", url: "#" },
-            { title: "3Blue1Brown Linear Algebra", url: "#" }
+            { title: "Khan Academy Statistics", url: "https://youtube.com/playlist?list=PLU5aQXLWR3_yYS0ZYRA-5g5YSSYLNZ6Mc&si=RhowBKKNdz2r0Ayz" },
+            { title: "3Blue1Brown Linear Algebra", url: "https://youtube.com/playlist?list=PL0-GT3co4r2y2YErbmuJw2L5tW4Ew2O5B&si=JZYXC0LeHvxEZiFj" }
           ]
         },
         {
@@ -253,8 +253,8 @@ const ResourcesHub = () => {
           skills: ["Python", "NumPy", "Pandas", "Matplotlib"],
           completed: true,
           resources: [
-            { title: "Python.org Tutorial", url: "#" },
-            { title: "Pandas Documentation", url: "#" }
+            { title: "Python.org Tutorial", url: "https://wiki.python.org/moin/BeginnersGuide" },
+            
           ]
         },
         {
@@ -266,8 +266,8 @@ const ResourcesHub = () => {
           skills: ["Scikit-learn", "Supervised Learning", "Unsupervised Learning", "Model Evaluation"],
           completed: false,
           resources: [
-            { title: "Scikit-learn User Guide", url: "#" },
-            { title: "Andrew Ng ML Course", url: "#" }
+            { title: "Scikit-learn User Guide", url: "https://scikit-learn.org/stable/user_guide.html" },
+            { title: "ML Course", url: "https://youtu.be/i_LwzRVP7bg?si=Z-YwdR1DH44Iu6Ou" }
           ]
         },
         {
@@ -279,13 +279,13 @@ const ResourcesHub = () => {
           skills: ["TensorFlow", "PyTorch", "Neural Networks", "CNNs", "RNNs"],
           completed: false,
           resources: [
-            { title: "TensorFlow Tutorials", url: "#" },
-            { title: "Deep Learning Specialization", url: "#" }
+            { title: "TensorFlow Tutorials", url: "https://youtu.be/tPYj3fFJGjk?si=pMhG1NQFEbaiUCV6" },
+            { title: "Deep Learning Specialization", url: "https://youtu.be/G1P2IaBcXx8?si=DldJLEc5vD9iTb_d" }
           ]
         }
       ],
       mentor: {
-        name: "campus pulll",
+        name: "campus pull",
         verified: true
       },
       followers: 2156

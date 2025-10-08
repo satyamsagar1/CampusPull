@@ -3,6 +3,8 @@ import Icon from "../../../components/AppIcon";
 import Button from "../../../components/ui/Button";
 
 const CareerRoadmapCard = ({ roadmap }) => {
+  if (!roadmap) return <div className="text-center p-4">No roadmap data available</div>;
+
   const [expandedMilestone, setExpandedMilestone] = useState(null);
   const [milestones, setMilestones] = useState(roadmap?.milestones || []);
   const [isStarted, setIsStarted] = useState(false);
@@ -12,36 +14,38 @@ const CareerRoadmapCard = ({ roadmap }) => {
 
   // Load saved progress
   useEffect(() => {
+    if (!roadmap?.id) return;
     const saved = JSON.parse(localStorage.getItem(`progress-${roadmap.id}`));
     if (saved) {
-      setMilestones(saved.milestones);
-      setIsStarted(saved.isStarted);
-      if (saved.milestones.every(m => m.completed)) {
-        setCompletedBadge(true);
-      }
+      setMilestones(saved.milestones || []);
+      setIsStarted(saved.isStarted || false);
+      if (saved.milestones?.every((m) => m.completed)) setCompletedBadge(true);
     }
-  }, [roadmap.id]);
+  }, [roadmap]);
 
   // Save progress and check completion
   useEffect(() => {
+    if (!roadmap?.id) return;
     localStorage.setItem(
       `progress-${roadmap.id}`,
       JSON.stringify({ milestones, isStarted })
     );
+
     const progress = getProgressPercentage();
     if (progress === 100 && !completedBadge) {
       setShowAchievement(true);
       setCompletedBadge(true);
       setShowConfetti(true);
-      setTimeout(() => setShowConfetti(false), 3000); // confetti disappears after 3s
+      setTimeout(() => setShowConfetti(false), 3000);
     }
-  }, [milestones, isStarted]);
+  }, [milestones, isStarted, roadmap, completedBadge]);
 
   const handleMilestoneClick = (milestoneId) => {
     setExpandedMilestone(expandedMilestone === milestoneId ? null : milestoneId);
   };
 
-  const toggleCompletion = (milestoneId) => {
+  const toggleCompletion = (milestoneId, e) => {
+    if (e) e.stopPropagation();
     const updated = milestones.map((m) =>
       m.id === milestoneId ? { ...m, completed: !m.completed } : m
     );
@@ -49,15 +53,17 @@ const CareerRoadmapCard = ({ roadmap }) => {
   };
 
   const getProgressPercentage = () => {
-    const completedMilestones = milestones.filter((m) => m?.completed).length;
-    return (completedMilestones / milestones.length) * 100;
+    if (!milestones?.length) return 0;
+    const completed = milestones.filter((m) => m.completed).length;
+    return (completed / milestones.length) * 100;
   };
 
   const getMilestoneStatusColor = (completed) =>
     completed ? "bg-green-500 border-green-500" : "bg-gray-300 border-gray-300";
 
-  const getMilestoneIcon = (completed) =>
-    completed ? "CheckCircle" : "Circle";
+  const getMilestoneIcon = (completed) => (completed ? "CheckCircle" : "Circle");
+
+  const progressPercentage = getProgressPercentage();
 
   return (
     <>
@@ -66,7 +72,6 @@ const CareerRoadmapCard = ({ roadmap }) => {
         {completedBadge && (
           <div className="absolute top-3 right-3 bg-yellow-400 text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg relative">
             🏆
-            {/* Confetti */}
             {showConfetti && (
               <>
                 <span className="confetti confetti-1"></span>
@@ -80,7 +85,7 @@ const CareerRoadmapCard = ({ roadmap }) => {
         )}
 
         {/* Header */}
-        <div className="relative h-32 bg-gradient-to-r from-academic-blue to-credibility-indigo overflow-hidden">
+        <div className="relative h-32 bg-gradient-to-r from-blue-500 to-green-500 overflow-hidden">
           <div className="absolute inset-0 bg-black bg-opacity-20"></div>
           <div className="relative p-6 h-full flex items-center">
             <div className="flex items-center space-x-4">
@@ -88,9 +93,9 @@ const CareerRoadmapCard = ({ roadmap }) => {
                 <Icon name="Route" size={24} color="white" />
               </div>
               <div>
-                <h3 className="font-bold text-white text-xl mb-1">{roadmap?.title}</h3>
+                <h3 className="font-bold text-white text-xl mb-1">{roadmap.title}</h3>
                 <p className="text-white text-opacity-90 text-sm">
-                  {roadmap?.duration} • {roadmap?.difficulty} Level
+                  {roadmap.duration} • {roadmap.difficulty} Level
                 </p>
               </div>
             </div>
@@ -101,16 +106,16 @@ const CareerRoadmapCard = ({ roadmap }) => {
         <div className="px-6 py-4 border-b border-slate-100">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-gray-700">
-              Progress: {Math.round(getProgressPercentage())}%
+              Progress: {Math.round(progressPercentage)}%
             </span>
             <span className="text-xs text-gray-500">
-              {milestones.filter((m) => m?.completed)?.length} of {milestones.length} completed
+              {milestones.filter((m) => m.completed)?.length} of {milestones.length} completed
             </span>
           </div>
           <div className="w-full bg-slate-200 rounded-full h-2">
             <div
-              className="bg-gradient-to-r from-academic-blue to-green-500 h-2 rounded-full transition-all duration-500"
-              style={{ width: `${getProgressPercentage()}%` }}
+              className="bg-gradient-to-r from-blue-500 to-green-500 h-2 rounded-full transition-all duration-500"
+              style={{ width: `${progressPercentage}%` }}
             ></div>
           </div>
         </div>
@@ -128,26 +133,19 @@ const CareerRoadmapCard = ({ roadmap }) => {
                 onClick={() => handleMilestoneClick(milestone.id)}
               >
                 <div
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleCompletion(milestone.id);
-                  }}
+                  onClick={(e) => toggleCompletion(milestone.id, e)}
                   className={`w-8 h-8 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${getMilestoneStatusColor(
-                    milestone?.completed
+                    milestone.completed
                   )}`}
                 >
-                  <Icon
-                    name={getMilestoneIcon(milestone?.completed)}
-                    size={14}
-                    color="white"
-                  />
+                  <Icon name={getMilestoneIcon(milestone.completed)} size={14} color="white" />
                 </div>
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
-                    <h4 className="font-medium text-gray-800 text-sm">{milestone?.title}</h4>
+                    <h4 className="font-medium text-gray-800 text-sm">{milestone.title}</h4>
                     <div className="flex items-center space-x-2">
-                      <span className="text-xs text-gray-500">{milestone?.estimatedTime}</span>
+                      <span className="text-xs text-gray-500">{milestone.estimatedTime}</span>
                       <Icon
                         name={expandedMilestone === milestone.id ? "ChevronUp" : "ChevronDown"}
                         size={14}
@@ -158,18 +156,22 @@ const CareerRoadmapCard = ({ roadmap }) => {
 
                   {expandedMilestone === milestone.id && (
                     <div className="mt-3 p-3 bg-slate-50 rounded-lg">
-                      <p className="text-xs text-gray-600">{milestone?.description}</p>
-                      {milestone?.resources && (
+                      <p className="text-xs text-gray-600">{milestone.description}</p>
+                      {milestone.resources && (
                         <div className="mt-2">
                           <h5 className="text-xs font-medium text-gray-700 mb-1">Resources:</h5>
                           <ul className="space-y-1">
                             {milestone.resources.map((res, i) => (
-                              <li
-                                key={i}
-                                className="flex items-center gap-2 text-xs text-blue-600 cursor-pointer hover:underline"
-                              >
-                                <Icon name="ExternalLink" size={12} />
-                                {res.title}
+                              <li key={i}>
+                                <a
+                                  href={res.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center gap-2 text-xs text-blue-600 hover:underline"
+                                >
+                                  <Icon name="ExternalLink" size={12} />
+                                  {res.title}
+                                </a>
                               </li>
                             ))}
                           </ul>
@@ -186,7 +188,7 @@ const CareerRoadmapCard = ({ roadmap }) => {
         {/* Footer */}
         <div className="px-6 py-4 bg-slate-50 border-t border-slate-100">
           <div className="flex justify-between items-center">
-            <a href={roadmap?.image} download={`${roadmap?.title || "roadmap"}.png`}>
+            <a href={roadmap.image} download={`${roadmap.title || "roadmap"}.png`}>
               <Button variant="outline" size="sm" iconName="Download" className="mr-2">
                 Download Roadmap
               </Button>
@@ -195,7 +197,7 @@ const CareerRoadmapCard = ({ roadmap }) => {
             <Button
               variant="default"
               size="sm"
-              className="bg-academic-blue hover:bg-blue-700"
+              className="bg-blue-500 hover:bg-blue-700"
               iconName="Play"
               onClick={() => setIsStarted(true)}
             >
@@ -217,7 +219,7 @@ const CareerRoadmapCard = ({ roadmap }) => {
             <Button
               variant="default"
               size="sm"
-              className="bg-academic-blue hover:bg-blue-700"
+              className="bg-blue-500 hover:bg-blue-700"
               onClick={() => setShowAchievement(false)}
             >
               Close

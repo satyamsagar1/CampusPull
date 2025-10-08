@@ -118,9 +118,7 @@ const CommunityPage = () => {
   };
 
   const handleLeave = (communityName) => {
-    setJoinedCommunities(
-      joinedCommunities.filter((c) => c.name !== communityName)
-    );
+    setJoinedCommunities(joinedCommunities.filter((c) => c.name !== communityName));
     if (selectedCommunity?.name === communityName) setSelectedCommunity(null);
     alert(`🚪 Left ${communityName}.`);
   };
@@ -257,45 +255,6 @@ const CommunityPage = () => {
         )}
       </div>
 
-      {/* General Chat */}
-      <div className="max-w-4xl mx-auto mt-20 bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-6 shadow-lg">
-        <h2 className="text-2xl font-semibold mb-4 text-purple-300 flex items-center gap-2">
-          <MessageSquare size={22} /> General Campus Chat
-        </h2>
-        <div className="h-60 overflow-y-auto bg-white/10 rounded-xl p-4 mb-4 space-y-2">
-          {generalMessages.length === 0 ? (
-            <p className="text-sky-200 text-sm text-center">
-              No messages yet. Be the first to share your thoughts!
-            </p>
-          ) : (
-            generalMessages.map((msg, idx) => (
-              <div
-                key={idx}
-                className="bg-white/10 rounded-lg p-2 text-sm text-sky-50"
-              >
-                <strong className="text-purple-200">{msg.user}:</strong> {msg.text}
-              </div>
-            ))
-          )}
-        </div>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            placeholder="Share your thoughts..."
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-            className="flex-1 px-4 py-2 rounded-full text-slate-900 focus:outline-none"
-          />
-          <button
-            onClick={handleSendMessage}
-            className="px-6 py-2 bg-gradient-to-r from-sky-400 to-purple-400 text-slate-900 font-semibold rounded-full hover:from-sky-300 hover:to-purple-300 transition-all flex items-center gap-1"
-          >
-            <Send size={18} /> Send
-          </button>
-        </div>
-      </div>
-
       {/* Floating Create Button */}
       <motion.button
         onClick={() => setShowCreateModal(true)}
@@ -306,11 +265,11 @@ const CommunityPage = () => {
         <PlusCircle size={22} /> Create Community
       </motion.button>
 
-      {/* Announcement Modal */}
+      {/* Create Community Modal */}
       <AnimatePresence>
-        {showAnnouncementModal && (
+        {showCreateModal && (
           <motion.div
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50 p-4"
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm flex justify-center items-center z-50 p-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -322,41 +281,41 @@ const CommunityPage = () => {
               exit={{ scale: 0.8 }}
             >
               <button
-                onClick={() => setShowAnnouncementModal(false)}
+                onClick={() => setShowCreateModal(false)}
                 className="absolute top-4 right-4 text-sky-200 hover:text-sky-100"
               >
                 <X size={22} />
               </button>
 
               <h2 className="text-3xl font-bold mb-6 text-purple-300 text-center">
-                📢 Post New Announcement
+                🏗️ Create New Community
               </h2>
 
-              <form onSubmit={handlePostAnnouncement} className="space-y-4">
+              <form onSubmit={handleCreateCommunity} className="space-y-4">
                 <input
                   type="text"
-                  placeholder="Title"
-                  value={newAnnouncement.title}
+                  placeholder="Community Name"
+                  value={newCommunity.name}
                   onChange={(e) =>
-                    setNewAnnouncement({ ...newAnnouncement, title: e.target.value })
+                    setNewCommunity({ ...newCommunity, name: e.target.value })
                   }
                   className="w-full px-4 py-2 rounded-lg text-slate-900 focus:outline-none"
                 />
                 <textarea
-                  placeholder="Announcement Details"
-                  value={newAnnouncement.content}
+                  placeholder="Community Description"
+                  value={newCommunity.desc}
                   onChange={(e) =>
-                    setNewAnnouncement({ ...newAnnouncement, content: e.target.value })
+                    setNewCommunity({ ...newCommunity, desc: e.target.value })
                   }
                   className="w-full px-4 py-2 rounded-lg text-slate-900 focus:outline-none"
                   rows="3"
                 />
                 <input
                   type="text"
-                  placeholder="Posted By (e.g. Dr. Meena Sharma - HOD CSE)"
-                  value={newAnnouncement.postedBy}
+                  placeholder="Category (e.g., Tech, Design, etc.)"
+                  value={newCommunity.category}
                   onChange={(e) =>
-                    setNewAnnouncement({ ...newAnnouncement, postedBy: e.target.value })
+                    setNewCommunity({ ...newCommunity, category: e.target.value })
                   }
                   className="w-full px-4 py-2 rounded-lg text-slate-900 focus:outline-none"
                 />
@@ -365,7 +324,7 @@ const CommunityPage = () => {
                   type="submit"
                   className="w-full py-2 bg-gradient-to-r from-sky-400 to-purple-400 text-slate-900 font-semibold rounded-full hover:from-sky-300 hover:to-purple-300 transition-all"
                 >
-                  Post
+                  Create
                 </button>
               </form>
             </motion.div>
@@ -406,17 +365,16 @@ const CommunityPage = () => {
                     key={idx}
                     className="bg-white/10 rounded-lg p-2 text-sm text-sky-50"
                   >
-                    <strong className="text-purple-200">{post.user}:</strong>{" "}
-                    {post.text}
+                    <strong className="text-purple-200">{post.user}:</strong> {post.text}
                   </div>
                 ))}
               </div>
 
               <button
                 onClick={() => handleLeave(selectedCommunity.name)}
-                className="w-full py-2 border border-red-400 text-red-200 rounded-full hover:bg-red-500/20 transition-all flex items-center justify-center gap-1"
+                className="w-full py-2 border border-red-400 text-red-200 rounded-full hover:bg-red-500/20 transition-all"
               >
-                <LogOut size={18} /> Leave Community
+                Leave Community
               </button>
             </motion.div>
           </motion.div>
