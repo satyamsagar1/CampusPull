@@ -17,7 +17,7 @@ const ResourcePreviewGrid = () => {
       rating: 4.9,
       difficulty: "Intermediate",
       thumbnail: "https://images.pexels.com/photos/4164418/pexels-photo-4164418.jpeg?auto=compress&cs=tinysrgb&w=400",
-      author: "Rahul Kumar",
+      author: "Campus Pull",
       authorAvatar: "https://images.pexels.com/photos/3785079/pexels-photo-3785079.jpeg?auto=compress&cs=tinysrgb&w=100",
       tags: ["DSA", "Coding", "Interviews"],
       lastUpdated: "2 days ago"
@@ -31,7 +31,7 @@ const ResourcePreviewGrid = () => {
       rating: 4.8,
       difficulty: "Advanced",
       thumbnail: "https://images.pexels.com/photos/3184291/pexels-photo-3184291.jpeg?auto=compress&cs=tinysrgb&w=400",
-      author: "Priya Sharma",
+      author: "Campus pull",
       authorAvatar: "https://images.pexels.com/photos/3769021/pexels-photo-3769021.jpeg?auto=compress&cs=tinysrgb&w=100",
       tags: ["Google", "System Design", "Coding"],
       lastUpdated: "1 week ago"
@@ -45,7 +45,7 @@ const ResourcePreviewGrid = () => {
       rating: 4.9,
       difficulty: "Beginner",
       thumbnail: "https://images.pexels.com/photos/3861958/pexels-photo-3861958.jpeg?auto=compress&cs=tinysrgb&w=400",
-      author: "Arjun Patel",
+      author: "Campus pull",
       authorAvatar: "https://images.pexels.com/photos/3785079/pexels-photo-3785079.jpeg?auto=compress&cs=tinysrgb&w=100",
       tags: ["React", "Node.js", "MongoDB"],
       lastUpdated: "3 days ago"
@@ -59,7 +59,7 @@ const ResourcePreviewGrid = () => {
       rating: 4.7,
       difficulty: "Advanced",
       thumbnail: "https://images.pexels.com/photos/3861969/pexels-photo-3861969.jpeg?auto=compress&cs=tinysrgb&w=400",
-      author: "Dr. Sneha Reddy",
+      author: "Campus pull",
       authorAvatar: "https://images.pexels.com/photos/3769021/pexels-photo-3769021.jpeg?auto=compress&cs=tinysrgb&w=100",
       tags: ["Linear Algebra", "Statistics", "ML"],
       lastUpdated: "5 days ago"
@@ -73,7 +73,7 @@ const ResourcePreviewGrid = () => {
       rating: 4.6,
       difficulty: "Intermediate",
       thumbnail: "https://images.pexels.com/photos/3184465/pexels-photo-3184465.jpeg?auto=compress&cs=tinysrgb&w=400",
-      author: "Vikram Singh",
+      author: "Campus pull",
       authorAvatar: "https://images.pexels.com/photos/3785079/pexels-photo-3785079.jpeg?auto=compress&cs=tinysrgb&w=100",
       tags: ["Strategy", "Analytics", "Leadership"],
       lastUpdated: "1 day ago"
@@ -87,7 +87,7 @@ const ResourcePreviewGrid = () => {
       rating: 4.9,
       difficulty: "Advanced",
       thumbnail: "https://images.pexels.com/photos/4164418/pexels-photo-4164418.jpeg?auto=compress&cs=tinysrgb&w=400",
-      author: "Amit Gupta",
+      author: "Campuss pull",
       authorAvatar: "https://images.pexels.com/photos/3785079/pexels-photo-3785079.jpeg?auto=compress&cs=tinysrgb&w=100",
       tags: ["GATE", "CS", "Preparation"],
       lastUpdated: "4 days ago"

@@ -1,8 +1,15 @@
-// pages/Explore.jsx
 import React, { useContext, useState } from "react";
-import { FaSearch, FaUserCircle, FaLinkedin, FaEnvelope, FaUserPlus, FaStar, FaFire } from "react-icons/fa";
+import {
+  FaSearch,
+  FaUserCircle,
+  FaLinkedin,
+  FaEnvelope,
+  FaUserPlus,
+  FaStar,
+  FaFire,
+} from "react-icons/fa";
 import { ExploreContext } from "../../context/exploreContext";
-import RequestsPage from "./RequestsPage"; // New page for handling requests
+import RequestsPage from "./RequestsPage";
 
 export default function Explore() {
   const { suggestions, search, setSearch, loading, error, sendRequest, requests } =
@@ -21,8 +28,8 @@ export default function Explore() {
       email: "alice@mit.edu",
       linkedin: "https://linkedin.com/in/alice",
       reviews: [
-        { user: "John", rating: 5, comment: "Great mentor, very supportive!" },
-        { user: "Emma", rating: 4, comment: "Helped me improve my skills!" },
+        { user: "John", rating: 5, comment: "Great mentor!" },
+        { user: "Emma", rating: 4, comment: "Very helpful!" },
       ],
     },
     {
@@ -31,25 +38,11 @@ export default function Explore() {
       college: "Stanford",
       degree: "M.Sc AI",
       graduationYear: 2021,
-      skills: ["Python", "Machine Learning", "Data Science"],
+      skills: ["Python", "Machine Learning"],
       email: "bob@stanford.edu",
       linkedin: "https://linkedin.com/in/bob",
       reviews: [
         { user: "Liam", rating: 5, comment: "Excellent guidance!" },
-        { user: "Olivia", rating: 5, comment: "Very knowledgeable mentor." },
-      ],
-    },
-    {
-      _id: "3",
-      name: "Clara Davis",
-      college: "Harvard",
-      degree: "MBA",
-      graduationYear: 2023,
-      skills: ["Management", "Leadership", "Strategy"],
-      email: "clara@harvard.edu",
-      linkedin: "https://linkedin.com/in/clara",
-      reviews: [
-        { user: "Sophia", rating: 4, comment: "Helpful mentor for career growth." },
       ],
     },
   ];
@@ -67,31 +60,29 @@ export default function Explore() {
     .filter((m) => m.avgRating >= 4.5)
     .sort((a, b) => b.avgRating - a.avgRating);
 
-  // Show RequestsPage if clicked
   if (showRequestsPage) {
     return <RequestsPage onBack={() => setShowRequestsPage(false)} />;
   }
 
   return (
-    <div className="p-10 min-h-screen bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600 relative">
-      
-      {/* Heading and Requests Button */}
-      <div className="flex justify-between items-center mb-6">
+    <div className="min-h-screen p-10 bg-gradient-to-br from-pink-50 via-white to-blue-50">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
         <div>
-          <h1 className="text-4xl font-bold text-white">Explore Network 🌐</h1>
-          <p className="text-gray-100">Search and connect with students & mentors of LinkeMate</p>
+          <h1 className="text-4xl font-bold text-gray-800">Explore Network</h1>
+          <p className="text-gray-600 mt-1">Connect with students & mentors of LinkeMate</p>
         </div>
         <button
           onClick={() => setShowRequestsPage(true)}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full font-medium shadow flex items-center gap-2"
+          className="px-4 py-2 bg-gradient-to-r from-pink-500 to-blue-500 hover:from-pink-600 hover:to-blue-600 text-white rounded-xl font-medium shadow-lg flex items-center gap-2 transition"
         >
           <FaUserPlus /> Requests {requests?.length > 0 && `(${requests.length})`}
         </button>
       </div>
 
       {/* Pending Requests Panel */}
-      <div className="bg-blue-100 p-4 rounded-xl shadow mb-6">
-        <h2 className="text-blue-700 font-semibold mb-3 flex items-center gap-2">
+      <div className="bg-white/30 backdrop-blur-md p-4 rounded-2xl shadow mb-8 border border-white/30">
+        <h2 className="text-gray-800 font-semibold mb-3 flex items-center gap-2">
           <FaUserPlus /> Pending Requests
         </h2>
         {requests.length > 0 ? (
@@ -99,47 +90,47 @@ export default function Explore() {
             {requests.map((req) => (
               <div
                 key={req._id}
-                className="px-4 py-2 bg-white rounded-full shadow text-sm text-gray-700"
+                className="px-4 py-2 bg-white rounded-full shadow text-gray-800 font-medium"
               >
                 {req.name || "Unknown User"}
               </div>
             ))}
           </div>
         ) : (
-          <p className="text-gray-500 text-sm">No pending requests.</p>
+          <p className="text-gray-600 text-sm">No pending requests.</p>
         )}
       </div>
 
       {/* Search Bar */}
-      <div className="flex justify-center mb-8">
-        <div className="flex items-center w-full max-w-xl bg-white shadow-md rounded-full px-4 py-2">
+      <div className="flex justify-center mb-10">
+        <div className="flex items-center w-full max-w-xl bg-white/50 backdrop-blur-md rounded-full px-4 py-2 border border-white/30 shadow-sm">
           <FaSearch className="text-gray-400 text-lg mr-2" />
           <input
             type="text"
             placeholder="Search by name, college, degree, or skills..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-transparent focus:outline-none text-gray-700"
+            className="w-full bg-transparent focus:outline-none text-gray-700 placeholder-gray-500"
           />
         </div>
       </div>
 
       {/* Top Rated Mentors */}
       {topRatedMentors.length > 0 && (
-        <div className="mb-10">
-          <h2 className="text-2xl font-bold text-red-900 mb-4 flex items-center gap-2 animate-pulse">
+        <div className="mb-12">
+          <h2 className="text-2xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
             <FaFire className="text-yellow-400" /> Top Rated Mentors
           </h2>
           <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {topRatedMentors.map((user) => (
               <div
                 key={user._id}
-                className="bg-red-700/40 backdrop-blur-lg border border-red-500/50 rounded-2xl shadow-lg p-6 flex flex-col items-center hover:shadow-2xl transition transform hover:scale-105 relative"
+                className="bg-white/30 backdrop-blur-md border border-white/30 rounded-2xl shadow-lg p-6 flex flex-col items-center hover:shadow-2xl transition transform hover:-translate-y-2"
               >
-                <FaUserCircle className="text-white text-6xl mb-4" />
-                <h2 className="text-lg font-semibold text-white">{user.name}</h2>
-                <p className="text-sm text-white mb-1">{user.college}</p>
-                <p className="text-sm text-white mb-2">
+                <FaUserCircle className="text-pink-500 text-6xl mb-4" />
+                <h2 className="text-lg font-semibold text-gray-800">{user.name}</h2>
+                <p className="text-sm text-gray-500 mb-1">{user.college}</p>
+                <p className="text-sm text-gray-500 mb-2">
                   {user.degree} - {user.graduationYear}
                 </p>
 
@@ -147,14 +138,14 @@ export default function Explore() {
                   {[...Array(Math.round(user.avgRating))].map((_, i) => (
                     <FaStar key={i} className="text-yellow-400 mr-1" />
                   ))}
-                  <span className="text-sm ml-2 text-white">{user.avgRating.toFixed(1)}</span>
+                  <span className="text-sm ml-2 text-gray-700">{user.avgRating.toFixed(1)}</span>
                 </div>
 
                 <button
-                  className={`mt-2 px-5 py-2 rounded-full font-medium transition ${
+                  className={`mt-2 px-5 py-2 rounded-xl font-medium transition ${
                     requests.some((req) => req._id === user._id)
-                      ? "bg-green-500 text-white cursor-not-allowed"
-                      : "bg-white text-red-800 hover:bg-white/90"
+                      ? "bg-gray-400 text-white cursor-not-allowed"
+                      : "bg-gradient-to-r from-pink-500 to-blue-500 hover:from-pink-600 hover:to-blue-600 text-white"
                   }`}
                   disabled={requests.some((req) => req._id === user._id)}
                   onClick={() => sendRequest(user._id)}
@@ -167,24 +158,21 @@ export default function Explore() {
         </div>
       )}
 
-      {loading && <p className="text-center text-white">Loading...</p>}
-      {error && <p className="text-center text-red-500">{error}</p>}
-
-      {/* Mentor Cards Grid */}
+      {/* All Mentors Grid */}
       <div className="grid gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {displayedMentors.length > 0 ? (
           displayedMentors.map((user) => (
             <div
               key={user._id}
-              className="bg-white/20 backdrop-blur-md border border-white/30 rounded-2xl shadow-lg p-6 flex flex-col items-center hover:shadow-2xl transition transform hover:scale-105 relative"
+              className="bg-white/30 backdrop-blur-md border border-white/20 rounded-2xl shadow-lg p-6 flex flex-col items-center hover:shadow-xl transition transform hover:-translate-y-1"
             >
-              <FaUserCircle className="text-white text-6xl mb-4" />
-              <h2 className="text-lg font-semibold text-white">{user.name}</h2>
-              <p className="text-sm text-white mb-1">{user.college}</p>
-              <p className="text-sm text-white mb-1">
+              <FaUserCircle className="text-pink-500 text-6xl mb-4" />
+              <h2 className="text-lg font-semibold text-gray-800">{user.name}</h2>
+              <p className="text-sm text-gray-500 mb-1">{user.college}</p>
+              <p className="text-sm text-gray-500 mb-1">
                 {user.degree} - {user.graduationYear}
               </p>
-              <p className="text-sm text-white mb-2">{user.skills.join(", ")}</p>
+              <p className="text-sm text-gray-700 mb-2">{user.skills.join(", ")}</p>
 
               {/* Reviews */}
               <div className="mb-4 w-full">
@@ -193,7 +181,7 @@ export default function Explore() {
                     {[...Array(r.rating)].map((_, i) => (
                       <FaStar key={i} className="text-yellow-400 mr-1" />
                     ))}
-                    <span className="text-xs text-white ml-1">({r.comment})</span>
+                    <span className="text-xs text-gray-600 ml-1">({r.comment})</span>
                   </div>
                 ))}
               </div>
@@ -202,7 +190,7 @@ export default function Explore() {
               <div className="flex space-x-4 mb-4">
                 <a
                   href={`mailto:${user.email}`}
-                  className="text-white hover:text-gray-200 text-xl"
+                  className="text-gray-700 hover:text-gray-900 text-xl"
                   title="Send Email"
                 >
                   <FaEnvelope />
@@ -212,7 +200,7 @@ export default function Explore() {
                     href={user.linkedin}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-white hover:text-gray-200 text-xl"
+                    className="text-gray-700 hover:text-gray-900 text-xl"
                     title="LinkedIn Profile"
                   >
                     <FaLinkedin />
@@ -222,10 +210,10 @@ export default function Explore() {
 
               {/* Connect Button */}
               <button
-                className={`mt-2 px-5 py-2 rounded-full font-medium transition ${
+                className={`mt-2 px-5 py-2 rounded-xl font-medium transition ${
                   requests.some((req) => req._id === user._id)
-                    ? "bg-green-500 text-white cursor-not-allowed"
-                    : "bg-blue-600 text-white hover:bg-blue-700"
+                    ? "bg-gray-400 text-white cursor-not-allowed"
+                    : "bg-gradient-to-r from-pink-500 to-blue-500 hover:from-pink-600 hover:to-blue-600 text-white"
                 }`}
                 disabled={requests.some((req) => req._id === user._id)}
                 onClick={() => sendRequest(user._id)}
@@ -235,11 +223,14 @@ export default function Explore() {
             </div>
           ))
         ) : (
-          <p className="col-span-full text-center text-white">
+          <p className="col-span-full text-center text-gray-600">
             No profiles found matching your search.
           </p>
         )}
       </div>
+
+      {loading && <p className="text-center text-gray-600 mt-6">Loading...</p>}
+      {error && <p className="text-center text-red-500 mt-6">{error}</p>}
     </div>
   );
 }

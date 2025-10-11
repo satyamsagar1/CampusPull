@@ -22,7 +22,7 @@ const MobileSearchBar = () => {
       id: 1,
       title: "Complete DSA Guide for Interviews",
       type: "Study Material",
-      author: "Rahul Kumar",
+      author: "Campus pull",
       downloads: 2847,
       rating: 4.9,
       icon: "BookOpen"
@@ -31,7 +31,7 @@ const MobileSearchBar = () => {
       id: 2,
       title: "Google SWE Interview Experience 2024",
       type: "Interview PYQ",
-      author: "Priya Sharma",
+      author: "Campus pull",
       downloads: 1923,
       rating: 4.8,
       icon: "MessageSquare"
@@ -40,7 +40,7 @@ const MobileSearchBar = () => {
       id: 3,
       title: "Frontend Developer Learning Path",
       type: "Career Roadmap",
-      author: "Arjun Patel",
+      author: "Campus pull",
       downloads: 3156,
       rating: 4.9,
       icon: "Map"
