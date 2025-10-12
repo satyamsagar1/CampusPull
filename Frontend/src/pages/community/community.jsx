@@ -1,330 +1,306 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Users,
   MessageSquare,
-  X,
+  Megaphone,
   Eye,
   PlusCircle,
+  X,
   Send,
-  Megaphone,
-  LogOut,
+  Bookmark,
 } from "lucide-react";
 
+// LocalStorage Keys
+const LS_COMMUNITIES = "cp_communities_v1";
+const LS_JOINED = "cp_joined_v1";
+const LS_ANNOUNCEMENTS = "cp_announcements_v1";
+
+// Default Communities
+const defaultCommunities = [
+  {
+    name: "Coding Ninjas ABESIT",
+    desc: "A community for coding enthusiasts to solve problems, share knowledge, and grow together.",
+    members: 1200,
+    category: "Tech & Development",
+    posts: [
+      { user: "Aarav Singh", text: "Anyone up for a LeetCode challenge today?", date: "2025-10-01" },
+      { user: "Shristi Dabas", text: "Hackathon next week — register now!", date: "2025-09-28" },
+    ],
+  },
+  {
+    name: "Design Hive",
+    desc: "A creative space for UI/UX designers to collaborate, showcase designs, and learn design thinking.",
+    members: 780,
+    category: "Design & Creativity",
+    posts: [{ user: "Ananya Verma", text: "Figma workshop this Friday!", date: "2025-09-30" }],
+  },
+];
+
+// Default Official Announcements
+const defaultAnnouncements = [
+  {
+    title: "Mid-Semester CT Schedule",
+    content:
+      "Mid-semester class tests (CT) will be conducted between 14th Oct - 18th Oct. Check Moodle for subject-wise timings.",
+    postedBy: "Dr. Meena Sharma (HOD - CSE)",
+    date: "2025-10-07",
+  },
+  {
+    title: "Holiday Notice",
+    content: "Campus will remain closed on 10th Oct due to festival celebrations.",
+    postedBy: "College Administration",
+    date: "2025-10-01",
+  },
+];
+
 const CommunityPage = () => {
+  // 🌸 You can change this to 'student' or 'teacher' to test visibility
+  const [role] = useState("teacher");
+
+  const [communities, setCommunities] = useState([]);
+  const [joined, setJoined] = useState([]);
   const [selectedCommunity, setSelectedCommunity] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
+  const [newCommunity, setNewCommunity] = useState({ name: "", desc: "", category: "" });
+  const [announcements, setAnnouncements] = useState([]);
+  const [newAnnouncement, setNewAnnouncement] = useState({ title: "", content: "" });
 
-  const [generalMessages, setGeneralMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState("");
-  const [newCommunity, setNewCommunity] = useState({
-    name: "",
-    desc: "",
-    category: "",
-  });
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(LS_COMMUNITIES);
+      const rawJoined = localStorage.getItem(LS_JOINED);
+      const rawAnn = localStorage.getItem(LS_ANNOUNCEMENTS);
+      setCommunities(raw ? JSON.parse(raw) : defaultCommunities);
+      setJoined(rawJoined ? JSON.parse(rawJoined) : []);
+      setAnnouncements(rawAnn ? JSON.parse(rawAnn) : defaultAnnouncements);
+    } catch {
+      setCommunities(defaultCommunities);
+      setJoined([]);
+      setAnnouncements(defaultAnnouncements);
+    }
+  }, []);
 
-  const [joinedCommunities, setJoinedCommunities] = useState([]);
+  // Save to localStorage
+  useEffect(() => {
+    localStorage.setItem(LS_COMMUNITIES, JSON.stringify(communities));
+  }, [communities]);
+  useEffect(() => {
+    localStorage.setItem(LS_JOINED, JSON.stringify(joined));
+  }, [joined]);
+  useEffect(() => {
+    localStorage.setItem(LS_ANNOUNCEMENTS, JSON.stringify(announcements));
+  }, [announcements]);
 
-  const [announcements, setAnnouncements] = useState([
-    {
-      title: "Internal CT Notice",
-      content:
-        "Mid-semester Class Test (CT) will be held from 14th Oct. Prepare accordingly.",
-      postedBy: "Dr. Meena Sharma (HOD-CSE)",
-      date: "2025-10-07",
-    },
-    {
-      title: "Holiday Notice",
-      content:
-        "Campus will remain closed on 10th Oct due to festival celebration.",
-      postedBy: "College Administration",
-      date: "2025-10-06",
-    },
-  ]);
+  const isJoined = (name) => joined.includes(name);
 
-  const [newAnnouncement, setNewAnnouncement] = useState({
-    title: "",
-    content: "",
-    postedBy: "",
-  });
-
-  const [communities, setCommunities] = useState([
-    {
-      name: "Coding Ninjas ABESIT",
-      desc: "A community for coding enthusiasts to solve problems, share knowledge, and grow together.",
-      members: 1200,
-      category: "Tech & Development",
-      posts: [
-        { user: "Aarav Singh", text: "Anyone up for a LeetCode challenge today?" },
-        { user: "Shristi Dabas", text: "We’re organizing a hackathon next week!" },
-      ],
-    },
-    {
-      name: "Design Hive",
-      desc: "A creative space for UI/UX designers to collaborate, showcase designs, and learn design thinking.",
-      members: 780,
-      category: "Design & Creativity",
-      posts: [
-        { user: "Ananya Verma", text: "New Figma tricks workshop coming soon!" },
-        { user: "Karan Mehta", text: "Let’s share feedback on our latest mockups." },
-      ],
-    },
-    {
-      name: "Entrepreneurship Cell",
-      desc: "Connecting innovative students, mentors, and investors to promote startup culture in campus.",
-      members: 540,
-      category: "Innovation & Startups",
-      posts: [
-        { user: "Priya Sharma", text: "Pitch deck review session at 6 PM today!" },
-        { user: "Rohit Gupta", text: "Looking for a co-founder for my idea — DM me!" },
-      ],
-    },
-  ]);
-
-  // --- Functions ---
+  // Create new community
   const handleCreateCommunity = (e) => {
     e.preventDefault();
-    if (!newCommunity.name || !newCommunity.desc) return;
-    setCommunities([...communities, { ...newCommunity, members: 1, posts: [] }]);
+    if (!newCommunity.name.trim() || !newCommunity.desc.trim()) return alert("Enter all details!");
+    const newCom = {
+      ...newCommunity,
+      members: 1,
+      posts: [],
+    };
+    setCommunities([newCom, ...communities]);
+    setJoined([newCom.name, ...joined]);
     setNewCommunity({ name: "", desc: "", category: "" });
     setShowCreateModal(false);
-    alert("🎉 New community created successfully!");
   };
 
-  const handleSendMessage = () => {
-    if (newMessage.trim() !== "") {
-      setGeneralMessages([...generalMessages, { user: "You", text: newMessage }]);
-      setNewMessage("");
-    }
-  };
-
-  const handlePostAnnouncement = (e) => {
-    e.preventDefault();
-    if (!newAnnouncement.title || !newAnnouncement.content || !newAnnouncement.postedBy)
-      return;
-    const today = new Date().toISOString().split("T")[0];
-    setAnnouncements([{ ...newAnnouncement, date: today }, ...announcements]);
-    setNewAnnouncement({ title: "", content: "", postedBy: "" });
-    setShowAnnouncementModal(false);
-    alert("📢 Announcement posted successfully!");
-  };
-
+  // Join community
   const handleJoin = (community) => {
-    if (!joinedCommunities.some((c) => c.name === community.name)) {
-      setJoinedCommunities([...joinedCommunities, community]);
-      alert(`✅ Joined ${community.name}!`);
+    if (!isJoined(community.name)) {
+      setJoined([community.name, ...joined]);
+      setCommunities((prev) =>
+        prev.map((c) => (c.name === community.name ? { ...c, members: c.members + 1 } : c))
+      );
     }
   };
 
-  const handleLeave = (communityName) => {
-    setJoinedCommunities(joinedCommunities.filter((c) => c.name !== communityName));
-    if (selectedCommunity?.name === communityName) setSelectedCommunity(null);
-    alert(`🚪 Left ${communityName}.`);
+  // Add announcement (teacher only)
+  const handleAddAnnouncement = (e) => {
+    e.preventDefault();
+    if (!newAnnouncement.title.trim() || !newAnnouncement.content.trim()) return;
+    const newAnn = {
+      title: newAnnouncement.title.trim(),
+      content: newAnnouncement.content.trim(),
+      postedBy: "You (Teacher)",
+      date: new Date().toLocaleDateString(),
+    };
+    setAnnouncements([newAnn, ...announcements]);
+    setNewAnnouncement({ title: "", content: "" });
+    setShowAnnouncementModal(false);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 text-white py-16 px-6 relative">
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="text-center mb-12"
-      >
-        <h1 className="text-5xl font-extrabold mb-3">💬 CampusPull Community</h1>
-        <p className="text-sky-100 text-lg">
-          Connect, Collaborate, and Stay Updated with your campus peers and faculty.
+    <div className="min-h-screen bg-[#F3F4FD] text-[#1E293B] py-10 px-6">
+      {/* HEADER */}
+      <div className="max-w-7xl mx-auto text-center mb-10">
+        <h1 className="text-4xl font-extrabold text-[#3B82F6]">🎓 CampusPull Community</h1>
+        <p className="text-[#475569] mt-2 text-lg">
+          Connect, collaborate, and stay informed with your campus network.
         </p>
-      </motion.div>
-
-      {/* Search Bar */}
-      <div className="flex justify-center mb-12">
-        <input
-          type="text"
-          placeholder="🔍 Search communities..."
-          className="w-full max-w-lg px-5 py-3 rounded-full text-slate-800 focus:outline-none shadow-md"
-        />
       </div>
 
-      {/* Community Grid */}
-      <div className="grid md:grid-cols-3 gap-10 max-w-7xl mx-auto">
-        {communities.map((community, i) => (
-          <motion.div
-            key={i}
-            whileHover={{ scale: 1.05 }}
-            transition={{ duration: 0.3 }}
-            className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-6 shadow-lg hover:bg-white/20 transition-all"
-          >
-            <div className="flex items-center gap-3 mb-3">
-              <Users className="text-pink-300" size={28} />
-              <h2 className="text-2xl font-semibold text-purple-300">{community.name}</h2>
-            </div>
-            <p className="text-sky-50 mb-4 text-sm">{community.desc}</p>
-            <div className="flex justify-between items-center text-sky-100 text-sm mb-4">
-              <span className="inline-block bg-purple-300/30 text-purple-100 text-xs px-3 py-1 rounded-full">
-                {community.category}
-              </span>
-              <span>{community.members} Members</span>
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setSelectedCommunity(community)}
-                className="flex-1 py-2 bg-gradient-to-r from-sky-400 to-purple-400 text-slate-900 font-semibold rounded-full hover:from-sky-300 hover:to-purple-300 transition-all flex items-center justify-center gap-1"
-              >
-                <Eye size={18} /> View
-              </button>
-              <button
-                onClick={() => handleJoin(community)}
-                className="flex-1 py-2 border border-purple-300 text-purple-100 rounded-full hover:bg-white/10 transition-all"
-              >
-                Join
-              </button>
-            </div>
-          </motion.div>
-        ))}
-      </div>
+      <div className="max-w-7xl mx-auto grid lg:grid-cols-3 gap-8">
+        {/* LEFT SIDE: Communities */}
+        <div className="lg:col-span-2 space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-semibold text-[#3B82F6]">Communities</h2>
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-[#3B82F6] to-[#6366F1] text-white shadow-md"
+            >
+              <PlusCircle size={18} /> Create
+            </button>
+          </div>
 
-      {/* My Joined Communities */}
-      {joinedCommunities.length > 0 && (
-        <div className="max-w-6xl mx-auto mt-20 bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-6 shadow-lg">
-          <h2 className="text-3xl font-semibold mb-6 text-purple-300">
-            🌟 My Joined Communities
-          </h2>
-          <div className="grid md:grid-cols-3 gap-6">
-            {joinedCommunities.map((community, idx) => (
+          <div className="grid md:grid-cols-2 gap-5">
+            {communities.map((c, idx) => (
               <motion.div
                 key={idx}
-                whileHover={{ scale: 1.05 }}
-                className="bg-white/10 rounded-xl p-5 border border-white/10 hover:bg-white/20 transition-all"
+                whileHover={{ scale: 1.02 }}
+                className="bg-white rounded-2xl p-5 shadow-md border border-slate-100"
               >
-                <h3 className="text-xl font-bold text-pink-200 mb-2">
-                  {community.name}
+                <h3 className="text-lg font-semibold text-[#1E40AF] flex items-center gap-2">
+                  <Users size={18} /> {c.name}
                 </h3>
-                <p className="text-sky-100 text-sm mb-3">{community.desc}</p>
-                <div className="flex gap-2">
+                <p className="text-sm text-slate-600 mt-2">{c.desc}</p>
+                <div className="text-xs text-slate-500 mt-1">{c.category}</div>
+                <div className="flex gap-2 mt-4">
                   <button
-                    onClick={() => setSelectedCommunity(community)}
-                    className="flex-1 py-2 bg-gradient-to-r from-sky-400 to-purple-400 text-slate-900 font-semibold rounded-full hover:from-sky-300 hover:to-purple-300 transition-all flex items-center justify-center gap-1"
+                    onClick={() => setSelectedCommunity(c)}
+                    className={`flex-1 py-2 rounded-full font-semibold ${
+                      isJoined(c.name)
+                        ? "bg-gradient-to-r from-[#3B82F6] to-[#6366F1] text-white"
+                        : "bg-gray-300 text-gray-700 cursor-not-allowed"
+                    }`}
+                    disabled={!isJoined(c.name)}
                   >
-                    <Eye size={18} /> Open
+                    <Eye size={14} className="inline mr-1" /> View
                   </button>
-                  <button
-                    onClick={() => handleLeave(community.name)}
-                    className="flex-1 py-2 border border-red-400 text-red-200 rounded-full hover:bg-red-500/20 transition-all flex items-center justify-center gap-1"
-                  >
-                    <LogOut size={18} /> Leave
-                  </button>
+                  {!isJoined(c.name) ? (
+                    <button
+                      onClick={() => handleJoin(c)}
+                      className="flex-1 rounded-full py-2 border border-[#3B82F6] text-[#1E40AF] font-medium hover:bg-[#EFF6FF]"
+                    >
+                      Join
+                    </button>
+                  ) : (
+                    <div className="flex-1 text-center text-sm text-[#2563EB] font-medium">
+                      Joined
+                    </div>
+                  )}
                 </div>
               </motion.div>
             ))}
           </div>
-        </div>
-      )}
 
-      {/* Announcements */}
-      <div className="max-w-5xl mx-auto mt-20 bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-6 shadow-lg">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-3xl font-semibold text-purple-300 flex items-center gap-2">
-            <Megaphone size={24} /> Official Announcements
-          </h2>
-          <button
-            onClick={() => setShowAnnouncementModal(true)}
-            className="px-4 py-2 bg-gradient-to-r from-sky-400 to-purple-400 text-slate-900 font-semibold rounded-full hover:from-sky-300 hover:to-purple-300 transition-all flex items-center gap-1"
-          >
-            <PlusCircle size={18} /> Post
-          </button>
+          {/* My Joined Communities Section */}
+          {joined.length > 0 && (
+            <div className="bg-white rounded-2xl p-6 shadow-md border border-slate-100 mt-10">
+              <h2 className="text-xl font-semibold text-[#3B82F6] flex items-center gap-2 mb-4">
+                <Bookmark /> My Joined Communities
+              </h2>
+              <ul className="space-y-2 text-sm text-slate-700">
+                {joined.map((name, idx) => (
+                  <li key={idx} className="border-b pb-1">
+                    {name}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
-        {announcements.length === 0 ? (
-          <p className="text-sky-200 text-sm text-center">No announcements yet.</p>
-        ) : (
-          <div className="space-y-3">
-            {announcements.map((a, idx) => (
-              <div
-                key={idx}
-                className="bg-white/10 rounded-xl p-4 border border-white/10 hover:bg-white/20 transition-all"
-              >
-                <h3 className="text-lg font-bold text-pink-200">{a.title}</h3>
-                <p className="text-sky-100 text-sm mt-1">{a.content}</p>
-                <div className="text-xs text-sky-200 mt-2">
-                  Posted by <strong>{a.postedBy}</strong> • {a.date}
-                </div>
+
+        {/* RIGHT SIDE: Announcements */}
+        <aside className="space-y-6">
+          <div className="bg-white rounded-2xl p-5 shadow-md border border-slate-100">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Megaphone className="text-[#3B82F6]" size={18} />
+                <h3 className="font-semibold text-[#1E293B]">Official Announcements</h3>
               </div>
-            ))}
-          </div>
-        )}
-      </div>
+              {role === "teacher" && (
+                <button
+                  onClick={() => setShowAnnouncementModal(true)}
+                  className="text-sm text-[#3B82F6] hover:underline"
+                >
+                  + Add
+                </button>
+              )}
+            </div>
 
-      {/* Floating Create Button */}
-      <motion.button
-        onClick={() => setShowCreateModal(true)}
-        whileHover={{ scale: 1.1 }}
-        transition={{ duration: 0.3 }}
-        className="fixed bottom-8 right-8 bg-gradient-to-r from-purple-400 to-sky-400 text-slate-900 font-semibold rounded-full shadow-xl px-6 py-3 flex items-center gap-2 hover:from-purple-300 hover:to-sky-300"
-      >
-        <PlusCircle size={22} /> Create Community
-      </motion.button>
+            <div className="space-y-3 max-h-[400px] overflow-y-auto">
+              {announcements.map((a, i) => (
+                <div key={i} className="border-b pb-3">
+                  <h4 className="font-semibold text-[#1E3A8A]">{a.title}</h4>
+                  <p className="text-sm text-slate-600 mt-1">{a.content}</p>
+                  <div className="text-xs text-slate-500 mt-2">
+                    Posted by <strong>{a.postedBy}</strong> • {a.date}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </aside>
+      </div>
 
       {/* Create Community Modal */}
       <AnimatePresence>
         {showCreateModal && (
           <motion.div
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm flex justify-center items-center z-50 p-4"
+            className="fixed inset-0 flex items-center justify-center bg-black/50 z-50"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
             <motion.div
-              className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-8 max-w-md w-full text-white shadow-2xl relative"
-              initial={{ scale: 0.8 }}
+              className="bg-white rounded-2xl p-6 shadow-xl w-full max-w-md border-t-4 border-[#3B82F6]"
+              initial={{ scale: 0.9 }}
               animate={{ scale: 1 }}
-              exit={{ scale: 0.8 }}
+              exit={{ scale: 0.9 }}
             >
-              <button
-                onClick={() => setShowCreateModal(false)}
-                className="absolute top-4 right-4 text-sky-200 hover:text-sky-100"
-              >
-                <X size={22} />
-              </button>
-
-              <h2 className="text-3xl font-bold mb-6 text-purple-300 text-center">
-                🏗️ Create New Community
-              </h2>
-
-              <form onSubmit={handleCreateCommunity} className="space-y-4">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-semibold text-[#3B82F6]">Create Community</h3>
+                <button onClick={() => setShowCreateModal(false)}>
+                  <X />
+                </button>
+              </div>
+              <form onSubmit={handleCreateCommunity} className="space-y-3">
                 <input
-                  type="text"
-                  placeholder="Community Name"
                   value={newCommunity.name}
                   onChange={(e) =>
                     setNewCommunity({ ...newCommunity, name: e.target.value })
                   }
-                  className="w-full px-4 py-2 rounded-lg text-slate-900 focus:outline-none"
-                />
-                <textarea
-                  placeholder="Community Description"
-                  value={newCommunity.desc}
-                  onChange={(e) =>
-                    setNewCommunity({ ...newCommunity, desc: e.target.value })
-                  }
-                  className="w-full px-4 py-2 rounded-lg text-slate-900 focus:outline-none"
-                  rows="3"
+                  placeholder="Community Name"
+                  className="w-full px-3 py-2 border rounded-lg outline-none"
                 />
                 <input
-                  type="text"
-                  placeholder="Category (e.g., Tech, Design, etc.)"
                   value={newCommunity.category}
                   onChange={(e) =>
                     setNewCommunity({ ...newCommunity, category: e.target.value })
                   }
-                  className="w-full px-4 py-2 rounded-lg text-slate-900 focus:outline-none"
+                  placeholder="Category (e.g., Tech, Design)"
+                  className="w-full px-3 py-2 border rounded-lg outline-none"
                 />
-
+                <textarea
+                  value={newCommunity.desc}
+                  onChange={(e) =>
+                    setNewCommunity({ ...newCommunity, desc: e.target.value })
+                  }
+                  placeholder="Short description"
+                  rows={3}
+                  className="w-full px-3 py-2 border rounded-lg outline-none"
+                />
                 <button
                   type="submit"
-                  className="w-full py-2 bg-gradient-to-r from-sky-400 to-purple-400 text-slate-900 font-semibold rounded-full hover:from-sky-300 hover:to-purple-300 transition-all"
+                  className="w-full py-2 bg-gradient-to-r from-[#3B82F6] to-[#6366F1] text-white rounded-full"
                 >
-                  Create
+                  Create & Join
                 </button>
               </form>
             </motion.div>
@@ -332,50 +308,52 @@ const CommunityPage = () => {
         )}
       </AnimatePresence>
 
-      {/* Community View Modal */}
+      {/* Add Announcement Modal (Teacher Only) */}
       <AnimatePresence>
-        {selectedCommunity && (
+        {showAnnouncementModal && role === "teacher" && (
           <motion.div
-            className="fixed inset-0 bg-black/70 flex justify-center items-center z-50 p-6"
+            className="fixed inset-0 flex items-center justify-center bg-black/50 z-50"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
             <motion.div
-              className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-8 max-w-lg w-full text-white relative shadow-2xl"
-              initial={{ scale: 0.8 }}
+              className="bg-white rounded-2xl p-6 shadow-xl w-full max-w-md border-t-4 border-[#6366F1]"
+              initial={{ scale: 0.9 }}
               animate={{ scale: 1 }}
-              exit={{ scale: 0.8 }}
+              exit={{ scale: 0.9 }}
             >
-              <button
-                onClick={() => setSelectedCommunity(null)}
-                className="absolute top-4 right-4 text-sky-200 hover:text-sky-100"
-              >
-                <X size={22} />
-              </button>
-
-              <h2 className="text-3xl font-bold mb-3 text-purple-300">
-                {selectedCommunity.name}
-              </h2>
-              <p className="text-sky-100 text-sm mb-4">{selectedCommunity.desc}</p>
-
-              <div className="space-y-2 max-h-60 overflow-y-auto bg-white/10 rounded-xl p-4 mb-4">
-                {selectedCommunity.posts.map((post, idx) => (
-                  <div
-                    key={idx}
-                    className="bg-white/10 rounded-lg p-2 text-sm text-sky-50"
-                  >
-                    <strong className="text-purple-200">{post.user}:</strong> {post.text}
-                  </div>
-                ))}
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-semibold text-[#6366F1]">Add Announcement</h3>
+                <button onClick={() => setShowAnnouncementModal(false)}>
+                  <X />
+                </button>
               </div>
-
-              <button
-                onClick={() => handleLeave(selectedCommunity.name)}
-                className="w-full py-2 border border-red-400 text-red-200 rounded-full hover:bg-red-500/20 transition-all"
-              >
-                Leave Community
-              </button>
+              <form onSubmit={handleAddAnnouncement} className="space-y-3">
+                <input
+                  value={newAnnouncement.title}
+                  onChange={(e) =>
+                    setNewAnnouncement({ ...newAnnouncement, title: e.target.value })
+                  }
+                  placeholder="Title"
+                  className="w-full px-3 py-2 border rounded-lg outline-none"
+                />
+                <textarea
+                  value={newAnnouncement.content}
+                  onChange={(e) =>
+                    setNewAnnouncement({ ...newAnnouncement, content: e.target.value })
+                  }
+                  placeholder="Announcement details"
+                  rows={3}
+                  className="w-full px-3 py-2 border rounded-lg outline-none"
+                />
+                <button
+                  type="submit"
+                  className="w-full py-2 bg-gradient-to-r from-[#3B82F6] to-[#6366F1] text-white rounded-full"
+                >
+                  Post Announcement
+                </button>
+              </form>
             </motion.div>
           </motion.div>
         )}
