@@ -1,8 +1,8 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo } from "react"; 
 import { useChat } from "../../context/chatContext";
+import { FaCircle } from "react-icons/fa";
 
 const ChatSidebar = () => {
-  // Get everything from the context for consistency
   const { chatList, onlineUsers, loadMessages, activeChat, setActiveChat, unreadCounts, clearUnreadCount } = useChat();
   const [search, setSearch] = useState("");
 
@@ -14,19 +14,21 @@ const ChatSidebar = () => {
   }, [chatList, search]);
 
   return (
-    // This structure is correct: a flex column with a scrolling middle section
-    <div className="w-80 border-r border-gray-200 flex flex-col h-full bg-white">
+    <div className="w-80 h-full flex flex-col bg-gradient-to-b from-pink-50 via-white to-blue-50 border-r border-white/40 shadow-lg">
       
-      {/* 1. Search Bar (Stays Fixed) */}
-      <div className="p-4 border-b border-gray-200">
+      {/* Search Bar */}
+      <div className="p-4 border-b border-white/30">
         <input
-          type="text" placeholder="Search chats..." value={search} onChange={e => setSearch(e.target.value)}
-          className="w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring"
+          type="text"
+          placeholder="Search chats..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full px-3 py-2 rounded-full border border-white/30 bg-white/50 backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-pink-400 text-gray-700 placeholder-gray-500 shadow-sm"
         />
       </div>
 
-      {/* 2. Chat List (Scrolls) */}
-      <div className="flex-1 overflow-y-auto">
+      {/* Chat List */}
+      <div className="flex-1 overflow-y-auto p-2 space-y-2">
         {filteredChats.map(chat => {
           const chatUser = chat.chatWith;
           if (!chatUser?._id) return null;
@@ -42,23 +44,29 @@ const ChatSidebar = () => {
                 loadMessages(chatUser._id);
                 clearUnreadCount?.(chatUser._id);
               }}
-              className={`flex items-center p-3 w-full text-left transition-colors duration-200 ${
-                isActive ? "bg-sky-100 border-r-4 border-sky-500" : "hover:bg-gray-100"
-              }`}
               type="button"
+              className={`flex items-center w-full p-3 rounded-2xl transition transform hover:scale-105 ${
+                isActive 
+                  ? "bg-gradient-to-r from-pink-500 to-blue-500 text-white shadow-lg" 
+                  : "bg-white/30 backdrop-blur-md text-gray-800 hover:bg-white/50"
+              }`}
             >
               <div className="relative">
-                <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center font-bold text-gray-600">
+                <div className="w-10 h-10 rounded-full bg-white/50 flex items-center justify-center font-bold text-gray-700 shadow">
                   {chatUser.name?.charAt(0).toUpperCase() || "U"}
                 </div>
-                {isOnline && <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>}
+                {isOnline && <FaCircle className="absolute bottom-0 right-0 w-3 h-3 text-green-500" />}
               </div>
+
               <div className="ml-3 flex-1 overflow-hidden">
-                <h4 className="font-medium text-gray-800 truncate">{chatUser.name || "Unknown"}</h4>
-                <p className={`text-xs truncate ${unreadCount > 0 ? 'font-bold text-gray-700' : 'text-gray-500'}`}>{chat.lastMessage || "No messages yet"}</p>
+                <h4 className="font-medium truncate">{chatUser.name || "Unknown"}</h4>
+                <p className={`text-xs truncate ${unreadCount > 0 ? "font-bold" : "text-gray-600"}`}>
+                  {chat.lastMessage || "No messages yet"}
+                </p>
               </div>
+
               {unreadCount > 0 && (
-                <div className="ml-auto text-xs bg-sky-500 text-white rounded-full h-5 w-5 flex items-center justify-center font-semibold">
+                <div className="ml-auto text-xs bg-pink-500 text-white rounded-full h-5 w-5 flex items-center justify-center font-semibold shadow">
                   {unreadCount}
                 </div>
               )}

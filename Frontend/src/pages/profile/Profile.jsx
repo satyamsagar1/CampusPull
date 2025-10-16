@@ -2,7 +2,6 @@ import React, { useState, useEffect, useContext } from "react";
 import {
   FaGithub,
   FaLinkedin,
-  FaArrowLeft,
   FaTools,
   FaPlus,
   FaMagic,
@@ -10,13 +9,14 @@ import {
   FaGraduationCap,
   FaCertificate,
   FaFolderOpen,
+  FaCamera,
 } from "react-icons/fa";
+import { motion } from "framer-motion";
 import { ProfileContext } from "../../context/profileContext";
 
 export default function Profile() {
   const { profile, loading, error, updateProfile } = useContext(ProfileContext);
 
-  // Local editable states
   const [bio, setbio] = useState("");
   const [editbio, setEditbio] = useState(false);
   const [newSkill, setNewSkill] = useState("");
@@ -25,25 +25,113 @@ export default function Profile() {
   const [newEducation, setNewEducation] = useState({ degree: "", institution: "", year: "" });
   const [newCert, setNewCert] = useState({ name: "", provider: "" });
   const [resume, setResume] = useState(null);
+  const [previewImage, setPreviewImage] = useState(profile?.profileImage || "/default-avatar.png");
+  const [uploadingImage, setUploadingImage] = useState(false);
 
-  // Sync profile → local states
   useEffect(() => {
     if (profile) {
       setbio(profile.bio || "");
+      setPreviewImage(profile.profileImage || "/default-avatar.png");
     }
   }, [profile]);
 
-  // Loading and error states
-  if (loading) return <p className="p-6">Loading profile...</p>;
+  if (loading) return <p className="p-6 text-center text-gray-600">Loading profile...</p>;
   if (error) return <p className="p-6 text-red-500">{error}</p>;
   if (!profile && !loading) return <p className="p-6">No profile data</p>;
 
-  // --- Handlers with error alerts ---
   const safeUpdate = async (updatedProfile) => {
     try {
       await updateProfile(updatedProfile);
     } catch (err) {
-      alert("Failed to update profile: " + err.message);
+      alert("Failed to update profile: " + (err?.message || "Unknown error"));
+      throw err;
+    }
+  };
+
+  const readFileAsDataURL = (file) =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error("File read error"));
+      reader.onloadend = () => resolve(reader.result);
+      reader.readAsDataURL(file);
+    });
+
+  const resizeImage = (dataUrl, maxWidth = 1024) =>
+    new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        if (img.width <= maxWidth) return resolve(dataUrl);
+        const ratio = maxWidth / img.width;
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(img.width * ratio);
+        canvas.height = Math.round(img.height * ratio);
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL("image/jpeg", 0.8));
+      };
+      img.onerror = () => resolve(dataUrl);
+      img.src = dataUrl;
+    });
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const maxSizeMB = 6;
+    if (file.size / 1024 / 1024 > maxSizeMB) {
+      alert(`Image too large. Please choose an image smaller than ${maxSizeMB} MB.`);
+      return;
+    }
+
+    try {
+      setUploadingImage(true);
+      let dataUrl = await readFileAsDataURL(file);
+      dataUrl = await resizeImage(dataUrl, 1024);
+      setPreviewImage(dataUrl);
+
+      try {
+        await safeUpdate({ ...profile, profileImage: dataUrl });
+        setUploadingImage(false);
+        return;
+      } catch (err) {
+        console.warn("Base64 update failed, attempting multipart upload fallback...", err);
+      }
+
+      try {
+        const formData = new FormData();
+        const res = await fetch(dataUrl);
+        const blob = await res.blob();
+        const filename = file.name || `profile_${Date.now()}.jpg`;
+        formData.append("photo", blob, filename);
+        const token = localStorage.getItem("token");
+        const uploadRes = await fetch("/api/upload-profile-photo", {
+          method: "POST",
+          body: formData,
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+
+        if (!uploadRes.ok) {
+          const txt = await uploadRes.text().catch(() => "");
+          throw new Error(`Upload failed (${uploadRes.status}): ${txt}`);
+        }
+
+        const uploadJson = await uploadRes.json();
+        const photoUrl = uploadJson.photoUrl || uploadJson.url || uploadJson.data?.photoUrl;
+        if (!photoUrl) throw new Error("No photo URL returned from upload endpoint.");
+        await safeUpdate({ ...profile, profileImage: photoUrl });
+        setPreviewImage(photoUrl);
+      } catch (uploadErr) {
+        console.error("Multipart upload fallback failed:", uploadErr);
+        alert(
+          "Failed to upload image to server. Both methods failed. Check console."
+        );
+      }
+    } catch (err) {
+      console.error("Image handling error:", err);
+      alert("Could not process image. Try a different file.");
+    } finally {
+      setUploadingImage(false);
+      if (e.target) e.target.value = "";
     }
   };
 
@@ -82,9 +170,8 @@ export default function Profile() {
     setEditbio(false);
   };
 
-  // AI Resume Builder
   const generateResume = () => {
-    const resumeData = `'
+    const resumeData = `
 📌 Name: ${profile.name || ""}
 🎯 Role: ${profile.role || ""}
 
@@ -125,297 +212,209 @@ ${
     setResume(resumeData);
   };
 
-return (
-  <div className="relative min-h-screen bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100">
-   
+  const Card = ({ children }) => (
+    <motion.div
+      whileHover={{ y: -3 }}
+      transition={{ type: "spring", stiffness: 200, damping: 15 }}
+      className="bg-white/70 backdrop-blur-xl rounded-2xl shadow-md hover:shadow-xl p-6 transition-all border border-white/30"
+    >
+      {children}
+    </motion.div>
+  );
 
-    <div className="relative z-10 max-w-6xl mx-auto py-12 grid grid-cols-1 md:grid-cols-3 gap-6">
-      {/* Sidebar */}
-      <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-xl p-6">
-        <div className="flex flex-col items-center text-center">
-          <img
-            src={profile.profileImage || "/default-avatar.png"}
-            alt="Profile"
-            className="w-28 h-28 rounded-full border-4 border-white shadow-lg object-cover"
-          />
-          <h2 className="text-xl font-bold mt-4">{profile.name || "Unnamed"}</h2>
-          <p className="text-gray-600">{profile.role || "No role yet"}</p>
-          <div className="flex gap-4 mt-4 text-xl">
-            <a href={profile.linkedin || "#"} className="hover:text-blue-600">
-              <FaLinkedin />
-            </a>
-            <a href={profile.github || "#"} className="hover:text-gray-800">
-              <FaGithub />
-            </a>
-          </div>
-        </div>
-
-        {/* Skills */}
-        <div className="mt-8">
-          <h3 className="text-lg font-semibold flex items-center gap-2">
-            <FaTools /> Skills
-          </h3>
-          <div className="flex flex-wrap gap-2 mt-3">
-            {profile.skills?.length ? (
-              profile.skills.map((skill, idx) => (
-                <span
-                  key={idx}
-                  className="bg-gradient-to-r from-blue-100 to-purple-100 text-blue-700 px-3 py-1 rounded-full text-sm shadow"
-                >
-                  {skill}
-                </span>
-              ))
-            ) : (
-              <p className="text-gray-500 text-sm">No skills added yet</p>
-            )}
-          </div>
-          <div className="flex gap-2 mt-3">
-            <input
-              type="text"
-              value={newSkill}
-              onChange={(e) => setNewSkill(e.target.value)}
-              placeholder="Add new skill"
-              className="flex-1 px-3 py-1 border rounded-lg text-sm"
+  return (
+    <div className="relative min-h-screen bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100 px-4 md:px-10 py-12">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
+        {/* Sidebar */}
+        <Card>
+          <div className="flex flex-col items-center text-center relative">
+            <motion.img
+              whileHover={{ scale: 1.05 }}
+              src={previewImage}
+              alt="Profile"
+              className="w-32 h-32 rounded-full border-4 border-white shadow-lg object-cover"
             />
-            <button onClick={addSkill} className="px-3 py-1 bg-blue-500 text-white rounded-lg text-sm">
-              <FaPlus />
-            </button>
-          </div>
-        </div>
-      </div>
 
-      {/* Main Content */}
-      <div className="md:col-span-2 space-y-6">
-        {/* About */}
-        <div className="bg-white/90 rounded-2xl shadow-lg p-6">
-          <h3 className="text-lg font-semibold mb-3">About</h3>
-          {editbio ? (
-            <div className="flex flex-col gap-3">
-              <textarea
-                value={bio}
-                onChange={(e) => setbio(e.target.value)}
-                className="w-full p-2 border rounded-lg"
+            {/* Upload Button */}
+            <label
+              htmlFor="imageUpload"
+              className="absolute bottom-2 right-2 bg-indigo-600 hover:bg-indigo-700 text-white p-2 rounded-full cursor-pointer shadow-md"
+              title={uploadingImage ? "Uploading..." : "Change photo"}
+            >
+              <FaCamera size={16} />
+            </label>
+            <input
+              id="imageUpload"
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="hidden"
+            />
+
+            <h2 className="text-2xl font-bold mt-4 text-gray-800">{profile.name || "Unnamed"}</h2>
+            <p className="text-gray-500">{profile.role || "No role yet"}</p>
+            <div className="flex gap-5 mt-4 text-2xl">
+              <a href={profile.linkedin || "#"} className="hover:text-blue-600 transition">
+                <FaLinkedin />
+              </a>
+              <a href={profile.github || "#"} className="hover:text-gray-800 transition">
+                <FaGithub />
+              </a>
+            </div>
+
+            {/* 🔥 Streak Section */}
+            <div className="mt-4 flex flex-col items-center">
+              <div className="bg-yellow-100 text-yellow-800 px-4 py-2 rounded-full font-semibold flex items-center gap-2 shadow-md animate-pulse">
+                <span role="img" aria-label="fire">🔥</span>
+                <span>{profile.streakCount ?? 5} days</span>
+              </div>
+              <p className="text-gray-500 text-sm mt-1">Your current streak</p>
+            </div>
+          </div>
+
+          {/* Skills Section */}
+          <div className="mt-8">
+            <h3 className="text-lg font-semibold flex items-center gap-2 text-indigo-700">
+              <FaTools /> Skills
+            </h3>
+            <div className="flex flex-wrap gap-2 mt-3">
+              {profile.skills?.length ? (
+                profile.skills.map((skill, idx) => (
+                  <motion.span
+                    key={idx}
+                    whileHover={{ scale: 1.05 }}
+                    className="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-sm font-medium shadow-sm"
+                  >
+                    {skill}
+                  </motion.span>
+                ))
+              ) : (
+                <p className="text-gray-500 text-sm">No skills added yet</p>
+              )}
+            </div>
+            <div className="flex gap-2 mt-4">
+              <input
+                type="text"
+                value={newSkill}
+                onChange={(e) => setNewSkill(e.target.value)}
+                placeholder="Add new skill"
+                className="flex-1 px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-400 outline-none"
               />
               <button
-                onClick={savebio}
-                className="self-end px-3 py-1 bg-green-500 text-white rounded-lg"
+                onClick={addSkill}
+                className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm transition"
               >
-                Save
+                <FaPlus />
               </button>
             </div>
-          ) : (
-            <>
-              <p className="text-gray-700">{bio || "No about information yet"}</p>
-              <button
-                onClick={() => setEditbio(true)}
-                className="mt-2 text-sm text-blue-500"
-              >
-                ✏️ Edit
-              </button>
-            </>
-          )}
-        </div>
+          </div>
+        </Card>
 
-        {/* Projects */}
-        <div className="bg-white/90 rounded-2xl shadow-lg p-6">
-          <h3 className="text-lg font-semibold flex items-center gap-2">
-            <FaFolderOpen /> Projects
-          </h3>
-          <div className="mt-3 space-y-2">
-            {profile.projects?.length ? (
-              profile.projects.map((p, idx) => (
-                <div key={idx} className="p-3 border rounded-lg shadow-sm">
-                  <p className="font-semibold">{p.title || "Untitled Project"}</p>
-                  <p className="text-gray-600 text-sm">{p.description || "No description"}</p>
-                </div>
-              ))
+        {/* Main Content */}
+        <div className="md:col-span-2 space-y-8">
+          {/* About Section */}
+          <Card>
+            <h3 className="text-lg font-semibold mb-3 text-indigo-700">About</h3>
+            {editbio ? (
+              <div className="flex flex-col gap-3">
+                <textarea
+                  value={bio}
+                  onChange={(e) => setbio(e.target.value)}
+                  className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none"
+                />
+                <button
+                  onClick={savebio}
+                  className="self-end px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+                >
+                  Save
+                </button>
+              </div>
             ) : (
-              <p className="text-gray-500 text-sm">No projects added yet</p>
+              <>
+                <p className="text-gray-700 leading-relaxed">{bio || "No about information yet"}</p>
+                <button
+                  onClick={() => setEditbio(true)}
+                  className="mt-2 text-sm text-indigo-600 font-medium hover:underline"
+                >
+                  ✏️ Edit
+                </button>
+              </>
             )}
-          </div>
-          <div className="flex flex-col gap-2 mt-3">
-            <input
-              type="text"
-              value={newProject.title}
-              onChange={(e) => setNewProject({ ...newProject, title: e.target.value })}
-              placeholder="Project title"
-              className="px-3 py-1 border rounded-lg text-sm"
-            />
-            <input
-              type="text"
-              value={newProject.description}
-              onChange={(e) => setNewProject({ ...newProject, description: e.target.value })}
-              placeholder="Project description"
-              className="px-3 py-1 border rounded-lg text-sm"
-            />
-            <button
-              onClick={addProject}
-              className="self-start px-3 py-1 bg-blue-500 text-white rounded-lg text-sm"
-            >
-              <FaPlus /> Add Project
-            </button>
-          </div>
-        </div>
+          </Card>
 
-        {/* Experience */}
-        <div className="bg-white/90 rounded-2xl shadow-lg p-6">
-          <h3 className="text-lg font-semibold flex items-center gap-2">
-            <FaBriefcase /> Experience
-          </h3>
-          <div className="mt-3 space-y-2">
-            {profile.experience?.length ? (
-              profile.experience.map((e, idx) => (
-                <div key={idx} className="p-3 border rounded-lg shadow-sm">
-                  <p className="font-semibold">{e.role || "Role not provided"}</p>
-                  <p className="text-gray-600 text-sm">{e.year || "Year not provided"}</p>
-                  <p className="text-gray-600 text-sm">{e.description || "No description"}</p>
-                </div>
-              ))
-            ) : (
-              <p className="text-gray-500 text-sm">No experience added yet</p>
-            )}
-          </div>
-          <div className="flex flex-col gap-2 mt-3">
-            <input
-              type="text"
-              value={newExperience.role}
-              onChange={(e) => setNewExperience({ ...newExperience, role: e.target.value })}
-              placeholder="Role"
-              className="px-3 py-1 border rounded-lg text-sm"
-            />
-            <input
-              type="text"
-              value={newExperience.year}
-              onChange={(e) => setNewExperience({ ...newExperience, year: e.target.value })}
-              placeholder="Year"
-              className="px-3 py-1 border rounded-lg text-sm"
-            />
-            <input
-              type="text"
-              value={newExperience.description}
-              onChange={(e) => setNewExperience({ ...newExperience, description: e.target.value })}
-              placeholder="Description"
-              className="px-3 py-1 border rounded-lg text-sm"
-            />
-            <button
-              onClick={addExperience}
-              className="self-start px-3 py-1 bg-blue-500 text-white rounded-lg text-sm"
-            >
-              <FaPlus /> Add Experience
-            </button>
-          </div>
-        </div>
+          {/* Reusable Sections */}
+          {[
+            { icon: <FaFolderOpen />, title: "Projects", data: profile.projects, add: addProject, inputs: newProject, setInputs: setNewProject, fields: ["title", "description"] },
+            { icon: <FaBriefcase />, title: "Experience", data: profile.experience, add: addExperience, inputs: newExperience, setInputs: setNewExperience, fields: ["role", "year", "description"] },
+            { icon: <FaGraduationCap />, title: "Education", data: profile.education, add: addEducation, inputs: newEducation, setInputs: setNewEducation, fields: ["degree", "institution", "year"] },
+            { icon: <FaCertificate />, title: "Certifications", data: profile.certifications, add: addCertification, inputs: newCert, setInputs: setNewCert, fields: ["name", "provider"] },
+          ].map((section, idx) => (
+            <Card key={idx}>
+              <h3 className="text-lg font-semibold flex items-center gap-2 text-indigo-700">
+                {section.icon} {section.title}
+              </h3>
+              <div className="mt-3 space-y-3">
+                {section.data?.length ? (
+                  section.data.map((item, i) => (
+                    <motion.div
+                      key={i}
+                      whileHover={{ scale: 1.01 }}
+                      className="p-4 border rounded-lg bg-white/40 shadow-sm"
+                    >
+                      {Object.values(item).map((val, j) => (
+                        <p key={j} className="text-gray-700 text-sm">
+                          {val || "—"}
+                        </p>
+                      ))}
+                    </motion.div>
+                  ))
+                ) : (
+                  <p className="text-gray-500 text-sm">No {section.title.toLowerCase()} added yet</p>
+                )}
+              </div>
+              <div className="flex flex-col gap-2 mt-3">
+                {section.fields.map((f) => (
+                  <input
+                    key={f}
+                    type="text"
+                    value={section.inputs[f]}
+                    onChange={(e) => section.setInputs({ ...section.inputs, [f]: e.target.value })}
+                    placeholder={f.charAt(0).toUpperCase() + f.slice(1)}
+                    className="px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-400 outline-none"
+                  />
+                ))}
+                <button
+                  onClick={section.add}
+                  className="self-start px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm transition flex items-center gap-2"
+                >
+                  <FaPlus /> Add {section.title}
+                </button>
+              </div>
+            </Card>
+          ))}
 
-        {/* Education */}
-        <div className="bg-white/90 rounded-2xl shadow-lg p-6">
-          <h3 className="text-lg font-semibold flex items-center gap-2">
-            <FaGraduationCap /> Education
-          </h3>
-          <div className="mt-3 space-y-2">
-            {profile.education?.length ? (
-              profile.education.map((edu, idx) => (
-                <div key={idx} className="p-3 border rounded-lg shadow-sm">
-                  <p className="font-semibold">{edu.degree || "Degree not provided"}</p>
-                  <p className="text-gray-600 text-sm">{edu.institution || "Institution not provided"}</p>
-                  <p className="text-gray-600 text-sm">{edu.year || "Year not provided"}</p>
-                </div>
-              ))
-            ) : (
-              <p className="text-gray-500 text-sm">No education added yet</p>
-            )}
-          </div>
-          <div className="flex flex-col gap-2 mt-3">
-            <input
-              type="text"
-              value={newEducation.degree}
-              onChange={(e) => setNewEducation({ ...newEducation, degree: e.target.value })}
-              placeholder="Degree"
-              className="px-3 py-1 border rounded-lg text-sm"
-            />
-            <input
-              type="text"
-              value={newEducation.institution}
-              onChange={(e) => setNewEducation({ ...newEducation, institution: e.target.value })}
-              placeholder="Institution"
-              className="px-3 py-1 border rounded-lg text-sm"
-            />
-            <input
-              type="text"
-              value={newEducation.year}
-              onChange={(e) => setNewEducation({ ...newEducation, year: e.target.value })}
-              placeholder="Year"
-              className="px-3 py-1 border rounded-lg text-sm"
-            />
-            <button
-              onClick={addEducation}
-              className="self-start px-3 py-1 bg-blue-500 text-white rounded-lg text-sm"
-            >
-              <FaPlus /> Add Education
-            </button>
-          </div>
-        </div>
-
-        {/* Certifications */}
-        <div className="bg-white/90 rounded-2xl shadow-lg p-6">
-          <h3 className="text-lg font-semibold flex items-center gap-2">
-            <FaCertificate /> Certifications
-          </h3>
-          <div className="mt-3 space-y-2">
-            {profile.certifications?.length ? (
-              profile.certifications.map((c, idx) => (
-                <div key={idx} className="p-3 border rounded-lg shadow-sm">
-                  <p className="font-semibold">{c.name || "Certificate name not provided"}</p>
-                  <p className="text-gray-600 text-sm">{c.provider || "Provider not provided"}</p>
-                </div>
-              ))
-            ) : (
-              <p className="text-gray-500 text-sm">No certifications added yet</p>
-            )}
-          </div>
-          <div className="flex flex-col gap-2 mt-3">
-            <input
-              type="text"
-              value={newCert.name}
-              onChange={(e) => setNewCert({ ...newCert, name: e.target.value })}
-              placeholder="Certificate name"
-              className="px-3 py-1 border rounded-lg text-sm"
-            />
-            <input
-              type="text"
-              value={newCert.provider}
-              onChange={(e) => setNewCert({ ...newCert, provider: e.target.value })}
-              placeholder="Provider"
-              className="px-3 py-1 border rounded-lg text-sm"
-            />
-            <button
-              onClick={addCertification}
-              className="self-start px-3 py-1 bg-blue-500 text-white rounded-lg text-sm"
-            >
-              <FaPlus /> Add Certification
-            </button>
-          </div>
-        </div>
-
-        {/* AI Resume Builder */}
-        <div className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-2xl shadow-lg p-6">
-          <h3 className="text-lg font-semibold flex items-center gap-2">
-            <FaMagic /> AI Resume Builder
-          </h3>
-          <button
-            onClick={generateResume}
-            className="mt-4 px-4 py-2 bg-white text-indigo-600 font-semibold rounded-lg shadow hover:bg-gray-100 transition"
+          {/* AI Resume Builder */}
+          <motion.div
+            whileHover={{ y: -3 }}
+            className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-2xl shadow-lg p-6"
           >
-            Generate Resume
-          </button>
-          {resume && (
-            <div className="mt-4 bg-white text-gray-800 rounded-xl p-4 max-h-64 overflow-y-auto shadow-inner">
-              <pre className="whitespace-pre-wrap text-sm">{resume}</pre>
-            </div>
-          )}
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              <FaMagic /> AI Resume Builder
+            </h3>
+            <button
+              onClick={generateResume}
+              className="mt-4 px-5 py-2 bg-white text-indigo-600 font-semibold rounded-lg shadow hover:bg-gray-100 transition"
+            >
+              Generate Resume
+            </button>
+            {resume && (
+              <div className="mt-4 bg-white text-gray-800 rounded-xl p-4 max-h-64 overflow-y-auto shadow-inner">
+                <pre className="whitespace-pre-wrap text-sm">{resume}</pre>
+              </div>
+            )}
+          </motion.div>
         </div>
       </div>
     </div>
-  </div>
-);
-
+  );
 }
