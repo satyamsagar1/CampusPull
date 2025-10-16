@@ -53,13 +53,12 @@ export default function Explore() {
       ],
     },
   ];
-
-  const displayedMentors = suggestions.length > 0 ? suggestions : dummyMentors;
+  const displayedMentors = suggestions && suggestions.length > 0 ? suggestions : dummyMentors;
 
   const topRatedMentors = displayedMentors
     .map((m) => {
       const avgRating =
-        m.reviews.length > 0
+        (m.reviews && m.reviews.length > 0)
           ? m.reviews.reduce((acc, r) => acc + r.rating, 0) / m.reviews.length
           : 0;
       return { ...m, avgRating };
@@ -94,7 +93,7 @@ export default function Explore() {
         <h2 className="text-blue-700 font-semibold mb-3 flex items-center gap-2">
           <FaUserPlus /> Pending Requests
         </h2>
-        {requests.length > 0 ? (
+        {requests?.length > 0 ? (
           <div className="flex flex-wrap gap-3">
             {requests.map((req) => (
               <div
@@ -152,14 +151,14 @@ export default function Explore() {
 
                 <button
                   className={`mt-2 px-5 py-2 rounded-full font-medium transition ${
-                    requests.some((req) => req._id === user._id)
+                    requests?.some((req) => req._id === user._id)
                       ? "bg-green-500 text-white cursor-not-allowed"
                       : "bg-white text-red-800 hover:bg-white/90"
                   }`}
-                  disabled={requests.some((req) => req._id === user._id)}
+                  disabled={requests?.some((req) => req._id === user._id)}
                   onClick={() => sendRequest(user._id)}
                 >
-                  {requests.some((req) => req._id === user._id) ? "Request Sent" : "Connect"}
+                  {requests?.some((req) => req._id === user._id) ? "Request Sent" : "Connect"}
                 </button>
               </div>
             ))}
@@ -184,11 +183,11 @@ export default function Explore() {
               <p className="text-sm text-white mb-1">
                 {user.degree} - {user.graduationYear}
               </p>
-              <p className="text-sm text-white mb-2">{user.skills.join(", ")}</p>
+              <p className="text-sm text-white mb-2">{(user.skills || []).join(", ")}</p>
 
               {/* Reviews */}
               <div className="mb-4 w-full">
-                {user.reviews.map((r, idx) => (
+                {user.reviews?.map((r, idx) => (
                   <div key={idx} className="flex items-center mb-1">
                     {[...Array(r.rating)].map((_, i) => (
                       <FaStar key={i} className="text-yellow-400 mr-1" />
@@ -223,14 +222,14 @@ export default function Explore() {
               {/* Connect Button */}
               <button
                 className={`mt-2 px-5 py-2 rounded-full font-medium transition ${
-                  requests.some((req) => req._id === user._id)
+                  requests?.some((req) => req._id === user._id)
                     ? "bg-green-500 text-white cursor-not-allowed"
                     : "bg-blue-600 text-white hover:bg-blue-700"
                 }`}
-                disabled={requests.some((req) => req._id === user._id)}
+                disabled={requests?.some((req) => req._id === user._id)}
                 onClick={() => sendRequest(user._id)}
               >
-                {requests.some((req) => req._id === user._id) ? "Request Sent" : "Connect"}
+                {requests?.some((req) => req._id === user._id) ? "Request Sent" : "Connect"}
               </button>
             </div>
           ))
