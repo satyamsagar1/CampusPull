@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import { AnswerForm } from './AnswerForm';
-import { AnswerList } from './AnswerList';
+import { AnswerForm } from './answerForm';
+import { AnswerList } from './answerList';
 import { useAuth } from '../../../context/AuthContext';
 
 export const AnswerSection = ({ questionId, answers }) => {
