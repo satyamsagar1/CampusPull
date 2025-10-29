@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { X, Image as ImageIcon, Link as LinkIcon, AlertTriangle } from 'lucide-react';
-import { useEvents } from '../../../context/EventContext'; // Adjust path
+import { useEvents } from '../../../context/eventContext'; // Adjust path
 import Icon from '../../../components/AppIcon'; // Adjust path
 import Button from '../../../components/ui/Button'; // Adjust path
 import Image from '../../../components/AppImage'; // Adjust path for displaying current image
