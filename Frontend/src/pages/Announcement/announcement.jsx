@@ -9,7 +9,7 @@ import CreateAnnouncementModal from './components/createannouncementmodal'; // C
 import LoadingSkeleton from './components/loadingSkeleton';
 import { useAuth } from '../../context/AuthContext';
 // Removed api import - Context handles API calls
-import { useAnnouncements } from '../../context/AnnouncementContext'; // <-- 1. Import the hook
+import { useAnnouncements } from '../../context/announcementContext'; // <-- 1. Import the hook
 import EditAnnouncementModal from './components/EditAnnouncementModal';
 
 const AnnouncementPage = () => {
