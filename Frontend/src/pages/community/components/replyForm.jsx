@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Send, Loader } from 'lucide-react';
-import { useCommunity } from '../../../context/CommunityContext';
+import { useCommunity } from '../../../context/communityContext';
 import { useAuth } from '../../../context/AuthContext';
 
 export const ReplyForm = ({ answerId, onSuccess }) => {
