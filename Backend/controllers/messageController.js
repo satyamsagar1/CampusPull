@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import Message from "../models/message.js";
 import Connection from "../models/connectionModel.js";
-import User from "../models/user.js";
+// import User from "../models/user.js";
 import { encryptText, decryptText } from "../utils/encrypt.js";
 import { onlineUsers } from "../socket.js";
 
@@ -102,7 +102,7 @@ export const markAsRead = async (req, res) => {
     if (senderSocket) {
       io.to(senderSocket).emit("messageRead", message._id);}
     else {
-      console.log(`[DEBUG] Sender ${senderId} is not online. Cannot emit 'messageRead' event.`);
+      console.log("[DEBUG] Sender is offline, cannot emit read receipt.");
     }
 
     res.status(200).json(message);
@@ -167,7 +167,11 @@ export const getChatList = async (req, res) => {
       };
     });
 
-    chatList.sort((a, b) => (new Date(b.lastMessageTime) || 0) - (new Date(a.lastMessageTime) || 0));
+    chatList.sort((a, b) => {
+      const timeA = a.lastMessageTime ? new Date(a.lastMessageTime).getTime() : 0;
+      const timeB = b.lastMessageTime ? new Date(b.lastMessageTime).getTime() : 0;
+      return timeB - timeA;
+    });
     
     res.status(200).json(chatList);
   } catch (error) {

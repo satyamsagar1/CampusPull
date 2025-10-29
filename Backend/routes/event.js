@@ -1,7 +1,7 @@
 import express from "express";
 import { authMiddleware } from "../middleware/authMiddleware.js";
 import {
-    getEvent,createEvent, updateEvent, deleteEvent,
+    getEvent,createEvent, updateEvent, deleteEvent,toggleInterest
     } from "../controllers/eventController.js";
 import {cloudinaryParser} from "../middleware/upload.js";
 
@@ -17,6 +17,7 @@ router.get("/", authMiddleware, getEvent);
 router.post("/", authMiddleware,eventParser.single("banner"), createEvent);
 router.put("/:id",authMiddleware,eventParser.single("banner"), updateEvent);
 router.delete("/:id", authMiddleware, deleteEvent);
+router.patch("/:id/interest", authMiddleware,toggleInterest);
 
 
 export default router;

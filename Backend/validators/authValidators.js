@@ -6,7 +6,7 @@ export const signupSchema = z.object({
   password: z.string()
     .min(8)
     .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/, 'Password must include uppercase, lowercase, and a number'),
-  role: z.enum(['student', 'alumni', 'admin']).optional(),
+  role: z.enum(['student', 'alumni', 'teacher' ,'admin']).optional(),
   college: z.string().min(2),
   degree: z.string().min(2),
   graduationYear: z.number().int().min(1900).max(2100),

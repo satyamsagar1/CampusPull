@@ -13,7 +13,9 @@ import eventRoutes from "./routes/event.js";
 import connectionRoutes from "./routes/connection.js";
 import messageRoutes from "./routes/message.js";
 import profileRoutes from "./routes/profile.js";
-import http from "http";
+import resourceRoutes from "./routes/resource.js";
+import announcementRoutes from './routes/announcement.js';
+import http from "node:http";
 import {initSocket}  from "./socket.js";
 
 
@@ -30,7 +32,6 @@ app.use((req, res, next) => {
   next();
 });
 app.use(cookieParser());
-// app.use(generalrateLimiter);
 
 const io=initSocket(server);
 app.set("io", io); // make io accessible in routes/controllers via req.app.get("io")
@@ -49,26 +50,29 @@ app.use("/api/event", eventRoutes);
 app.use("/api/connection", connectionRoutes);
 app.use("/api/message", messageRoutes);
 app.use("/api/profile", profileRoutes);
+app.use("/api/resources", resourceRoutes);
+app.use('/api/announcements', announcementRoutes);
 
 // -------------------- START SERVER --------------------
 const PORT = process.env.PORT || 5000;
 
-conectDB()
-  .then(() => {
-    server.listen(PORT, () => {
-      console.log(`✅ Server running on port ${PORT}`);
-    });
+try {
+  await conectDB();
 
-    // Handle port already in use
-    server.on("error", (err) => {
-      if (err.code === "EADDRINUSE") {
-        console.error(`❌ Port ${PORT} is already in use. Please stop the other process or change PORT in .env`);
-        process.exit(1);
-      } else {
-        console.error("❌ Server error:", err);
-      }
-    });
-  })
-  .catch((err) => {
-    console.error("❌ Failed to connect to the database", err);
+  server.listen(PORT, () => {
+    console.log(`✅ Server running on port ${PORT}`);
   });
+
+  // Handle port already in use
+  server.on("error", (err) => {
+    if (err.code === "EADDRINUSE") {
+      console.error(`❌ Port ${PORT} is already in use. Please stop the other process or change PORT in .env`);
+      process.exit(1);
+    } else {
+      console.error("❌ Server error:", err);
+    }
+  });
+} catch (err) {
+  console.error("❌ Failed to connect to the database", err);
+  process.exit(1);
+}

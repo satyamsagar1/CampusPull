@@ -8,7 +8,7 @@ export const cloudinaryParser = (folderName) => {
     cloudinary,
     params: {
       folder: folderName,            // dynamic folder
-      allowed_formats: ["jpg", "jpeg", "png", "gif", "mp4"],
+      allowed_formats: ["jpg", "jpeg", "png", "gif", "mp4", "pdf", "docx", "pptx", "webp"],
     },
   });
 

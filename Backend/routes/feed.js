@@ -20,8 +20,8 @@ const feedParser = cloudinaryParser("linkmate_posts");
 router.get("/", authMiddleware, getFeed);
 
 // ---------------- POSTS ----------------
-router.post("/post", feedParser.single("media"), authMiddleware, createPost);
-router.put("/post/:id", feedParser.single("media"), authMiddleware, updatePost);
+router.post("/post", authMiddleware, feedParser.single("media"), createPost);
+router.put("/post/:id", authMiddleware, feedParser.single("media"), updatePost);
 router.delete("/post/:id", authMiddleware, deletePost);
 router.put("/like/:id", authMiddleware, likePost);
 router.post("/comment/:id", authMiddleware, commentPost);

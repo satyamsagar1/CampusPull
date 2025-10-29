@@ -9,13 +9,18 @@ const userSchema = new mongoose.Schema({
   college: { type: String, required: true, trim: true },
   degree: { type: String, required: true, trim: true },
   graduationYear: { type: Number, required: true },
+  
 
   // Optional fields
   phone: { type: String, default: '' },
   linkedin: { type: String, default: '' },
   bio: { type: String, default: '' },
   skills: { type: [String], default: [] },
+  profilePic: { type: String, default: '' }, // URL to profile picture
 
+  
+
+  completedLessons: {type: [{ type: mongoose.Schema.Types.ObjectId }],default: []},
   tokenVersion: { type: Number, default: 0 }, // for refresh token invalidation
 }, { timestamps: true });
 

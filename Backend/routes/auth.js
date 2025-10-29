@@ -106,7 +106,7 @@ router.post('/login', async (req, res) => {
     
 
     return res.json({
-      user: { id: user._id, name: user.name, email: user.email, role: user.role },
+      user: { id: user._id, name: user.name, email: user.email, role: user.role, completedLessons: user.completedLessons },
       accessToken,
     });
   } catch (err) {
@@ -152,26 +152,6 @@ router.get('/me', authMiddleware, async (req, res) => {
     return res.status(500).json({ message: 'Server error' });
   }
 });
-
-router.get('/admin-dashboard',
-  authMiddleware,
-  requireRole(['admin']),
-  (req, res) => res.json({ message: `Hello ${req.user.role}` })
-);
-
-router.get('/alumni-dashboard',
-  authMiddleware,
-  requireRole(['alumni', 'admin']),
-  (req, res) => res.json({ message: `Hello ${req.user.role}` })
-);
-
-router.get('/student-dashboard',
-  authMiddleware,
-  requireRole(['student', 'admin']),
-  (req, res) => res.json({ message: `Hello ${req.user.role}` }),
-  
-);
-
 
 router.post('/logout', async (req, res) => {
   try {

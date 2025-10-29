@@ -13,8 +13,8 @@ export const authMiddleware = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
-
     req.user = decoded; // attach user info
+    
     next();
   } catch (err) {
     console.log("JWT verification error:", err.name, err.message);
@@ -29,9 +29,11 @@ export const refreshAuthMiddleware = (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
     req.user = decoded;
+    console.log('[authMiddleware] Authentication successful for user:', req.user?.id);
     next();
   } catch (err) {
     console.log("JWT verification error:", err);
+    console.error('[authMiddleware] Error:', err.message);
     return res.status(401).json({ message: "Invalid or expired refresh token" });
   }
 };

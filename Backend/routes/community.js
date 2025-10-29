@@ -14,6 +14,7 @@ import {
   //upvote controllers
   toggleQuestionUpvote,
   toggleAnswerUpvote,
+  createReply,
 } from "../controllers/communityController.js";
 
 const router = express.Router();
@@ -30,5 +31,7 @@ router.post("/questions/:questionId/answers", authMiddleware, createAnswer); // 
 router.put("/answers/:id", authMiddleware, updateAnswer);                     // Update answer
 router.delete("/answers/:id", authMiddleware, deleteAnswer);                  // Delete answer
 router.post("/answers/:id/upvote", authMiddleware, toggleAnswerUpvote);       // Toggle answer upvote
+
+router.post("/answers/:answerId/replies", authMiddleware, createReply);
 
 export default router;

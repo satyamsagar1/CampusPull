@@ -1,25 +1,60 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import Icon from '../../../components/AppIcon';
 import Image from '../../../components/AppImage';
 import Button from '../../../components/ui/Button';
+import { ResourceContext } from '../../../context/ResourceContext';
 
-const ResourceCard = ({ resource, viewMode = 'grid' }) => {
+const ResourceCard = ({ resource, viewMode = 'grid', onEditClick }) => {
+  const { toggleBookmark, incrementDownload, incrementView, user } = useContext(ResourceContext);
   const [isBookmarked, setIsBookmarked] = useState(resource?.isBookmarked || false);
-  const [showPreview, setShowPreview] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
-  const handleBookmark = (e) => {
+  const isOwner = user?._id === resource?.uploadedBy?._id;
+
+  const handleBookmark = async (e) => {
     e?.stopPropagation();
-    setIsBookmarked(!isBookmarked);
+    try {
+      setIsBookmarked(!isBookmarked);
+      await toggleBookmark(resource._id, resource.type);
+    } catch (err) {
+      console.error('Bookmark toggle failed:', err);
+      setIsBookmarked(isBookmarked); // revert if failed
+    }
   };
 
-  const handleDownload = (e) => {
+  const handleDownload = async (e) => {
     e?.stopPropagation();
-    // Trigger success celebration animation
-    const button = e?.target?.closest('button');
-    button?.classList?.add('success-celebration');
-    setTimeout(() => {
-      button?.classList?.remove('success-celebration');
-    }, 600);
+    if (downloading) return;
+    setDownloading(true);
+
+    try {
+      await incrementDownload(resource._id, resource.type);
+
+      // Trigger visual celebration animation
+      const button = e?.target?.closest('button');
+      button?.classList?.add('success-celebration');
+      setTimeout(() => {
+        button?.classList?.remove('success-celebration');
+      }, 600);
+
+      // Open actual download link if available
+      if (resource?.link) window.open(resource.link, '_blank');
+    } catch (err) {
+      console.error('Download failed:', err);
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const handlePreview = async () => {
+    try {
+      await incrementView(resource._id, resource.type);
+      setTimeout(() => {
+        window.open(resource?.link, '_blank');
+      }, 100);
+    } catch (err) {
+      console.error('View increment failed:', err);
+    }
   };
 
   const getDifficultyColor = (difficulty) => {
@@ -36,7 +71,7 @@ const ResourceCard = ({ resource, viewMode = 'grid' }) => {
     const icons = {
       notes: 'FileText',
       roadmaps: 'Route',
-      'interview-pyqs': 'MessageCircle',
+      pyqs: 'MessageCircle',
       assignments: 'Clipboard',
       projects: 'Lightbulb',
       tutorials: 'Play'
@@ -44,49 +79,36 @@ const ResourceCard = ({ resource, viewMode = 'grid' }) => {
     return icons?.[type] || 'FileText';
   };
 
+  // === List View ===
   if (viewMode === 'list') {
     return (
       <div className="knowledge-card bg-white border border-slate-200 rounded-xl p-6 hover:shadow-brand-lg transition-all duration-300">
         <div className="flex items-start space-x-4">
-          {/* Thumbnail */}
           <div className="flex-shrink-0 w-20 h-20 bg-surface rounded-lg overflow-hidden">
-            <Image 
-              src={resource?.thumbnail} 
-              alt={resource?.title}
-              className="w-full h-full object-cover"
-            />
+            <Image src={resource?.thumbnail} alt={resource?.title} className="w-full h-full object-cover" />
           </div>
 
-          {/* Content */}
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between mb-2">
               <div className="flex-1">
                 <h3 className="font-inter font-semibold text-wisdom-charcoal text-lg mb-1 line-clamp-1">
                   {resource?.title}
                 </h3>
-                <p className="text-insight-gray text-sm line-clamp-2 mb-3">
-                  {resource?.description}
-                </p>
+                <p className="text-insight-gray text-sm line-clamp-2 mb-3">{resource?.description}</p>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleBookmark}
-                className="ml-2"
-              >
-                <Icon 
-                  name={isBookmarked ? "Bookmark" : "BookmarkPlus"} 
-                  size={18} 
-                  color={isBookmarked ? "var(--color-academic-blue)" : "var(--color-insight-gray)"}
+              <Button variant="ghost" size="icon" onClick={handleBookmark} className="ml-2">
+                <Icon
+                  name={isBookmarked ? 'Bookmark' : 'BookmarkPlus'}
+                  size={18}
+                  color={isBookmarked ? 'var(--color-academic-blue)' : 'var(--color-insight-gray)'}
                 />
               </Button>
             </div>
 
-            {/* Meta Information */}
             <div className="flex items-center flex-wrap gap-3 mb-4">
               <div className="flex items-center space-x-1">
                 <Icon name={getResourceTypeIcon(resource?.type)} size={14} color="var(--color-insight-gray)" />
-                <span className="text-xs text-insight-gray capitalize">{resource?.type?.replace('-', ' ')}</span>
+                <span className="text-xs text-insight-gray capitalize">{resource?.type}</span>
               </div>
               <div className={`px-2 py-1 rounded-full text-xs font-medium border ${getDifficultyColor(resource?.difficulty)}`}>
                 {resource?.difficulty}
@@ -101,32 +123,25 @@ const ResourceCard = ({ resource, viewMode = 'grid' }) => {
               </div>
             </div>
 
-            {/* Contributor & Actions */}
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <Image 
-                  src={resource?.contributor?.avatar} 
-                  alt={resource?.contributor?.name}
-                  className="w-6 h-6 rounded-full"
-                />
-                <span className="text-sm text-insight-gray">by {resource?.contributor?.name}</span>
-                {resource?.contributor?.verified && (
-                  <Icon name="BadgeCheck" size={14} color="var(--color-academic-blue)" />
-                )}
+                <Image src={resource?.contributor?.avatar} alt={resource?.contributor?.name} className="w-6 h-6 rounded-full" />
+                <span className="text-sm text-insight-gray"> Campus-Pull {resource?.contributor?.name}</span>
+                {resource?.contributor?.verified && <Icon name="BadgeCheck" size={14} color="var(--color-academic-blue)" />}
               </div>
               <div className="flex items-center space-x-2">
-                <Button variant="outline" size="sm" iconName="Eye" iconPosition="left">
+                <Button variant="outline" size="sm" iconName="Eye" iconPosition="left" onClick={handlePreview}>
                   Preview
                 </Button>
-                <Button 
-                  variant="default" 
-                  size="sm" 
+                <Button
+                  variant="default"
+                  size="sm"
                   onClick={handleDownload}
-                  iconName="Download" 
+                  iconName="Download"
                   iconPosition="left"
                   className="bg-academic-blue hover:bg-blue-700"
                 >
-                  Download
+                  {downloading ? '...' : 'Download'}
                 </Button>
               </div>
             </div>
@@ -136,26 +151,17 @@ const ResourceCard = ({ resource, viewMode = 'grid' }) => {
     );
   }
 
+  // === Grid View ===
   return (
     <div className="knowledge-card bg-white border border-slate-200 rounded-xl overflow-hidden hover:shadow-brand-lg transition-all duration-300">
-      {/* Thumbnail */}
       <div className="relative h-48 bg-surface overflow-hidden">
-        <Image 
-          src={resource?.thumbnail} 
-          alt={resource?.title}
-          className="w-full h-full object-cover"
-        />
+        <Image src={resource?.thumbnail} alt={resource?.title} className="w-full h-full object-cover" />
         <div className="absolute top-3 right-3 flex space-x-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleBookmark}
-            className="bg-white/90 backdrop-blur-sm hover:bg-white"
-          >
-            <Icon 
-              name={isBookmarked ? "Bookmark" : "BookmarkPlus"} 
-              size={18} 
-              color={isBookmarked ? "var(--color-academic-blue)" : "var(--color-insight-gray)"}
+          <Button variant="ghost" size="icon" onClick={handleBookmark} className="bg-white/90 backdrop-blur-sm hover:bg-white">
+            <Icon
+              name={isBookmarked ? 'Bookmark' : 'BookmarkPlus'}
+              size={18}
+              color={isBookmarked ? 'var(--color-academic-blue)' : 'var(--color-insight-gray)'}
             />
           </Button>
         </div>
@@ -165,24 +171,19 @@ const ResourceCard = ({ resource, viewMode = 'grid' }) => {
           </div>
         </div>
       </div>
-      {/* Content */}
+
       <div className="p-4">
         <div className="flex items-start justify-between mb-2">
           <div className="flex items-center space-x-2">
             <Icon name={getResourceTypeIcon(resource?.type)} size={16} color="var(--color-insight-gray)" />
-            <span className="text-xs text-insight-gray capitalize">{resource?.type?.replace('-', ' ')}</span>
+            <span className="text-xs text-insight-gray capitalize">{resource?.type}</span>
           </div>
         </div>
 
-        <h3 className="font-inter font-semibold text-wisdom-charcoal text-lg mb-2 line-clamp-2">
-          {resource?.title}
-        </h3>
+        <h3 className="font-inter font-semibold text-wisdom-charcoal text-lg mb-2 line-clamp-2">{resource?.title}</h3>
 
-        <p className="text-insight-gray text-sm line-clamp-3 mb-4">
-          {resource?.description}
-        </p>
+        <p className="text-insight-gray text-sm line-clamp-3 mb-4">{resource?.description}</p>
 
-        {/* Stats */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-1">
@@ -200,41 +201,35 @@ const ResourceCard = ({ resource, viewMode = 'grid' }) => {
           </div>
         </div>
 
-        {/* Contributor */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-2">
-            <Image 
-              src={resource?.contributor?.avatar} 
-              alt={resource?.contributor?.name}
-              className="w-6 h-6 rounded-full"
-            />
-            <span className="text-sm text-insight-gray">by {resource?.contributor?.name}</span>
-            {resource?.contributor?.verified && (
-              <Icon name="BadgeCheck" size={14} color="var(--color-academic-blue)" />
-            )}
+            <Image src={resource?.contributor?.avatar} alt={resource?.contributor?.name} className="w-6 h-6 rounded-full" />
+            <span className="text-sm text-insight-gray">by Campus-Pull {resource?.contributor?.name}</span>
+            {resource?.contributor?.verified && <Icon name="BadgeCheck" size={14} color="var(--color-academic-blue)" />}
           </div>
         </div>
 
-        {/* Actions */}
         <div className="flex space-x-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="flex-1"
-            iconName="Eye" 
-            iconPosition="left"
-          >
-            Preview
-          </Button>
-          <Button 
-            variant="default" 
-            size="sm" 
+          {isOwner && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1"
+              iconName="Edit"
+              onClick={() => onEditClick(resource)}
+            >
+              Edit
+            </Button>
+          )}
+          <Button
+            variant="default"
+            size="sm"
             className="flex-1 bg-academic-blue hover:bg-blue-700"
             onClick={handleDownload}
-            iconName="Download" 
+            iconName="Download"
             iconPosition="left"
           >
-            Download
+            {downloading ? '...' : 'Download'}
           </Button>
         </div>
       </div>

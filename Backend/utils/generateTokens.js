@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken";
 
 export function signAccessToken(user) {
     return jwt.sign({
-        id: user._id,      // user id
+        id: user._id.toString(),      // user id
       role: user.role,   // add role here
 
     }, process.env.JWT_ACCESS_SECRET,{

@@ -1,292 +1,190 @@
-import React, { useState, useEffect } from "react";
+// src/pages/events/events.jsx (or your file path)
+import React, { useState, useContext } from "react"; // Removed useEffect unless needed later
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  Calendar,
-  Clock,
-  Users,
-  PlusCircle,
-  X,
-  Send,
-  Bookmark,
-  Sparkles,
-} from "lucide-react";
+import { PlusCircle, Search, Inbox, AlertTriangle } from "lucide-react"; // Updated icons
+import { Helmet } from 'react-helmet'; // Added Helmet
+
+// Import Context Hooks
+import { useEvents } from "../../context/EventContext"; // Adjust path
+import { useAuth } from "../../context/AuthContext";   // Adjust path
+
+// Import Components
+import EventCard from "./components/eventCard";             // We'll create/update this next
+import CreateEventModal from "./components/createEventModal"; // We'll create/update this next
+import EditEventModal from "./components/editEventModal";     // We'll create/update this next
+// import LoadingSkeleton from './components/LoadingSkeleton'; // Optional: Create a skeleton
 
 const EventsPage = () => {
-  const [events, setEvents] = useState([]);
-  const [joinedEvents, setJoinedEvents] = useState([]);
+  // --- Get data from Context ---
+  const { events, loading, error, deleteEvent } = useEvents();
+  const { user } = useAuth();
+  // ---
+
+  // --- Local UI State ---
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [newEvent, setNewEvent] = useState({
-    title: "",
-    date: "",
-    desc: "",
-    category: "",
-  });
-  const [chatMessages, setChatMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState("");
+  const [editingEvent, setEditingEvent] = useState(null); // Holds the event object being edited
+  const [searchTerm, setSearchTerm] = useState(""); // Basic search state
+  const [isDeleting, setIsDeleting] = useState(null); // Track which event is being deleted
+  // ---
 
-  useEffect(() => {
-    const savedJoined = JSON.parse(localStorage.getItem("joinedEvents")) || [];
-    setJoinedEvents(savedJoined);
-  }, []);
+  // --- Role Check for Creating/Editing ---
+  // Based on your backend: admin or alumni can create/edit/delete
+  const canManageEvents = user?.role === "admin" || user?.role === "alumni"|| user?.role === "teacher";
 
-  useEffect(() => {
-    localStorage.setItem("joinedEvents", JSON.stringify(joinedEvents));
-  }, [joinedEvents]);
-
-  const handleCreateEvent = (e) => {
-    e.preventDefault();
-    if (!newEvent.title || !newEvent.date || !newEvent.desc) return;
-    setEvents([...events, { ...newEvent, attendees: 0, joined: false }]);
-    setNewEvent({ title: "", date: "", desc: "", category: "" });
-    setShowCreateModal(false);
+  // --- Event Handlers ---
+  const handleEditClick = (eventToEdit) => {
+    setEditingEvent(eventToEdit);
   };
 
-  const handleJoinEvent = (index) => {
-    const updatedEvents = [...events];
-    if (!updatedEvents[index].joined) {
-      updatedEvents[index].attendees += 1;
-      updatedEvents[index].joined = true;
-      setJoinedEvents([...joinedEvents, updatedEvents[index]]);
-    }
-    setEvents(updatedEvents);
-  };
-
-  const handleSendMessage = () => {
-    if (newMessage.trim() !== "") {
-      setChatMessages([...chatMessages, { user: "You", text: newMessage }]);
-      setNewMessage("");
+  const handleDeleteClick = async (id) => {
+    if (window.confirm('Are you sure you want to delete this event?')) {
+      setIsDeleting(id);
+      try {
+        await deleteEvent(id);
+        // State updates via context
+      } catch (err) {
+        alert(`Deletion failed: ${err.message || 'Unknown error'}`);
+        console.error("Delete failed:", err);
+      } finally {
+        setIsDeleting(null);
+      }
     }
   };
+
+  const handleEventCreated = () => {
+    setShowCreateModal(false); // Close modal after creation
+    // Data updates via context
+  };
+
+  const handleEventUpdated = () => {
+    setEditingEvent(null); // Close modal after update
+    // Data updates via context
+  };
+
+  // --- Filtering Logic (Basic Example) ---
+  const filteredEvents = events.filter(event =>
+    event.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    event.description?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#F3F4FD] via-white to-[#E0E7FF] py-16 px-6 text-[#1E293B]">
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -25 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="text-center mb-14"
-      >
-        <h1 className="text-5xl font-extrabold text-[#3B82F6] mb-3">
-          🎓 CampusPull Events & Meetups
-        </h1>
-        <p className="text-[#475569] text-lg max-w-2xl mx-auto">
-          Discover, join, and host academic or fun campus activities. Build
-          connections beyond the classroom!
-        </p>
-      </motion.div>
-
-      {/* Search Bar */}
-      <div className="flex justify-center mb-12">
-        <input
-          type="text"
-          placeholder="🔍 Search campus events..."
-          className="w-full max-w-lg px-6 py-3 rounded-full border border-[#CBD5E1] shadow-sm focus:ring-2 focus:ring-[#6366F1] focus:outline-none bg-white"
-        />
-      </div>
-
-      {/* Event Cards */}
-      {events.length === 0 ? (
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="text-center text-[#64748B] text-lg"
+    <>
+      <Helmet>
+        <title>Events - CampusPull</title>
+        <meta name="description" content="Discover and manage campus events." />
+      </Helmet>
+      {/* Assume Header is global via App.js */}
+      <div className="min-h-screen bg-gradient-to-b from-[#F3F4FD] via-white to-[#E0E7FF] py-6 px-4 sm:px-6 lg:px-8 text-[#1E293B]">
+        {/* Header Section */}
+        <motion.div
+          initial={{ opacity: 0, y: -25 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-10"
         >
-          🚀 No events yet. Be the first to create one!
-        </motion.p>
-      ) : (
-        <div className="grid md:grid-cols-3 gap-10 max-w-7xl mx-auto">
-          {events.map((event, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.1 }}
-              whileHover={{ scale: 1.05 }}
-              className="bg-white rounded-2xl p-6 shadow-lg border border-[#E0E7FF] hover:shadow-2xl transition-all"
-            >
-              <div className="flex items-center gap-3 mb-3">
-                <Calendar className="text-[#3B82F6]" size={26} />
-                <h2 className="text-2xl font-semibold text-[#1E293B]">
-                  {event.title}
-                </h2>
-              </div>
-              <p className="text-[#475569] text-sm mb-3">{event.desc}</p>
-              <div className="text-sm text-[#64748B] space-y-1 mb-4">
-                <p className="flex items-center gap-2">
-                  <Clock size={16} /> {event.date}
-                </p>
-                <p className="flex items-center gap-2">
-                  <Users size={16} /> {event.attendees} Attendees
-                </p>
-                {event.category && (
-                  <span className="inline-block bg-[#E0E7FF] text-[#3B82F6] text-xs px-3 py-1 rounded-full">
-                    {event.category}
-                  </span>
-                )}
-              </div>
-              <button
-                onClick={() => handleJoinEvent(i)}
-                disabled={event.joined}
-                className={`w-full py-2 rounded-full font-semibold transition-all ${
-                  event.joined
-                    ? "bg-[#C7D2FE] text-[#3730A3] cursor-not-allowed"
-                    : "bg-gradient-to-r from-[#3B82F6] to-[#6366F1] text-white hover:opacity-90"
-                }`}
-              >
-                {event.joined ? "✅ Joined" : "Join Event"}
-              </button>
-            </motion.div>
-          ))}
-        </div>
-      )}
+          <h1 className="text-4xl sm:text-5xl font-extrabold text-[#3B82F6] mb-3">
+            CampusPull Events
+          </h1>
+          <p className="text-[#475569] text-base sm:text-lg max-w-2xl mx-auto">
+            Discover upcoming workshops, seminars, meetups, and activities.
+          </p>
+        </motion.div>
 
-      {/* My Joined Events */}
-      {joinedEvents.length > 0 && (
-        <div className="max-w-6xl mx-auto mt-20 bg-white rounded-2xl p-8 shadow-lg border border-[#E0E7FF]">
-          <h2 className="text-3xl font-semibold mb-6 text-[#3B82F6] flex items-center gap-2">
-            <Bookmark /> My Joined Events
-          </h2>
-          <div className="grid md:grid-cols-2 gap-6">
-            {joinedEvents.map((evt, idx) => (
-              <motion.div
-                key={idx}
-                whileHover={{ scale: 1.03 }}
-                className="bg-[#F3F4FD] p-4 rounded-xl border border-[#C7D2FE]"
-              >
-                <h3 className="text-xl font-semibold text-[#1E293B]">
-                  {evt.title}
-                </h3>
-                <p className="text-[#475569] text-sm mt-1">{evt.date}</p>
-                <p className="text-[#64748B] text-xs mt-2">{evt.desc}</p>
-              </motion.div>
-            ))}
+        {/* Search & Create Button Bar */}
+        <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-4 mb-10 max-w-6xl mx-auto">
+          <div className="relative w-full sm:max-w-md">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search className="h-5 w-5 text-gray-400" />
+            </div>
+            <input
+              type="text"
+              placeholder="Search events by title or description..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 rounded-full border border-[#CBD5E1] shadow-sm focus:ring-2 focus:ring-[#6366F1] focus:outline-none bg-white"
+            />
           </div>
-        </div>
-      )}
-
-      {/* Discussion Lounge */}
-      <div className="max-w-4xl mx-auto mt-20 bg-white rounded-2xl p-6 shadow-lg border border-[#E0E7FF]">
-        <h2 className="text-2xl font-semibold mb-4 text-[#3B82F6] flex items-center gap-2">
-          💬 Event Discussion Lounge
-        </h2>
-        <div className="h-60 overflow-y-auto bg-[#F3F4FD] rounded-xl p-4 mb-4 space-y-2 border border-[#C7D2FE]">
-          {chatMessages.length === 0 ? (
-            <p className="text-[#64748B] text-sm text-center">
-              No messages yet. Start a conversation about upcoming events!
-            </p>
-          ) : (
-            chatMessages.map((msg, idx) => (
-              <div
-                key={idx}
-                className="bg-white border border-[#C7D2FE] rounded-lg p-2 text-sm text-[#1E293B]"
-              >
-                <strong className="text-[#3B82F6]">{msg.user}:</strong>{" "}
-                {msg.text}
-              </div>
-            ))
+          {canManageEvents && (
+            <motion.button
+              onClick={() => setShowCreateModal(true)}
+              whileHover={{ scale: 1.05 }}
+              className="w-full sm:w-auto bg-gradient-to-r from-[#3B82F6] to-[#6366F1] text-white font-semibold rounded-full shadow-md px-5 py-2.5 flex items-center justify-center gap-2 hover:opacity-90"
+            >
+              <PlusCircle size={20} /> Create Event
+            </motion.button>
           )}
         </div>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            placeholder="Share your thoughts..."
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-            className="flex-1 px-4 py-2 rounded-full border border-[#CBD5E1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]"
-          />
-          <button
-            onClick={handleSendMessage}
-            className="px-6 py-2 bg-gradient-to-r from-[#3B82F6] to-[#6366F1] text-white font-semibold rounded-full hover:opacity-90 flex items-center gap-1"
-          >
-            <Send size={18} /> Send
-          </button>
-        </div>
+
+        {/* Event Display Area */}
+        <div className="max-w-7xl mx-auto">
+          {loading && <p className="text-center text-gray-500">Loading events...</p> /* Replace with Skeleton */}
+          
+          {error && (
+            <div className="text-center py-10 text-red-600">
+              <AlertTriangle size={40} className="mx-auto mb-2" />
+              <p>Error loading events: {error}</p>
+            </div>
+          )}
+
+          {!loading && !error && filteredEvents.length === 0 && (
+            <div className="text-center py-16">
+              <Inbox size={48} className="mx-auto mb-4 text-gray-400" />
+              <p className="text-gray-500 text-lg">
+                {searchTerm ? "No events match your search." : "No events scheduled yet."}
+              </p>
+              {canManageEvents && !searchTerm && (
+                 <p className="text-gray-500 text-sm mt-2">Why not create the first one?</p>
+              )}
+            </div>
+          )}
+
+          {!loading && !error && filteredEvents.length > 0 && (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+            {filteredEvents.map((event, index) => { // Added index for logging
+
+
+              // Add a quick check here too before rendering the card
+              if (!event || !event._id) {
+                console.error(`[EventsPage] Skipping render for invalid event at index ${index}:`, event);
+                return null; // Don't render card if event is invalid
+              }
+
+              return (
+                <EventCard
+                  key={event._id}
+                  event={event} // Pass the validated event object
+                  onEdit={handleEditClick}
+                  onDelete={handleDeleteClick}
+                  isDeleting={isDeleting === event._id}
+                />
+              );
+            })}
+          </div>
+        )}
       </div>
 
-      {/* Floating Button */}
-      <motion.button
-        onClick={() => setShowCreateModal(true)}
-        whileHover={{ scale: 1.1 }}
-        transition={{ duration: 0.3 }}
-        className="fixed bottom-8 right-8 bg-gradient-to-r from-[#3B82F6] to-[#6366F1] text-white font-semibold rounded-full shadow-lg px-6 py-3 flex items-center gap-2 hover:opacity-90"
-      >
-        <PlusCircle size={22} /> Create Event
-      </motion.button>
+        {/* Modals */}
+        <AnimatePresence>
+          {showCreateModal && (
+            <CreateEventModal
+              isOpen={showCreateModal}
+              onClose={() => setShowCreateModal(false)}
+              onEventCreated={handleEventCreated}
+            />
+          )}
+          {editingEvent && (
+            <EditEventModal
+              isOpen={!!editingEvent}
+              onClose={() => setEditingEvent(null)}
+              event={editingEvent}
+              onEventUpdated={handleEventUpdated}
+            />
+          )}
+        </AnimatePresence>
 
-      {/* Create Event Modal */}
-      <AnimatePresence>
-        {showCreateModal && (
-          <motion.div
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50 p-4"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.div
-              className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl border border-[#E0E7FF] relative"
-              initial={{ scale: 0.8 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.8 }}
-            >
-              <button
-                onClick={() => setShowCreateModal(false)}
-                className="absolute top-4 right-4 text-[#64748B] hover:text-[#1E293B]"
-              >
-                <X size={22} />
-              </button>
-              <h2 className="text-3xl font-bold mb-6 text-[#3B82F6] text-center">
-                <Sparkles className="inline mr-2" /> Create New Event
-              </h2>
-              <form onSubmit={handleCreateEvent} className="space-y-4">
-                <input
-                  type="text"
-                  placeholder="Event Title"
-                  value={newEvent.title}
-                  onChange={(e) =>
-                    setNewEvent({ ...newEvent, title: e.target.value })
-                  }
-                  className="w-full px-4 py-2 rounded-lg border border-[#CBD5E1] focus:outline-none"
-                />
-                <input
-                  type="date"
-                  value={newEvent.date}
-                  onChange={(e) =>
-                    setNewEvent({ ...newEvent, date: e.target.value })
-                  }
-                  className="w-full px-4 py-2 rounded-lg border border-[#CBD5E1] focus:outline-none"
-                />
-                <input
-                  type="text"
-                  placeholder="Category (e.g. Seminar, Hackathon)"
-                  value={newEvent.category}
-                  onChange={(e) =>
-                    setNewEvent({ ...newEvent, category: e.target.value })
-                  }
-                  className="w-full px-4 py-2 rounded-lg border border-[#CBD5E1] focus:outline-none"
-                />
-                <textarea
-                  placeholder="Event Description"
-                  value={newEvent.desc}
-                  onChange={(e) =>
-                    setNewEvent({ ...newEvent, desc: e.target.value })
-                  }
-                  className="w-full px-4 py-2 rounded-lg border border-[#CBD5E1] focus:outline-none"
-                  rows="3"
-                />
-                <button
-                  type="submit"
-                  className="w-full py-2 bg-gradient-to-r from-[#3B82F6] to-[#6366F1] text-white font-semibold rounded-full hover:opacity-90"
-                >
-                  Create
-                </button>
-              </form>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+        {/* Removed Floating Button if Create button is now at the top */}
+      </div>
+    </>
   );
 };
 

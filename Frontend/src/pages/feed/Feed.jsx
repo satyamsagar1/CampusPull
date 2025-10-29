@@ -1,110 +1,134 @@
 import React, { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Image as ImageIcon,
   Video,
   ThumbsUp,
-  Heart,
-  Zap,
-  Smile,
-  Star,
   MessageCircle,
   Share2,
-  BarChart2,
+  MoreVertical,
+  Trash2,
+  Edit,
   Flame,
   Hash,
+  X,
+  Loader,
 } from "lucide-react";
+import { useFeed } from "../../context/FeedContext"; // REAL CONTEXT
+import { useAuth } from "../../context/AuthContext";   // REAL CONTEXT
 
+// --- Helper: Time Formatter ---
+const formatTime = (dateString) => {
+  if (!dateString) return "just now";
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now - date;
+  const diffDays = Math.floor(diffMs / 86400000);
+  if (diffDays > 7) return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  if (diffDays > 0) return `${diffDays}d ago`;
+  const diffHours = Math.floor(diffMs / 3600000);
+  if (diffHours > 0) return `${diffHours}h ago`;
+  const diffMins = Math.floor(diffMs / 60000);
+  if (diffMins > 0) return `${diffMins}m ago`;
+  return 'just now';
+};
+
+// --- Helper: Check for Video URL ---
+const isVideo = (mediaUrl) => {
+  if (!mediaUrl) return false;
+  return mediaUrl.match(/\.(mp4|webm|mov)$/i) != null;
+};
+
+
+// --- Main Feed Page Component ---
 const FeedPage = () => {
-  const [posts, setPosts] = useState([
-    {
-      id: 1,
-      user: "Ananya Sharma",
-      content: "Excited for the Tech Fest 2025! 🚀 #Innovation #CampusVibes",
-      media: "/images/techfest.jpg",
-      mediaType: "image",
-      reactions: { like: 12, heart: 5, clap: 3, laugh: 2, wow: 1 },
-      comments: 3,
-      showReply: false,
-      replies: [],
-    },
-    {
-      id: 2,
-      user: "Rohan Verma",
-      content: "Should we have a coding marathon this weekend? 💻🔥 #Hackathon",
-      reactions: { like: 8, heart: 2, clap: 1, laugh: 0, wow: 0 },
-      comments: 5,
-      isPoll: true,
-      pollOptions: ["Yes, let's do it!", "Maybe next week", "Not interested"],
-      showReply: false,
-      replies: [],
-    },
-  ]);
+  // --- Get Real Data from Contexts ---
+  const { 
+    feed: posts, 
+    loading, 
+    error, 
+    createPost, 
+    likePost, 
+    commentPost,
+    deletePost,
+    sharePost,
+    replyToComment, // <-- Get new functions
+    likeComment,    // <-- Get new functions
+  } = useFeed();
+  const { user } = useAuth();
 
+  // --- State for New Post ---
   const [newPost, setNewPost] = useState("");
-  const [newMedia, setNewMedia] = useState(null);
+  const [newMediaPreview, setNewMediaPreview] = useState(null);
+  const [newMediaFile, setNewMediaFile] = useState(null);
   const [mediaType, setMediaType] = useState(null);
-  const [replyText, setReplyText] = useState("");
+  const [isPosting, setIsPosting] = useState(false);
 
+  // --- State for Comments ---
+  const [activeCommentBox, setActiveCommentBox] = useState(null);
+  const [commentText, setCommentText] = useState("");
+  const [isCommenting, setIsCommenting] = useState(false);
+
+  // --- Handle Media Selection ---
   const handleMediaUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
     const type = file.type.startsWith("video") ? "video" : "image";
-    if (type === "video" && file.size > 120 * 1024 * 1024) {
-      alert("Please upload a video under 2 minutes (max ~120MB).");
-      return;
-    }
     setMediaType(type);
-    setNewMedia(URL.createObjectURL(file));
+    setNewMediaFile(file);
+    setNewMediaPreview(URL.createObjectURL(file));
+    e.target.value = null;
   };
 
-  const handlePost = () => {
-    if (newPost.trim() === "" && !newMedia) return;
-    const newEntry = {
-      id: Date.now(),
-      user: "You",
-      content: newPost,
-      media: newMedia,
-      mediaType,
-      reactions: { like: 0, heart: 0, clap: 0, laugh: 0, wow: 0 },
-      comments: 0,
-      showReply: false,
-      replies: [],
-    };
-    setPosts([newEntry, ...posts]);
-    setNewPost("");
-    setNewMedia(null);
+  const clearMedia = () => {
+    setNewMediaPreview(null);
+    setNewMediaFile(null);
     setMediaType(null);
+  }
+
+  // --- Handle Create Post ---
+  const handlePost = async () => {
+    if (newPost.trim() === "" && !newMediaFile) return;
+    setIsPosting(true);
+    try {
+      await createPost(newPost, newMediaFile);
+      setNewPost("");
+      setNewMediaPreview(null);
+      setNewMediaFile(null);
+      setMediaType(null);
+    } catch (err) { console.error("Failed to post:", err); } 
+    finally { setIsPosting(false); }
   };
 
-  const handleReaction = (postId, type) => {
-    setPosts((prev) =>
-      prev.map((post) =>
-        post.id === postId
-          ? { ...post, reactions: { ...post.reactions, [type]: post.reactions[type] + 1 } }
-          : post
-      )
-    );
+  // --- Handle Like Post ---
+  const handleLike = async (postId) => {
+    try { await likePost(postId); } 
+    catch (err) { console.error("Failed to like post:", err); }
   };
 
-  const toggleReply = (postId) => {
-    setPosts((prev) =>
-      prev.map((post) =>
-        post.id === postId ? { ...post, showReply: !post.showReply } : post
-      )
-    );
+  // --- Handle Toggle Comment Box ---
+  const toggleCommentBox = (postId) => {
+    setActiveCommentBox(activeCommentBox === postId ? null : postId);
+    setCommentText("");
   };
 
-  const addReply = (postId) => {
-    if (replyText.trim() === "") return;
-    setPosts((prev) =>
-      prev.map((post) =>
-        post.id === postId
-          ? { ...post, replies: [...post.replies, { id: Date.now(), text: replyText }], showReply: false }
-          : post
-      )
-    );
-    setReplyText("");
+  // --- Handle Add Comment ---
+  const handleAddComment = async (postId) => {
+    if (commentText.trim() === "") return;
+    setIsCommenting(true);
+    try {
+      await commentPost(postId, commentText);
+      setCommentText("");
+    } catch (err) { console.error("Failed to comment:", err); } 
+    finally { setIsCommenting(false); }
+  };
+
+  // --- Handle Share ---
+  const handleShare = async (postId) => {
+    const sharedContent = prompt("Add a comment to your share (optional):");
+    if (sharedContent === null) return;
+    try { await sharePost(postId, sharedContent); } 
+    catch (err) { console.error("Failed to share post:", err); }
   };
 
   return (
@@ -116,7 +140,13 @@ const FeedPage = () => {
         {/* Create Post */}
         <motion.div className="bg-white rounded-2xl p-5 shadow-md border border-gray-200 mb-6" whileHover={{ scale: 1.01 }}>
           <div className="flex items-start gap-3 mb-3">
-            <div className="w-10 h-10 bg-blue-500 text-white rounded-full flex items-center justify-center font-semibold">Y</div>
+            <div className="w-10 h-10 bg-blue-500 text-white rounded-full flex items-center justify-center font-semibold overflow-hidden">
+              {user?.avatar ? (
+                <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+              ) : (
+                user?.name?.charAt(0) || 'U'
+              )}
+            </div>
             <textarea
               placeholder="Start a post..."
               value={newPost}
@@ -126,13 +156,16 @@ const FeedPage = () => {
             />
           </div>
 
-          {newMedia && (
-            <div className="mb-3 rounded-xl overflow-hidden">
+          {newMediaPreview && (
+            <div className="mb-3 rounded-xl overflow-hidden relative">
               {mediaType === "video" ? (
-                <video src={newMedia} controls className="w-full rounded-xl max-h-80" />
+                <video src={newMediaPreview} controls className="w-full rounded-xl max-h-80" />
               ) : (
-                <img src={newMedia} alt="Preview" className="rounded-xl max-h-80 object-cover" />
+                <img src={newMediaPreview} alt="Preview" className="rounded-xl max-h-80 object-cover" />
               )}
+              <button onClick={clearMedia} className="absolute top-2 right-2 bg-black/50 text-white rounded-full p-1.5 hover:bg-black/75">
+                <X size={18} />
+              </button>
             </div>
           )}
 
@@ -148,91 +181,43 @@ const FeedPage = () => {
                 <input type="file" accept="video/*" className="hidden" onChange={handleMediaUpload} />
                 Video
               </label>
-              <span className="flex items-center gap-1 hover:text-blue-500 cursor-pointer">
-                <Hash size={18} /> Hashtag
-              </span>
             </div>
-            <button onClick={handlePost} className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-1.5 rounded-full text-sm font-medium transition">
-              Post
+            <button 
+              onClick={handlePost} 
+              disabled={isPosting}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-1.5 rounded-full text-sm font-medium transition disabled:bg-blue-300"
+            >
+              {isPosting ? <Loader size={16} className="animate-spin" /> : "Post"}
             </button>
           </div>
         </motion.div>
 
-        {/* Posts */}
+        {loading && (
+          <div className="flex justify-center py-10">
+            <Loader size={32} className="animate-spin text-blue-500" />
+          </div>
+        )}
+        {error && <p className="text-center text-red-500">{error}</p>}
+        
         <div className="space-y-5">
-          {posts.map((post) => (
-            <motion.div key={post.id} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 bg-blue-500 text-white rounded-full flex items-center justify-center font-semibold">{post.user.charAt(0)}</div>
-                <div>
-                  <p className="font-semibold text-gray-800">{post.user}</p>
-                  <p className="text-xs text-gray-400">2h ago</p>
-                </div>
-              </div>
-
-              <p className="text-gray-800 mb-3 leading-relaxed">{post.content}</p>
-
-              {post.media && (
-                <div className="mb-3 rounded-xl overflow-hidden">
-                  {post.mediaType === "video" ? (
-                    <video src={post.media} controls className="w-full rounded-xl max-h-96" />
-                  ) : (
-                    <img src={post.media} alt="Post media" className="w-full rounded-xl" />
-                  )}
-                </div>
-              )}
-
-              {post.isPoll && (
-                <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 mb-3">
-                  {post.pollOptions.map((opt, i) => (
-                    <div key={i} className="flex items-center gap-2 p-2 hover:bg-gray-100 rounded-lg cursor-pointer text-gray-700">
-                      <BarChart2 size={16} /> {opt}
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Actions */}
-              <div className="flex justify-between items-center mt-2 text-gray-500 text-sm">
-                <div className="flex gap-4">
-                  <span onClick={() => handleReaction(post.id, "like")} className="flex items-center gap-1 cursor-pointer hover:text-blue-500"><ThumbsUp size={18} /> {post.reactions.like}</span>
-                  <span onClick={() => handleReaction(post.id, "heart")} className="flex items-center gap-1 cursor-pointer hover:text-red-500"><Heart size={18} /> {post.reactions.heart}</span>
-                  <span onClick={() => handleReaction(post.id, "clap")} className="flex items-center gap-1 cursor-pointer hover:text-yellow-500"><Zap size={18} /> {post.reactions.clap}</span>
-                  <span onClick={() => handleReaction(post.id, "laugh")} className="flex items-center gap-1 cursor-pointer hover:text-green-500"><Smile size={18} /> {post.reactions.laugh}</span>
-                  <span onClick={() => handleReaction(post.id, "wow")} className="flex items-center gap-1 cursor-pointer hover:text-purple-500"><Star size={18} /> {post.reactions.wow}</span>
-                  <span onClick={() => toggleReply(post.id)} className="flex items-center gap-1 cursor-pointer hover:text-blue-500"><MessageCircle size={18} /> Reply</span>
-                  <span className="flex items-center gap-1 cursor-pointer hover:text-blue-500"><Share2 size={18} /> Share</span>
-                </div>
-              </div>
-
-              {/* Reply Input */}
-              {post.showReply && (
-                <div className="mt-2">
-                  <input
-                    type="text"
-                    placeholder="Write a reply..."
-                    value={replyText}
-                    onChange={(e) => setReplyText(e.target.value)}
-                    className="w-full border border-gray-300 rounded-full px-4 py-2 text-sm focus:outline-none focus:border-blue-400"
-                  />
-                  <button
-                    onClick={() => addReply(post.id)}
-                    className="mt-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-1 rounded-full text-sm"
-                  >
-                    Reply
-                  </button>
-                </div>
-              )}
-
-              {/* Display Replies */}
-              {post.replies.length > 0 && (
-                <div className="mt-2 space-y-1 pl-4 border-l border-gray-200">
-                  {post.replies.map((r) => (
-                    <p key={r.id} className="text-gray-700 text-sm">• {r.text}</p>
-                  ))}
-                </div>
-              )}
-            </motion.div>
+          {!loading && posts.map((post) => (
+            <PostCard 
+              key={post._id} 
+              post={post} 
+              user={user}
+              onLike={handleLike}
+              onDelete={deletePost}
+              onShare={handleShare}
+              onToggleComment={toggleCommentBox}
+              onAddComment={handleAddComment}
+              activeCommentBox={activeCommentBox}
+              commentText={commentText}
+              setCommentText={setCommentText}
+              isCommenting={isCommenting}
+              // Pass reply functions down
+              onReplyToComment={replyToComment}
+              onLikeComment={likeComment}
+            />
           ))}
         </div>
       </motion.div>
@@ -253,3 +238,509 @@ const FeedPage = () => {
 };
 
 export default FeedPage;
+
+
+// ===================================================================
+// --- Post Card Component ---
+// ===================================================================
+const PostCard = ({ 
+  post, 
+  user, 
+  onLike, 
+  onDelete,
+  onShare,
+  onToggleComment, 
+  onAddComment, 
+  activeCommentBox,
+  commentText,
+  setCommentText,
+  isCommenting,
+  onReplyToComment,
+  onLikeComment
+}) => {
+  const { updatePost } = useFeed(); // Get the updatePost function
+
+  // --- State for Edit/Delete ---
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState(post.content);
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  // --- NEW STATE for editing media ---
+  const [editMediaFile, setEditMediaFile] = useState(null);     // The new File object to upload
+  const [editMediaPreview, setEditMediaPreview] = useState(null); // The preview URL
+  const [editMediaType, setEditMediaType] = useState(null);     // 'image' or 'video'
+
+  
+  const isLiked = post.likes.includes(user?._id);
+  const isAuthor = post.author._id === user?._id;
+
+  const handleDelete = async () => {
+    if (window.confirm("Are you sure you want to delete this post?")) {
+      try {
+        await onDelete(post._id); 
+      } catch (err) {
+        console.error("Delete failed:", err);
+        alert("Error: Could not delete the post.");
+      }
+    }
+    setMenuOpen(false);
+  };
+
+  const handleEditToggle = () => {
+    const editing = !isEditing;
+    setIsEditing(editing);
+    setMenuOpen(false);
+    
+    // When opening/closing edit, reset all edit state
+    // to match the original post
+    setEditContent(post.content);
+    setEditMediaFile(null); // Clear any staged new file
+    setEditMediaPreview(post.media || null); // Show the *current* media
+    setEditMediaType(post.media && isVideo(post.media) ? 'video' : 'image');
+  };
+
+  // --- NEW: Handler for changing media in edit mode ---
+  const handleEditMediaUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const type = file.type.startsWith("video") ? "video" : "image";
+    setEditMediaType(type);
+    setEditMediaFile(file); // Store the new file for upload
+    setEditMediaPreview(URL.createObjectURL(file)); // Set the new preview
+    e.target.value = null;
+  };
+
+  const handleUpdate = async () => {
+    const contentChanged = editContent.trim() !== post.content.trim();
+    const mediaChanged = editMediaFile !== null; // A new file was staged
+    
+    if (!contentChanged && !mediaChanged) {
+      setIsEditing(false); // Nothing changed
+      return;
+    }
+    
+    setIsUpdating(true);
+    try {
+      // Pass the new file (or null if unchanged) to updatePost
+      await updatePost(post._id, editContent, editMediaFile); 
+      setIsEditing(false);
+      // Clear file state after successful update
+      setEditMediaFile(null);
+    } catch (err) {
+      console.error("Failed to update post:", err);
+      alert(`Error updating post: ${err.response?.data?.error || err.message}`);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+  
+  return (
+    <motion.div 
+      className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200" 
+      initial={{ opacity: 0, y: 30 }} 
+      animate={{ opacity: 1, y: 0 }} 
+      transition={{ duration: 0.3 }}
+      layout
+    >
+      <div className="flex items-start justify-between">
+        {/* Author Info */}
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-10 h-10 bg-blue-500 text-white rounded-full flex items-center justify-center font-semibold overflow-hidden">
+             {post.author?.avatar ? (
+                <img src={post.author.avatar} alt={post.author.name} className="w-full h-full object-cover" />
+              ) : (
+                post.author?.name?.charAt(0) || '?'
+              )}
+          </div>
+          <div>
+            <p className="font-semibold text-gray-800">{post.author.name}</p>
+            <p className="text-xs text-gray-400">{formatTime(post.createdAt)}</p>
+          </div>
+        </div>
+        
+        {/* Post Menu (Delete/Edit) */}
+        {isAuthor && (
+          <div className="relative">
+            <button onClick={() => setMenuOpen(!menuOpen)} disabled={isEditing}>
+              <MoreVertical size={20} className="text-gray-500" />
+            </button>
+            <AnimatePresence>
+              {menuOpen && (
+                <motion.div 
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute right-0 top-6 bg-white shadow-lg rounded-md border border-gray-200 w-32 z-10"
+                >
+                  <button 
+                    onClick={handleEditToggle} // Toggles edit mode
+                    className="flex items-center gap-2 w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    <Edit size={14} /> Edit
+                  </button>
+                  <button 
+                    onClick={handleDelete} 
+                    className="flex items-center gap-2 w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+                  >
+                    <Trash2 size={14} /> Delete
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
+      </div>
+
+      {/* --- Post Content --- */}
+      {isEditing ? (
+        // --- EDITING VIEW ---
+        <div className="mb-3">
+          <textarea
+            value={editContent}
+            onChange={(e) => setEditContent(e.target.value)}
+            className="w-full border border-gray-300 rounded-md px-3 py-2 text-gray-800 leading-relaxed focus:outline-none focus:ring-2 focus:ring-blue-400"
+            rows="4"
+          />
+          
+          {/* --- NEW: Edit Media Preview --- */}
+          {editMediaPreview && (
+            <div className="my-3 rounded-xl overflow-hidden relative">
+              {editMediaType === "video" ? (
+                <video src={editMediaPreview} controls className="w-full rounded-xl max-h-80" />
+              ) : (
+                <img src={editMediaPreview} alt="Preview" className="rounded-xl max-h-80 object-cover" />
+              )}
+              {/* This button just clears the *staged* new file, it doesn't remove the original */}
+              {editMediaFile && (
+                <button onClick={() => { setEditMediaFile(null); setEditMediaPreview(post.media || null); setEditMediaType(post.media && isVideo(post.media) ? 'video' : 'image'); }} 
+                        className="absolute top-2 right-2 bg-black/50 text-white rounded-full p-1.5 hover:bg-black/75">
+                  <X size={18} />
+                </button>
+              )}
+            </div>
+          )}
+          
+          {/* --- NEW: Edit Media Upload Buttons --- */}
+          <div className="flex items-center justify-between mt-2">
+            <div className="flex gap-4 text-gray-500 text-sm">
+              <label className="flex items-center gap-1 cursor-pointer hover:text-blue-500">
+                <ImageIcon size={18} />
+                <input type="file" accept="image/*" className="hidden" onChange={handleEditMediaUpload} />
+                Change Photo
+              </label>
+              <label className="flex items-center gap-1 cursor-pointer hover:text-blue-500">
+                <Video size={18} />
+                <input type="file" accept="video/*" className="hidden" onChange={handleEditMediaUpload} />
+                Change Video
+              </label>
+            </div>
+          </div>
+
+          {/* --- Edit Action Buttons --- */}
+          <div className="flex gap-2 mt-4">
+            <button 
+              onClick={handleUpdate}
+              disabled={isUpdating}
+              className="bg-blue-600 text-white px-3 py-1 text-sm rounded-md font-medium disabled:bg-blue-300"
+            >
+              {isUpdating ? <Loader size={16} className="animate-spin" /> : 'Save'}
+            </button>
+            <button 
+              onClick={handleEditToggle} // This is now the "Cancel" button
+              className="bg-gray-200 text-gray-700 px-3 py-1 text-sm rounded-md font-medium"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : (
+        // --- NORMAL VIEW ---
+        <>
+          {post.sharedContent && (
+            <p className="text-gray-600 mb-2 italic">"{post.sharedContent}"</p>
+          )}
+          {post.content && !post.originalPost && (
+            <p className="text-gray-800 mb-3 leading-relaxed">{post.content}</p>
+          )}
+          {post.media && !post.originalPost && (
+            <div className="mb-3 rounded-xl overflow-hidden">
+              {isVideo(post.media) ? (
+                <video src={post.media} controls className="w-full rounded-xl max-h-96" />
+              ) : (
+                <img src={post.media} alt="Post media" className="w-full rounded-xl" />
+              )}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* --- Shared Post Card (if it exists) --- */}
+      {!isEditing && post.originalPost && (
+        <div className="border border-gray-200 rounded-xl p-4 mt-2">
+          {/* ... (shared post content, same as before) ... */}
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-8 h-8 bg-gray-400 text-white rounded-full flex items-center justify-center font-semibold overflow-hidden">
+              {post.originalPost.author?.avatar ? (
+                  <img src={post.originalPost.author.avatar} alt={post.originalPost.author.name} className="w-full h-full object-cover" />
+                ) : (
+                  post.originalPost.author?.name?.charAt(0) || '?'
+                )}
+            </div>
+            <div>
+              <p className="font-semibold text-gray-800 text-sm">{post.originalPost.author.name}</p>
+              <p className="text-xs text-gray-400">{formatTime(post.originalPost.createdAt)}</p>
+            </div>
+          </div>
+          {post.originalPost.content && (
+            <p className="text-gray-700 mb-3 text-sm">{post.originalPost.content}</p>
+          )}
+          {post.originalPost.media && (
+             <div className="mb-3 rounded-lg overflow-hidden">
+              {isVideo(post.originalPost.media) ? (
+                <video src={post.originalPost.media} controls className="w-full rounded-lg max-h-80" />
+              ) : (
+                <img src={post.originalPost.media} alt="Post media" className="w-full rounded-lg" />
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* --- Stats --- */}
+      <div className="flex justify-between items-center text-xs text-gray-500 mt-2">
+        <span>{post.likesCount} {post.likesCount === 1 ? 'Like' : 'Likes'}</span>
+        <span>{post.commentsCount} {post.commentsCount === 1 ? 'Comment' : 'Comments'}</span>
+      </div>
+
+      {/* --- Actions --- */}
+      <div className="flex justify-around items-center mt-2 pt-2 border-t border-gray-200 text-gray-500 text-sm font-medium">
+        <button 
+          onClick={() => onLike(post._id)}
+          className={`flex-1 flex justify-center items-center gap-2 py-1 rounded-lg hover:bg-gray-100 ${isLiked ? 'text-blue-600' : ''}`}
+        >
+          <ThumbsUp size={18} className={`${isLiked ? 'fill-blue-600' : ''}`} /> 
+          {isLiked ? 'Liked' : 'Like'}
+        </button>
+        <button 
+          onClick={() => onToggleComment(post._id)}
+          className="flex-1 flex justify-center items-center gap-2 py-1 rounded-lg hover:bg-gray-100"
+        >
+          <MessageCircle size={18} /> Comment
+        </button>
+        <button 
+          onClick={() => onShare(post._id)}
+          className="flex-1 flex justify-center items-center gap-2 py-1 rounded-lg hover:bg-gray-100"
+        >
+          <Share2 size={18} /> Share
+        </button>
+      </div>
+
+      {/* --- Comment Input & List --- */}
+      <AnimatePresence>
+        {activeCommentBox === post._id && (
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="mt-4"
+          >
+            {/* ... (comment input form, same as before) ... */}
+            <div className="flex items-start gap-2">
+              <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-semibold overflow-hidden mt-1">
+                {user?.avatar ? (
+                  <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+                ) : (
+                  user?.name?.charAt(0) || 'U'
+                )}
+              </div>
+              <input
+                type="text"
+                placeholder="Write a comment..."
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                className="w-full border border-gray-300 rounded-full px-4 py-2.5 text-sm focus:outline-none focus:border-blue-400"
+              />
+              <button
+                onClick={() => onAddComment(post._id)}
+                disabled={isCommenting || commentText.trim() === ""}
+                className="mt-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-full text-sm disabled:bg-blue-300"
+              >
+                {isCommenting ? <Loader size={16} className="animate-spin" /> : 'Post'}
+              </button>
+            </div>
+            
+            {post.comments.length > 0 && (
+              <div className="mt-4 space-y-3 pl-4 border-l border-gray-200">
+                {post.comments.map((comment) => (
+                  <CommentItem 
+                    key={comment._id} 
+                    comment={comment} 
+                    user={user}
+                    postId={post._id}
+                    onReplyToComment={onReplyToComment}
+                    onLikeComment={onLikeComment}
+                  />
+                ))}
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+};
+
+
+// ===================================================================
+// --- Comment Item Component (UPGRADED FOR REPLIES) ---
+// ===================================================================
+const CommentItem = ({ comment, user, postId, onReplyToComment, onLikeComment }) => {
+  const [showReplyForm, setShowReplyForm] = useState(false);
+  const [replyText, setReplyText] = useState("");
+  const [isReplying, setIsReplying] = useState(false);
+
+  const isLiked = comment.likes.includes(user?._id);
+
+  const handleReplySubmit = async (e) => {
+    e.preventDefault();
+    if (replyText.trim() === "") return;
+    setIsReplying(true);
+    try {
+      await onReplyToComment(postId, comment._id, replyText);
+      setReplyText("");
+      setShowReplyForm(false);
+    } catch (err) {
+      console.error("Failed to submit reply:", err);
+    } finally {
+      setIsReplying(false);
+    }
+  };
+
+  const handleLike = () => {
+    onLikeComment(postId, comment._id);
+  };
+
+  return (
+    <div className="flex items-start gap-2">
+      <div className="w-8 h-8 bg-gray-400 text-white rounded-full flex items-center justify-center font-semibold overflow-hidden flex-shrink-0">
+        {comment.user?.avatar ? (
+          <img src={comment.user.avatar} alt={comment.user.name} className="w-full h-full object-cover" />
+        ) : (
+          comment.user?.name?.charAt(0) || '?'
+        )}
+      </div>
+      <div className="flex-1">
+        <div className="bg-gray-100 rounded-xl px-4 py-2">
+          <div className="flex items-center justify-between">
+            <span className="font-semibold text-gray-800 text-sm">{comment.user.name}</span>
+            <span className="text-xs text-gray-400">{formatTime(comment.createdAt)}</span>
+          </div>
+          <p className="text-gray-700 text-sm">{comment.text}</p>
+        </div>
+        <div className="flex items-center gap-3 text-xs text-gray-500 pl-2 mt-1">
+          <button 
+            onClick={handleLike}
+            className={`font-semibold ${isLiked ? 'text-blue-600' : 'hover:underline'}`}
+          >
+            {isLiked ? 'Liked' : 'Like'}
+          </button>
+          <span className="">{comment.likesCount > 0 && comment.likesCount}</span>
+          <button 
+            onClick={() => setShowReplyForm(!showReplyForm)}
+            className="font-semibold hover:underline"
+          >
+            Reply
+          </button>
+        </div>
+
+        {/* --- Nested Reply Form --- */}
+        <AnimatePresence>
+          {showReplyForm && (
+            <motion.form 
+              onSubmit={handleReplySubmit}
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="flex items-center gap-2 mt-2"
+            >
+              <input 
+                type="text"
+                placeholder="Write a reply..."
+                value={replyText}
+                onChange={(e) => setReplyText(e.target.value)}
+                className="w-full border border-gray-300 rounded-full px-3 py-1.5 text-sm focus:outline-none focus:border-blue-400"
+              />
+              <button
+                type="submit"
+                disabled={isReplying || replyText.trim() === ""}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-full text-xs font-semibold disabled:bg-blue-300"
+              >
+                {isReplying ? <Loader size={14} className="animate-spin" /> : 'Send'}
+              </button>
+            </motion.form>
+          )}
+        </AnimatePresence>
+
+        {/* --- Nested Reply List --- */}
+        {comment.replies.length > 0 && (
+          <div className="mt-2 space-y-2">
+            {comment.replies.map((reply) => (
+              <ReplyItem 
+                key={reply._id} 
+                reply={reply} 
+                user={user}
+                postId={postId}
+                commentId={comment._id}
+                onLikeComment={onLikeComment}
+              />
+            ))}
+          </div>
+        )}
+
+      </div>
+    </div>
+  );
+};
+
+// ===================================================================
+// --- Reply Item Component (NEW) ---
+// ===================================================================
+const ReplyItem = ({ reply, user, postId, commentId, onLikeComment }) => {
+  const isLiked = reply.likes.includes(user?._id);
+
+  const handleLike = () => {
+    onLikeComment(postId, commentId, reply._id);
+  };
+
+  return (
+    <div className="flex items-start gap-2">
+      <div className="w-7 h-7 bg-gray-400 text-white rounded-full flex items-center justify-center font-semibold overflow-hidden flex-shrink-0">
+        {reply.user?.avatar ? (
+          <img src={reply.user.avatar} alt={reply.user.name} className="w-full h-full object-cover" />
+        ) : (
+          reply.user?.name?.charAt(0) || '?'
+        )}
+      </div>
+      <div className="flex-1">
+        <div className="bg-gray-100 rounded-xl px-3 py-1.5">
+          <div className="flex items-center justify-between">
+            <span className="font-semibold text-gray-800 text-xs">{reply.user.name}</span>
+            <span className="text-xs text-gray-400">{formatTime(reply.createdAt)}</span>
+          </div>
+          <p className="text-gray-700 text-sm">{reply.text}</p>
+        </div>
+        <div className="flex items-center gap-3 text-xs text-gray-500 pl-2 mt-1">
+          <button 
+            onClick={handleLike}
+            className={`font-semibold ${isLiked ? 'text-blue-600' : 'hover:underline'}`}
+          >
+            {isLiked ? 'Liked' : 'Like'}
+          </button>
+          <span className="">{reply.likesCount > 0 && reply.likesCount}</span>
+        </div>
+      </div>
+    </div>
+  );
+};

@@ -60,14 +60,37 @@ export const sendConnectionRequest = async (req, res) => {
         const { recipientId } = req.body;
         const requesterId = req.user.id;
 
-        //prevent duplicate requests
-        const existingRequest = await Connection.findOne({
-            requester: requesterId,
-            recipient: recipientId
+        const existingConnection = await Connection.findOne({
+            $or: [
+                { requester: requesterId, recipient: recipientId },
+                { requester: recipientId, recipient: requesterId } 
+            ]
         });
-        if (existingRequest) {
-            return res.status(400).json({ message: "Connection request already sent" });
-        }   
+
+        // If a connection exists (pending or accepted), prevent new request
+        if (existingConnection) {
+            if (existingConnection.status === 'accepted') {
+                return res.status(400).json({ message: "Already connected" });
+            } else if (existingConnection.status === 'pending') {
+                 // Check who sent the pending request
+                 if (existingConnection.requester.toString() === requesterId) {
+                    return res.status(400).json({ message: "Connection request already sent" });
+                 } else {
+                    return res.status(400).json({ message: "This user has sent you a request. Please check your requests." });
+                 }
+            } else { // 'rejected' case, allow sending a new request
+               // You might want to delete the rejected request before creating a new one
+               // await Connection.findByIdAndDelete(existingConnection._id); 
+            }
+        }
+        //prevent duplicate requests
+        // const existingRequest = await Connection.findOne({
+        //     requester: requesterId,
+        //     recipient: recipientId
+        // });
+        // if (existingRequest) {
+        //     return res.status(400).json({ message: "Connection request already sent" });
+        // }   
         const connection = await Connection.create({
             requester: requesterId,
             recipient: recipientId,
@@ -118,8 +141,8 @@ export const getPendingRequests = async (req, res) => {
     { recipient: userId, status: "pending" }, // incoming
     { requester: userId, status: "pending" }  // outgoing
   ]
-}).populate("requester", "name email college degree skills")
- .populate("recipient", "name email college degree skills");
+}).populate("requester", "name email college degree skills graduationYear linkedin profilePic")
+ .populate("recipient", "name email college degree skills graduationYear linkedin profilePic");
     // populate requester details to show in UI
 
     res.status(200).json(requests);
@@ -139,8 +162,8 @@ export const getConnections = async (req, res) => {
         { requester: userId, status: "accepted" },
         { recipient: userId, status: "accepted" }
       ]
-    }).populate("requester", "name email profilePic year skills")
-    .populate("recipient", "name email profilePic year skills");
+    }).populate("requester", "name email profilePic year skills college degree graduationYear linkedin ")
+    .populate("recipient", "name email profilePic year skills college degree graduationYear linkedin ");
 
     const connectedUsers = connections.map((conn) => {
       return conn.requester._id.toString() === userId

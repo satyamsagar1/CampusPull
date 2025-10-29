@@ -1,256 +1,276 @@
-import React, { useState, useEffect } from "react";
-import Icon from "../../../components/AppIcon";
-import Button from "../../../components/ui/Button";
+import React, { useState, useContext, useMemo } from 'react';
+import Icon from '../../../components/AppIcon';
+import Image from '../../../components/AppImage';
+import Button from '../../../components/ui/Button';
+import { ResourceContext } from '../../../context/ResourceContext';
 
-const CareerRoadmapCard = ({ roadmap }) => {
+const CareerRoadmapCard = ({ roadmap, onEditClick }) => {
+  // Get user and new function from context
+  const { toggleBookmark, toggleLessonProgress, user } = useContext(ResourceContext);
+  
+  const [expandedModules, setExpandedModules] = useState({});
+  const [isBookmarked, setIsBookmarked] = useState(roadmap?.isBookmarked || false);
+  const [isTogglingLesson, setIsTogglingLesson] = useState(null); // Tracks which lesson is loading
+
+  const { _id, title, description, modules, uploadedBy, thumbnail, bookmarks } = roadmap;
+
+  const isOwner = user?._id === uploadedBy?._id;
+  const isAdmin = user?.role === 'admin';
+  const canEdit = isOwner && isAdmin;
+
+  // --- Progress Calculation (Reads from global user state) ---
+  const { totalLessons, completedLessons, progressPercentage } = useMemo(() => {
+    // Get all resource IDs for *this* roadmap
+    const roadmapLessonIds = new Set(
+      modules?.flatMap(mod => mod.resources.map(res => res._id)) || []
+    );
+    
+    const total = roadmapLessonIds.size;
+
+    // Get all completed IDs from the user
+    const userCompletedIds = new Set(user?.completedLessons || []);
+
+    // Find the intersection
+    let completedCount = 0;
+    for (const lessonId of roadmapLessonIds) {
+      if (userCompletedIds.has(lessonId)) {
+        completedCount++;
+      }
+    }
+    
+    const percentage = (total === 0) ? 0 : (completedCount / total) * 100;
+    
+    return {
+      totalLessons: total,
+      completedLessons: completedCount,
+      progressPercentage: Math.round(percentage)
+    };
+  }, [modules, user?.completedLessons]); // Re-calculates when user object changes
+
+
   if (!roadmap) return <div className="text-center p-4">No roadmap data available</div>;
 
-  const [expandedMilestone, setExpandedMilestone] = useState(null);
-  const [milestones, setMilestones] = useState(roadmap?.milestones || []);
-  const [isStarted, setIsStarted] = useState(false);
-  const [showAchievement, setShowAchievement] = useState(false);
-  const [completedBadge, setCompletedBadge] = useState(false);
-  const [showConfetti, setShowConfetti] = useState(false);
+  const modulesCount = modules?.length || 0;
 
-  // Load saved progress
-  useEffect(() => {
-    if (!roadmap?.id) return;
-    const saved = JSON.parse(localStorage.getItem(`progress-${roadmap.id}`));
-    if (saved) {
-      setMilestones(saved.milestones || []);
-      setIsStarted(saved.isStarted || false);
-      if (saved.milestones?.every((m) => m.completed)) setCompletedBadge(true);
+  const toggleModule = (moduleId) => {
+    setExpandedModules(prev => ({
+      ...prev,
+      [moduleId]: !prev[moduleId]
+    }));
+  };
+
+  const handleBookmark = async (e) => {
+    e?.stopPropagation();
+    try {
+      setIsBookmarked(!isBookmarked); 
+      await toggleBookmark(_id, "roadmap");
+    } catch (err) {
+      console.error('Bookmark toggle failed:', err);
+      setIsBookmarked(isBookmarked); 
     }
-  }, [roadmap]);
+  };
 
-  // Save progress and check completion
-  useEffect(() => {
-    if (!roadmap?.id) return;
-    localStorage.setItem(
-      `progress-${roadmap.id}`,
-      JSON.stringify({ milestones, isStarted })
-    );
+  // --- NEW: Toggle Lesson Completion ---
+  const handleToggleLesson = async (resourceId, e) => {
+    e.stopPropagation(); // Don't collapse the module
+    if (isTogglingLesson === resourceId) return; // Prevent double-click
 
-    const progress = getProgressPercentage();
-    if (progress === 100 && !completedBadge) {
-      setShowAchievement(true);
-      setCompletedBadge(true);
-      setShowConfetti(true);
-      setTimeout(() => setShowConfetti(false), 3000);
+    setIsTogglingLesson(resourceId); // Set loading state
+    
+    try {
+      // Call the context function that hits the backend
+      await toggleLessonProgress(resourceId);
+    } catch (err) {
+      console.error("Failed to toggle lesson:", err);
+      // Note: The UI will auto-update when the 'user' object from context changes
+    } finally {
+      setIsTogglingLesson(null); // Unset loading state
     }
-  }, [milestones, isStarted, roadmap, completedBadge]);
-
-  const handleMilestoneClick = (milestoneId) => {
-    setExpandedMilestone(expandedMilestone === milestoneId ? null : milestoneId);
   };
 
-  const toggleCompletion = (milestoneId, e) => {
-    if (e) e.stopPropagation();
-    const updated = milestones.map((m) =>
-      m.id === milestoneId ? { ...m, completed: !m.completed } : m
-    );
-    setMilestones(updated);
+  // Check if a lesson is complete by reading from the user object
+  const isLessonComplete = (resourceId) => {
+    return user?.completedLessons?.includes(resourceId);
   };
-
-  const getProgressPercentage = () => {
-    if (!milestones?.length) return 0;
-    const completed = milestones.filter((m) => m.completed).length;
-    return (completed / milestones.length) * 100;
-  };
-
-  const getMilestoneStatusColor = (completed) =>
-    completed ? "bg-green-500 border-green-500" : "bg-gray-300 border-gray-300";
-
-  const getMilestoneIcon = (completed) => (completed ? "CheckCircle" : "Circle");
-
-  const progressPercentage = getProgressPercentage();
 
   return (
-    <>
-      <div className="knowledge-card relative bg-white border border-slate-200 rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300">
-        {/* Achievement Badge */}
-        {completedBadge && (
-          <div className="absolute top-3 right-3 bg-yellow-400 text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg relative">
-            🏆
-            {showConfetti && (
-              <>
-                <span className="confetti confetti-1"></span>
-                <span className="confetti confetti-2"></span>
-                <span className="confetti confetti-3"></span>
-                <span className="confetti confetti-4"></span>
-                <span className="confetti confetti-5"></span>
-              </>
-            )}
+    
+    <div className="knowledge-card relative bg-white border border-slate-200 rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300">
+      
+      {/* Header with Thumbnail */}
+      <div className="relative h-40 bg-slate-100 overflow-hidden">
+        {thumbnail ? (
+          <Image src={thumbnail} alt={title} className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-r from-academic-blue to-credibility-indigo">
+             <Icon name="Route" size={48} color="white" />
           </div>
         )}
+        <div className="absolute inset-0 bg-black bg-opacity-30"></div>
+        
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={handleBookmark} 
+          className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm hover:bg-white"
+        >
+          <Icon
+            name={isBookmarked ? 'Bookmark' : 'BookmarkPlus'}
+            size={18}
+            color={isBookmarked ? 'var(--color-academic-blue)' : 'var(--color-insight-gray)'}
+          />
+        </Button>
 
-        {/* Header */}
-        <div className="relative h-32 bg-gradient-to-r from-blue-500 to-green-500 overflow-hidden">
-          <div className="absolute inset-0 bg-black bg-opacity-20"></div>
-          <div className="relative p-6 h-full flex items-center">
-            <div className="flex items-center space-x-4">
-              <div className="w-16 h-16 bg-white bg-opacity-20 backdrop-blur-sm rounded-xl flex items-center justify-center">
-                <Icon name="Route" size={24} color="white" />
-              </div>
-              <div>
-                <h3 className="font-bold text-white text-xl mb-1">{roadmap.title}</h3>
-                <p className="text-white text-opacity-90 text-sm">
-                  {roadmap.duration} • {roadmap.difficulty} Level
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Progress Bar */}
-        <div className="px-6 py-4 border-b border-slate-100">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-700">
-              Progress: {Math.round(progressPercentage)}%
-            </span>
-            <span className="text-xs text-gray-500">
-              {milestones.filter((m) => m.completed)?.length} of {milestones.length} completed
-            </span>
-          </div>
-          <div className="w-full bg-slate-200 rounded-full h-2">
-            <div
-              className="bg-gradient-to-r from-blue-500 to-green-500 h-2 rounded-full transition-all duration-500"
-              style={{ width: `${progressPercentage}%` }}
-            ></div>
-          </div>
-        </div>
-
-        {/* Milestones */}
-        <div className="p-6 space-y-4">
-          {milestones.map((milestone, index) => (
-            <div key={milestone.id} className="relative">
-              {index < milestones.length - 1 && (
-                <div className="absolute left-4 top-8 w-0.5 h-8 bg-slate-200"></div>
-              )}
-
-              <div
-                className="flex items-start space-x-4 cursor-pointer"
-                onClick={() => handleMilestoneClick(milestone.id)}
-              >
-                <div
-                  onClick={(e) => toggleCompletion(milestone.id, e)}
-                  className={`w-8 h-8 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${getMilestoneStatusColor(
-                    milestone.completed
-                  )}`}
-                >
-                  <Icon name={getMilestoneIcon(milestone.completed)} size={14} color="white" />
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-medium text-gray-800 text-sm">{milestone.title}</h4>
-                    <div className="flex items-center space-x-2">
-                      <span className="text-xs text-gray-500">{milestone.estimatedTime}</span>
-                      <Icon
-                        name={expandedMilestone === milestone.id ? "ChevronUp" : "ChevronDown"}
-                        size={14}
-                        color="gray"
-                      />
-                    </div>
-                  </div>
-
-                  {expandedMilestone === milestone.id && (
-                    <div className="mt-3 p-3 bg-slate-50 rounded-lg">
-                      <p className="text-xs text-gray-600">{milestone.description}</p>
-                      {milestone.resources && (
-                        <div className="mt-2">
-                          <h5 className="text-xs font-medium text-gray-700 mb-1">Resources:</h5>
-                          <ul className="space-y-1">
-                            {milestone.resources.map((res, i) => (
-                              <li key={i}>
-                                <a
-                                  href={res.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="flex items-center gap-2 text-xs text-blue-600 hover:underline"
-                                >
-                                  <Icon name="ExternalLink" size={12} />
-                                  {res.title}
-                                </a>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Footer */}
-        <div className="px-6 py-4 bg-slate-50 border-t border-slate-100">
-          <div className="flex justify-between items-center">
-            <a href={roadmap.image} download={`${roadmap.title || "roadmap"}.png`}>
-              <Button variant="outline" size="sm" iconName="Download" className="mr-2">
-                Download Roadmap
-              </Button>
-            </a>
-
-            <Button
-              variant="default"
-              size="sm"
-              className="bg-blue-500 hover:bg-blue-700"
-              iconName="Play"
-              onClick={() => setIsStarted(true)}
-            >
-              {isStarted ? "Resume Journey" : "Start Journey"}
-            </Button>
-          </div>
-          <p className="text-xs text-center mt-2 text-gray-500">Created by CampusPull</p>
+        <div className="absolute bottom-4 left-4 p-4">
+          <h3 className="font-bold text-white text-2xl mb-1 line-clamp-2">{title}</h3>
+          <p className="text-white text-opacity-90 text-sm line-clamp-2">
+            {description}
+          </p>
         </div>
       </div>
 
-      {/* Achievement Popup */}
-      {showAchievement && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-80 text-center shadow-lg">
-            <h2 className="text-xl font-bold text-green-600 mb-2">🎉 Congratulations!</h2>
-            <p className="text-gray-700 mb-4">
-              You have completed the <strong>{roadmap.title}</strong> roadmap!
-            </p>
-            <Button
-              variant="default"
-              size="sm"
-              className="bg-blue-500 hover:bg-blue-700"
-              onClick={() => setShowAchievement(false)}
+      {/* Stats Bar */}
+      <div className="px-6 py-4 border-b border-slate-100 flex justify-around">
+        <div className="text-center">
+          <div className="font-bold text-academic-blue text-lg">{modulesCount}</div>
+          <div className="text-xs text-insight-gray">Modules</div>
+        </div>
+         <div className="text-center">
+          <div className="font-bold text-academic-blue text-lg">{totalLessons}</div>
+          <div className="text-xs text-insight-gray">Lessons</div>
+        </div>
+         <div className="text-center">
+          <div className="font-bold text-academic-blue text-lg">{bookmarks?.length || 0}</div>
+          <div className="text-xs text-insight-gray">Bookmarks</div>
+        </div>
+      </div>
+
+      {/* Progress Bar */}
+      <div className="px-6 py-4 border-b border-slate-100">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-sm font-medium text-gray-700">
+            Progress: {progressPercentage}%
+          </span>
+          <span className="text-xs text-gray-500">
+            {completedLessons} of {totalLessons} completed
+          </span>
+        </div>
+        <div className="w-full bg-slate-200 rounded-full h-2">
+          <div
+            className="bg-gradient-to-r from-blue-500 to-green-500 h-2 rounded-full transition-all duration-500"
+            style={{ width: `${progressPercentage}%` }}
+          ></div>
+        </div>
+      </div>
+
+      {/* Modules List */}
+      <div className="p-6 space-y-4 max-h-72 overflow-y-auto">
+        {modules?.map((module, index) => (
+          <div key={module._id || index} className="relative">
+            {/* Dotted line connector */}
+            {index < modules.length - 1 && (
+              <div className="absolute left-4 top-8 w-px h-full border-l-2 border-dashed border-slate-300"></div>
+            )}
+
+            <div
+              className="flex items-start space-x-4 cursor-pointer"
+              onClick={() => toggleModule(module._id || index)}
             >
-              Close
+              <div className="w-8 h-8 rounded-full bg-academic-blue border-2 border-white shadow-sm flex items-center justify-center flex-shrink-0 z-10">
+                <Icon name="BookOpen" size={14} color="white" />
+              </div>
+
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-medium text-gray-800 text-sm">{module.moduleTitle}</h4>
+                  <Icon
+                    name={expandedModules[module._id || index] ? "ChevronUp" : "ChevronDown"}
+                    size={14}
+                    color="gray"
+                  />
+                </div>
+                
+                {/* Expanded Section: Resources */}
+                {expandedModules[module._id || index] && (
+                  <div className="mt-3 p-3 bg-slate-50 rounded-lg">
+                    <p className="text-xs text-gray-600 mb-2">{module.moduleDescription}</p>
+                    <ul className="space-y-1">
+                      {module.resources?.map((res, resIdx) => (
+                        <li key={res._id || resIdx} className="flex items-center justify-between">
+                          <a
+                            href={res.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 text-xs text-blue-600 hover:underline"
+                            onClick={(e) => e.stopPropagation()} // Prevents collapsing
+                          >
+                            <Icon name="PlayCircle" size={12} />
+                            {res.title}
+                          </a>
+                          
+                          {/* Checkbox Button */}
+                          <button 
+                            onClick={(e) => handleToggleLesson(res._id, e)} 
+                            className={`p-1 rounded-full hover:bg-slate-200 ${isTogglingLesson === res._id ? 'animate-spin' : ''}`}
+                            title={isLessonComplete(res._id) ? "Mark as incomplete" : "Mark as complete"}
+                            disabled={isTogglingLesson === res._id}
+                          >
+                            <Icon 
+                              name={isTogglingLesson === res._id ? 'Loader' : (isLessonComplete(res._id) ? "CheckCircle" : "Circle")} 
+                              size={20} 
+                              color={isLessonComplete(res._id) ? "#10B981" : "#6B7280"} // Green or Gray
+                            />
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Footer */}
+      <div className="px-6 py-4 bg-slate-50 border-t border-slate-100">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center space-x-2">
+            <Image 
+              src={uploadedBy?.avatar} 
+              alt={uploadedBy?.name}
+              className="w-6 h-6 rounded-full"
+            />
+            <span className="text-sm text-insight-gray">
+              by {uploadedBy?.name}
+            </span>
+            {uploadedBy?.verified && (
+              <Icon name="BadgeCheck" size={14} color="var(--color-academic-blue)" />
+            )}
+          </div>
+          <div className="flex space-x-2">
+            {canEdit && ( // <-- Use the new canEdit check
+              <Button
+                variant="default"
+                size="sm"
+                iconName="Edit"
+                className="bg-academic-blue hover:bg-blue-700"
+                onClick={() => onEditClick(roadmap)}
+              >
+                Edit
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => { /* ... expand logic ... */ }}
+            >
+              View Roadmap
             </Button>
           </div>
-        </div>
-      )}
-
-      {/* Confetti CSS */}
-      <style jsx>{`
-        .confetti {
-          position: absolute;
-          width: 6px;
-          height: 6px;
-          background: red;
-          top: 0;
-          animation: fall 1.5s linear infinite;
-          border-radius: 50%;
-        }
-        .confetti-1 { left: 10%; background: #f59e0b; animation-delay: 0s; }
-        .confetti-2 { left: 30%; background: #10b981; animation-delay: 0.2s; }
-        .confetti-3 { left: 50%; background: #3b82f6; animation-delay: 0.4s; }
-        .confetti-4 { left: 70%; background: #ef4444; animation-delay: 0.6s; }
-        .confetti-5 { left: 90%; background: #8b5cf6; animation-delay: 0.8s; }
-
-        @keyframes fall {
-          0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-          100% { transform: translateY(50px) rotate(360deg); opacity: 0; }
-        }
-      `}</style>
-    </>
+          </div>
+      </div>
+    </div>
   );
 };
 

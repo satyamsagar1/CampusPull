@@ -10,6 +10,13 @@ export const AuthProvider = ({ children }) => {
   const navigate = useNavigate();
   const [accessToken, setAccessToken] = useState("");
 
+  const partialUpdateUser = (updates) => {
+    setUser(prevUser => ({
+      ...prevUser,
+      ...updates
+    }));
+  };
+
   // --- LOGIN ---
   const login = async (credentials) => {
     try {
@@ -17,8 +24,8 @@ export const AuthProvider = ({ children }) => {
       
       // --- FIX: Set header immediately after login ---
       api.defaults.headers.common["Authorization"] = `Bearer ${res.data.accessToken}`;
-      
       setUser(res.data.user);
+
       setAccessToken(res.data.accessToken);
       navigate("/homepage", { replace: true });
     } catch (err) {
@@ -107,7 +114,7 @@ export const AuthProvider = ({ children }) => {
   }, [accessToken]);
 
   const contextValue = useMemo(
-    () => ({ user, loading, accessToken, login, signup, logout }),
+    () => ({ user, loading, accessToken, login, signup, logout, partialUpdateUser }),
     [user, accessToken, loading]
   );
 
