@@ -5,7 +5,7 @@ import { PlusCircle, Search, Inbox, AlertTriangle } from "lucide-react"; // Upda
 import { Helmet } from 'react-helmet'; // Added Helmet
 
 // Import Context Hooks
-import { useEvents } from "../../context/EventContext"; // Adjust path
+import { useEvents } from "../../context/eventContext"; // Adjust path
 import { useAuth } from "../../context/AuthContext";   // Adjust path
 
 // Import Components
