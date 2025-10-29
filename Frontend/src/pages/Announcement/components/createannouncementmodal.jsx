@@ -4,7 +4,7 @@ import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 // Remove direct api import if not needed elsewhere in this file
 // import api from '../../../utils/api';
-import { useAnnouncements } from '../../../context/AnnouncementContext'; // Correct path assumed
+import { useAnnouncements } from '../../../context/announcementContext'; // Correct path assumed
 
 const CreateAnnouncementModal = ({ isOpen, onClose, onCreated }) => {
   // --- FIX 1: Import createAnnouncement from context ---
