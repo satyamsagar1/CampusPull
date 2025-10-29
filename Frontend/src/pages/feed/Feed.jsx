@@ -14,7 +14,7 @@ import {
   X,
   Loader,
 } from "lucide-react";
-import { useFeed } from "../../context/FeedContext"; // REAL CONTEXT
+import { useFeed } from "../../context/feedContext"; // REAL CONTEXT
 import { useAuth } from "../../context/AuthContext";   // REAL CONTEXT
 
 // --- Helper: Time Formatter ---
