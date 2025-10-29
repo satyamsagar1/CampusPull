@@ -4,9 +4,9 @@ import { Helmet } from 'react-helmet';
 // Removed Header import - Assuming it's global
 import Icon from '../../components/AppIcon';
 import Button from '../../components/ui/Button';
-import AnnouncementCard from './components/AnnouncementCard'; // Corrected case
-import CreateAnnouncementModal from './components/CreateAnnouncementModal'; // Corrected case
-import LoadingSkeleton from './components/LoadingSkeleton';
+import AnnouncementCard from './components/announcementCard'; // Corrected case
+import CreateAnnouncementModal from './components/createannouncementmodal'; // Corrected case
+import LoadingSkeleton from './components/loadingSkeleton';
 import { useAuth } from '../../context/AuthContext';
 // Removed api import - Context handles API calls
 import { useAnnouncements } from '../../context/AnnouncementContext'; // <-- 1. Import the hook
