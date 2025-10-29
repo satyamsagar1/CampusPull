@@ -3,7 +3,7 @@ import React, { useState, useContext } from 'react'; // Added useContext
 import { motion } from 'framer-motion';
 import { Calendar, Clock, Edit, Trash2, Link as LinkIcon, AlertTriangle, User, Eye, Check } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext'; // Adjust path
-import { useEvents } from '../../../context/EventContext'; // Adjust path
+import { useEvents } from '../../../context/eventContext'; // Adjust path
 import Image from '../../../components/AppImage'; // Adjust path
 import Button from '../../../components/ui/Button'; // Adjust path
 import Icon from '../../../components/AppIcon'; // Adjust path
