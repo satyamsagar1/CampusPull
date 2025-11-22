@@ -1,5 +1,5 @@
 import React from 'react';
-import { ReplyItem } from './ReplyItem';
+import { ReplyItem } from './replyItem';
 
 export const ReplyList = ({ replies = [] }) => {
     return (
