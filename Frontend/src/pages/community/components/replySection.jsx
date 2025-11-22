@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { MessageSquare, ChevronDown, ChevronUp } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
-import { ReplyList } from './ReplyList';
-import { ReplyForm } from './ReplyForm';
+import { ReplyList } from './replyList';
+import { ReplyForm } from './replyForm';
 
 export const ReplySection = ({ answerId, replies = [] }) => {
     const { user } = useAuth();

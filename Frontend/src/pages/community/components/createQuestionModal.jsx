@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { X, Loader } from 'lucide-react';
-import { useCommunity } from '../../../context/CommunityContext';
+import { useCommunity } from '../../../context/communityContext';
 
 // Button Component
 const Button = ({ children, onClick, disabled, className, type = 'button', size = 'md' }) => (

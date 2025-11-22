@@ -11,7 +11,7 @@ import {
 // Import the custom hook
 import { useExplore } from "../../context/exploreContext"; 
 import RequestsPage from "./RequestsPage";
-import { useAuth } from "../../context/authContext"; // To get logged-in user info
+import { useAuth } from "../../context/AuthContext"; // To get logged-in user info
 import ConnectionsPage from "./connectionsPage";
 
 

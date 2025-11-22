@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ThumbsUp, MessageSquare, Tag, Clock, User, Edit, Trash2, Loader } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
-import { useCommunity } from '../../../context/CommunityContext';
-import { AnswerSection } from './AnswerSection'; // This is the next component
+import { useCommunity } from '../../../context/communityContext';
+import { AnswerSection } from './answerSection'; // This is the next component
 
 // --- Helper Components (Embedded from your UI) ---
 

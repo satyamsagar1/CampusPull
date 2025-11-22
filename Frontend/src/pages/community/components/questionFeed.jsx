@@ -1,6 +1,6 @@
 import React from 'react';
 import { Users } from 'lucide-react';
-import { QuestionCard } from './QuestionCard';
+import { QuestionCard } from './questionCard';
 
 export const QuestionFeed = ({ questions, searchTerm }) => {
     

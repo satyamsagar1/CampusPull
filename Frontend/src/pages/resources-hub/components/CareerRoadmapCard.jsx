@@ -2,7 +2,7 @@ import React, { useState, useContext, useMemo } from 'react';
 import Icon from '../../../components/AppIcon';
 import Image from '../../../components/AppImage';
 import Button from '../../../components/ui/Button';
-import { ResourceContext } from '../../../context/ResourceContext';
+import { ResourceContext } from '../../../context/resourceContext';
 
 const CareerRoadmapCard = ({ roadmap, onEditClick }) => {
   // Get user and new function from context

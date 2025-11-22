@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { ThumbsUp, User, Edit, Trash2, Loader, Send, X } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { useCommunity } from '../../../context/communityContext';
-import { ReplySection } from './ReplySection'; // The next component
+import { ReplySection } from './replySection'; // The next component
 
 // --- Helper Functions (Embedded) ---
 const formatTime = (dateString) => {

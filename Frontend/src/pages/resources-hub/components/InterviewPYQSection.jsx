@@ -2,7 +2,7 @@ import React, { useState, useMemo, useContext } from 'react';
 import Icon from '../../../components/AppIcon';
 import Image from '../../../components/AppImage';
 import Button from '../../../components/ui/Button';
-import { ResourceContext } from '../../../context/ResourceContext';
+import { ResourceContext } from '../../../context/resourceContext';
 
 const InterviewPYQSection = ({ pyqs, onEditClick }) => {
   const { user } = useContext(ResourceContext);

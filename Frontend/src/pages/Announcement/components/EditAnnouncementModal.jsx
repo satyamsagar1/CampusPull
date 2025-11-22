@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
-import { useAnnouncements } from '../../../context/AnnouncementContext';
+import { useAnnouncements } from '../../../context/announcementContext';
 
 const EditAnnouncementModal = ({ isOpen, onClose, announcement, onUpdated }) => {
   const { updateAnnouncement } = useAnnouncements();

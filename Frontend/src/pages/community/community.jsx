@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Users, Search, PlusCircle, X, Loader } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { useCommunity } from '../../context/CommunityContext';
+import { useCommunity } from '../../context/communityContext';
 import { CreateQuestionModal } from './components/createQuestionModal';
 import { QuestionFeed } from './components/questionFeed';
 

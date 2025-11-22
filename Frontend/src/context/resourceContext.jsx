@@ -8,7 +8,7 @@ import React, {
   useContext,
 } from "react";
 import api from "../utils/api"; // axios instance with baseURL + token interceptor
-import { AuthContext } from "./authContext";
+import { AuthContext } from "./AuthContext";
 
 export const ResourceContext = createContext();
 
