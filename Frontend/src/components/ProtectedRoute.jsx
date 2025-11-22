@@ -1,13 +1,10 @@
-import React, { useEffect } from "react";
-import { Navigate } from "react-router-dom";
+import React from "react";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
-
-  useEffect(() => {
-    window.history.replaceState(null, "", window.location.pathname);
-  }, []);
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -24,7 +21,7 @@ const ProtectedRoute = ({ children }) => {
   }
 
   if (!user) {
-    return <Navigate to="/auth" replace />;
+  return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
   return children;

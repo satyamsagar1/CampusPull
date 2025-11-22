@@ -79,7 +79,11 @@ export const AuthProvider = ({ children }) => {
         const userRes = await api.get("/auth/me", { withCredentials: true });
         setUser(userRes.data.user);
       } catch (err) {
-        console.error("Failed to fetch user or refresh token:", err);
+        if (err.response?.status === 401) {
+         console.log("Session expired or no user found. Redirecting to login...");
+        } else {
+          console.error("Unexpected Auth Error:", err);
+        }
         setUser(null);
         setAccessToken("");
       } finally {

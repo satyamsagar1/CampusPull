@@ -2,7 +2,7 @@ import { Router } from 'express';
 import User from '../models/user.js';
 import { signupSchema, loginSchema } from '../validators/authValidators.js';
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../utils/generateTokens.js';
-import {authMiddleware, requireRole} from '../middleware/authMiddleware.js';
+import {authMiddleware} from '../middleware/authMiddleware.js';
 
 const router = Router();
 
@@ -157,38 +157,29 @@ router.post('/logout', async (req, res) => {
   try {
     const token = req.cookies?.linkmate_rft;
 
-    // Invalidate tokenVersion if token exists
     if (token) {
       try {
         const payload = verifyRefreshToken(token);
-        if (payload?.sub) await User.findByIdAndUpdate(payload.sub, { $inc: { tokenVersion: 1 } });
-      } catch {
-        // invalid token, ignore
-      }
+        if (payload?.id) {
+          await User.findByIdAndUpdate(payload.id, { $inc: { tokenVersion: 1 } });
+        }
+      } catch {}
     }
 
-     // Clear cookies explicitly for localhost and production
-    const cookieOptions = {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-      path: "/",
-    };
+    // use EXACT cookie opts used during creation
+    res.clearCookie("linkmate_rft", refreshCookieOpts);
+    res.clearCookie("linkmate_at", accessCookieOpts);
 
-    res.clearCookie("linkmate_rft", cookieOptions);
-    res.clearCookie("linkmate_at", cookieOptions);
-
-    // Prevent caching
-    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    res.setHeader("Cache-Control", "no-store");
     res.setHeader("Pragma", "no-cache");
-    res.setHeader("Expires", "0");
-    res.setHeader("Surrogate-Control", "no-store");
 
-    return res.json({ message: 'Logged out' });
+    return res.json({ message: "Logged out" });
+
   } catch (err) {
     console.error('Logout error', err);
     return res.status(500).json({ message: 'Server error' });
   }
 });
+
 
 export default router;
