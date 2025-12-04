@@ -12,7 +12,7 @@ import {
 import { useExplore } from "../../context/exploreContext"; 
 import RequestsPage from "./RequestsPage";
 import { useAuth } from "../../context/AuthContext"; 
-import ConnectionsPage from "./ConnectionsPage";
+import ConnectionsPage from "./connectionsPage";
 
 const BASE_URL = "http://localhost:5000";
 
