@@ -13,7 +13,7 @@ const AboutLinkMate = () => {
   return (
     <div className="min-h-screen bg-background">
       <Helmet>
-        <title>About LinkMate - Knowledge Without Boundaries | Educational Networking Platform</title>
+        <title>About Campus-Pull - Knowledge Without Boundaries | Educational Networking Platform</title>
         <meta name="description" content="Discover LinkMate's mission to transform university networking by connecting students with successful alumni. Learn about our founding story, impact metrics, team, and values that drive educational excellence." />
         <meta name="keywords" content="LinkMate about, educational networking, student mentorship, alumni connections, university partnerships, educational platform story" />
         <meta property="og:title" content="About LinkMate - Knowledge Without Boundaries" />
