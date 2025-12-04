@@ -8,7 +8,6 @@ import {
   FaCalendarAlt,
   FaPhone,
   FaLinkedin,
-  FaImage,
   FaInfoCircle,
   FaTools,
 } from "react-icons/fa";

@@ -60,7 +60,7 @@ router.post('/signup', async (req, res) => {
 
     return res.status(201).json({
       user: {
-        id: user._id.toString(), // <--- fixed missing ()
+        _id: user._id.toString(), // <--- fixed missing ()
         name: user.name,
         email: user.email,
         role: user.role,
@@ -106,7 +106,7 @@ router.post('/login', async (req, res) => {
     
 
     return res.json({
-      user: { id: user._id, name: user.name, email: user.email, role: user.role, completedLessons: user.completedLessons },
+      user: { _id: user._id, name: user.name, email: user.email, role: user.role, completedLessons: user.completedLessons },
       accessToken,
     });
   } catch (err) {

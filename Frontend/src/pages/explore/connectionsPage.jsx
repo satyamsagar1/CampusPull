@@ -1,73 +1,110 @@
 // src/pages/explore/ConnectionsPage.jsx
 import React from "react";
-import { FaArrowLeft, FaUserCircle, FaLinkedin, FaEnvelope } from "react-icons/fa";
-import { useExplore } from "../../context/exploreContext"; // Import context hook
+import { FaArrowLeft, FaUserCircle, FaLinkedin, FaEnvelope, FaPaperPlane } from "react-icons/fa";
+import { useExplore } from "../../context/exploreContext"; 
+
+// 👇 IMPORTANT: Match this with your backend port
+const BASE_URL = "http://localhost:5000";
 
 export default function ConnectionsPage({ onBack }) {
   // Get connections from the context
   const { connections, loading } = useExplore();
 
   return (
-    <div className="min-h-screen p-10 bg-gradient-to-br from-pink-50 via-white to-blue-50">
+    <div className="min-h-screen p-4 md:p-10 bg-gradient-to-br from-pink-50 via-white to-blue-50">
       {/* Back button */}
       <button
         onClick={onBack}
-        className="mb-6 flex items-center gap-2 px-4 py-2 bg-white shadow-lg text-pink-500 rounded-full font-medium hover:bg-white/90 transition"
+        className="mb-8 flex items-center gap-2 px-5 py-2.5 bg-white/80 backdrop-blur-md shadow-sm border border-pink-100 text-pink-600 rounded-full font-medium hover:bg-white hover:shadow-md transition-all"
       >
-        <FaArrowLeft /> Back
+        <FaArrowLeft /> Back to Explore
       </button>
 
-      <h1 className="text-3xl font-bold text-gray-800 mb-8">Your Connections ({connections.length})</h1>
+      <div className="flex items-center gap-3 mb-8">
+        <h1 className="text-3xl font-bold text-gray-800">Your Connections</h1>
+        <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-bold">
+            {connections.length}
+        </span>
+      </div>
 
-      {loading && <p className="text-center text-gray-600">Loading connections...</p>}
+      {loading && (
+        <div className="flex justify-center items-center h-40">
+            <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-pink-500"></div>
+        </div>
+      )}
       
       {!loading && connections.length === 0 ? (
-        <p className="text-gray-600 text-center">You haven't made any connections yet.</p>
+        <div className="text-center py-20 bg-white/50 rounded-3xl border border-dashed border-gray-300">
+            <p className="text-gray-500 text-lg">You haven't made any connections yet.</p>
+            <p className="text-sm text-gray-400 mt-2">Go back to "Find People" to start networking!</p>
+        </div>
       ) : (
         <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {connections.map((user) => (
-            // Using a slightly simpler card for connections
-            <div
-              key={user._id}
-              className="p-6 bg-white/40 backdrop-blur-md border border-white/30 rounded-2xl shadow-lg flex flex-col items-center transition hover:shadow-xl hover:-translate-y-1"
-            >
-              {/* Avatar */}
-               <div className="w-20 h-20 rounded-full mb-4 overflow-hidden border-2 border-blue-200 shadow-md">
-                 {user.avatar ? (
-                   <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
-                 ) : (
-                   <FaUserCircle className="text-blue-500 text-6xl w-full h-full p-1" />
-                 )}
-              </div>
-              {/* Info */}
-              <h2 className="text-lg font-semibold text-gray-800 text-center">{user.name}</h2>
-              <p className="text-sm text-gray-500 text-center mb-1">{user.college || "College not specified"}</p>
-              <p className="text-sm text-gray-500 text-center mb-3">
-                {user.degree || ""} {user.degree && user.graduationYear ? `- ${user.graduationYear}` : user.graduationYear || ""}
-              </p>
-               {/* Skills */}
-              {(user.skills && user.skills.length > 0) && (
-                <p className="text-xs text-center text-blue-600 font-medium mb-3">
-                  {user.skills.slice(0, 3).join(" • ")} {user.skills.length > 3 ? '...' : ''}
-                </p>
-              )}
-               {/* Contact Links */}
-              <div className="flex space-x-4 mb-4 mt-auto pt-2">
-                {user.email && (
-                  <a href={`mailto:${user.email}`} className="text-gray-500 hover:text-pink-500 text-xl" title="Send Email">
-                    <FaEnvelope />
-                  </a>
-                )}
-                {user.linkedin && (
-                  <a href={user.linkedin} target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-blue-600 text-xl" title="LinkedIn Profile">
-                    <FaLinkedin />
-                  </a>
-                )}
-              </div>
-              {/* Optional: Add Message/Remove button here */}
-              {/* <button className="mt-2 px-4 py-1 bg-red-100 text-red-600 text-xs rounded-full hover:bg-red-200">Remove</button> */}
-            </div>
-          ))}
+          {connections.map((user) => {
+            // Image Logic inside the loop
+            const imgSrc = user.profileImage 
+                ? (user.profileImage.startsWith("http") ? user.profileImage : `${BASE_URL}${user.profileImage}`) 
+                : null;
+
+            return (
+                <div
+                key={user._id}
+                className="group relative p-6 bg-white/60 backdrop-blur-xl border border-white/40 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                >
+                <div className="flex flex-col items-center">
+                    {/* Avatar */}
+                    <div className="w-24 h-24 rounded-full mb-4 overflow-hidden border-4 border-white shadow-md group-hover:border-pink-100 transition-colors">
+                        {imgSrc ? (
+                            <img src={imgSrc} alt={user.name} className="w-full h-full object-cover" />
+                        ) : (
+                            <FaUserCircle className="text-gray-300 text-6xl w-full h-full bg-gray-50" />
+                        )}
+                    </div>
+
+                    {/* Info */}
+                    <h2 className="text-xl font-bold text-gray-800 text-center mb-1">{user.name}</h2>
+                    
+                    {/* Role / Headline */}
+                    <p className="text-sm text-pink-600 font-medium text-center mb-2">
+                        {user.role || "Student / Developer"}
+                    </p>
+
+                    {/* College/Location (Optional fallback) */}
+                    {(user.college || user.degree) && (
+                        <p className="text-xs text-gray-500 text-center mb-3">
+                            {user.degree} {user.college ? `• ${user.college}` : ""}
+                        </p>
+                    )}
+
+                    {/* Skills Tags */}
+                    <div className="flex flex-wrap justify-center gap-1.5 mb-5 w-full">
+                        {user.skills && user.skills.slice(0, 3).map((skill, index) => (
+                            <span key={index} className="px-2 py-0.5 bg-gray-100 text-gray-600 text-[10px] uppercase tracking-wider font-semibold rounded-md">
+                                {skill}
+                            </span>
+                        ))}
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex items-center justify-center gap-4 w-full pt-4 border-t border-gray-100">
+                        {user.linkedin && (
+                            <a href={user.linkedin} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-600 transition-colors text-xl" title="LinkedIn">
+                                <FaLinkedin />
+                            </a>
+                        )}
+                        {user.email && (
+                            <a href={`mailto:${user.email}`} className="text-gray-400 hover:text-red-500 transition-colors text-xl" title="Email">
+                                <FaEnvelope />
+                            </a>
+                        )}
+                        <button className="text-gray-400 hover:text-pink-600 transition-colors text-xl" title="Message (Coming Soon)">
+                            <FaPaperPlane />
+                        </button>
+                    </div>
+                </div>
+                </div>
+            );
+          })}
         </div>
       )}
     </div>

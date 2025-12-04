@@ -4,59 +4,44 @@ import Image from '../../../components/AppImage';
 import Button from '../../../components/ui/Button';
 import { ResourceContext } from '../../../context/resourceContext';
 
-const CareerRoadmapCard = ({ roadmap, onEditClick }) => {
-  // Get user and new function from context
+const CareerRoadmapCard = ({ roadmap, viewMode = 'grid', onEditClick }) => {
   const { toggleBookmark, toggleLessonProgress, user } = useContext(ResourceContext);
   
   const [expandedModules, setExpandedModules] = useState({});
   const [isBookmarked, setIsBookmarked] = useState(roadmap?.isBookmarked || false);
-  const [isTogglingLesson, setIsTogglingLesson] = useState(null); // Tracks which lesson is loading
+  const [isTogglingLesson, setIsTogglingLesson] = useState(null);
 
-  const { _id, title, description, modules, uploadedBy, thumbnail, bookmarks } = roadmap;
+  const { _id, title, description, modules, uploadedBy, thumbnail } = roadmap;
 
   const isOwner = user?._id === uploadedBy?._id;
   const isAdmin = user?.role === 'admin';
   const canEdit = isOwner && isAdmin;
 
-  // --- Progress Calculation (Reads from global user state) ---
+  // --- Logic: Progress Calculation ---
   const { totalLessons, completedLessons, progressPercentage } = useMemo(() => {
-    // Get all resource IDs for *this* roadmap
     const roadmapLessonIds = new Set(
       modules?.flatMap(mod => mod.resources.map(res => res._id)) || []
     );
-    
     const total = roadmapLessonIds.size;
-
-    // Get all completed IDs from the user
     const userCompletedIds = new Set(user?.completedLessons || []);
-
-    // Find the intersection
     let completedCount = 0;
     for (const lessonId of roadmapLessonIds) {
-      if (userCompletedIds.has(lessonId)) {
-        completedCount++;
-      }
+      if (userCompletedIds.has(lessonId)) completedCount++;
     }
-    
     const percentage = (total === 0) ? 0 : (completedCount / total) * 100;
-    
     return {
       totalLessons: total,
       completedLessons: completedCount,
       progressPercentage: Math.round(percentage)
     };
-  }, [modules, user?.completedLessons]); // Re-calculates when user object changes
-
+  }, [modules, user?.completedLessons]);
 
   if (!roadmap) return <div className="text-center p-4">No roadmap data available</div>;
 
   const modulesCount = modules?.length || 0;
 
   const toggleModule = (moduleId) => {
-    setExpandedModules(prev => ({
-      ...prev,
-      [moduleId]: !prev[moduleId]
-    }));
+    setExpandedModules(prev => ({ ...prev, [moduleId]: !prev[moduleId] }));
   };
 
   const handleBookmark = async (e) => {
@@ -70,32 +55,124 @@ const CareerRoadmapCard = ({ roadmap, onEditClick }) => {
     }
   };
 
-  // --- NEW: Toggle Lesson Completion ---
   const handleToggleLesson = async (resourceId, e) => {
-    e.stopPropagation(); // Don't collapse the module
-    if (isTogglingLesson === resourceId) return; // Prevent double-click
-
-    setIsTogglingLesson(resourceId); // Set loading state
-    
+    e.stopPropagation();
+    if (isTogglingLesson === resourceId) return;
+    setIsTogglingLesson(resourceId); 
     try {
-      // Call the context function that hits the backend
       await toggleLessonProgress(resourceId);
     } catch (err) {
       console.error("Failed to toggle lesson:", err);
-      // Note: The UI will auto-update when the 'user' object from context changes
     } finally {
-      setIsTogglingLesson(null); // Unset loading state
+      setIsTogglingLesson(null);
     }
   };
 
-  // Check if a lesson is complete by reading from the user object
   const isLessonComplete = (resourceId) => {
     return user?.completedLessons?.includes(resourceId);
   };
 
+  // ==========================================
+  // LIST VIEW LOGIC (Matches ResourceCard Structure)
+  // ==========================================
+  if (viewMode === 'list') {
+    return (
+      <div className="knowledge-card bg-white border border-slate-200 rounded-xl p-6 hover:shadow-brand-lg transition-all duration-300 mb-4">
+        <div className="flex flex-col md:flex-row items-start space-x-0 md:space-x-4 space-y-4 md:space-y-0">
+          
+          {/* Logic: Thumbnail */}
+          <div className="flex-shrink-0 w-full md:w-48 h-32 bg-surface rounded-lg overflow-hidden relative">
+            {thumbnail ? (
+               <Image src={thumbnail} alt={title} className="w-full h-full object-cover" />
+            ) : (
+               <div className="w-full h-full flex items-center justify-center bg-gradient-to-r from-academic-blue to-credibility-indigo">
+                 <Icon name="Route" size={32} color="white" />
+               </div>
+            )}
+          </div>
+
+          {/* Logic: Main Content */}
+          <div className="flex-1 min-w-0 w-full">
+            <div className="flex items-start justify-between mb-2">
+               <div className="flex-1">
+                  <h3 className="font-inter font-semibold text-wisdom-charcoal text-lg mb-1">{title}</h3>
+                  <p className="text-insight-gray text-sm line-clamp-2 mb-3">{description}</p>
+               </div>
+               <Button variant="ghost" size="icon" onClick={handleBookmark} className="ml-2">
+                <Icon
+                  name={isBookmarked ? 'Bookmark' : 'BookmarkPlus'}
+                  size={18}
+                  color={isBookmarked ? 'var(--color-academic-blue)' : 'var(--color-insight-gray)'}
+                />
+              </Button>
+            </div>
+
+            {/* Logic: Roadmap Stats & Progress (Specific to Roadmap) */}
+            <div className="flex flex-wrap items-center gap-4 mb-4">
+               {/* Stats */}
+               <div className="flex items-center space-x-1">
+                 <Icon name="BookOpen" size={14} color="var(--color-insight-gray)" />
+                 <span className="text-xs text-insight-gray">{modulesCount} Modules</span>
+               </div>
+               <div className="flex items-center space-x-1">
+                 <Icon name="FileText" size={14} color="var(--color-insight-gray)" />
+                 <span className="text-xs text-insight-gray">{totalLessons} Lessons</span>
+               </div>
+               
+               {/* Progress Bar */}
+               <div className="flex-1 max-w-xs min-w-[150px]">
+                  <div className="flex justify-between text-[10px] text-gray-500 mb-1">
+                    <span>Progress</span>
+                    <span>{progressPercentage}%</span>
+                  </div>
+                  <div className="w-full bg-slate-200 rounded-full h-1.5">
+                    <div
+                      className="bg-gradient-to-r from-blue-500 to-green-500 h-1.5 rounded-full"
+                      style={{ width: `${progressPercentage}%` }}
+                    ></div>
+                  </div>
+               </div>
+            </div>
+
+            {/* Logic: Footer (Contributor + Buttons) */}
+            <div className="flex items-center justify-between">
+               <div className="flex items-center space-x-2">
+                  <Image src={uploadedBy?.avatar} alt={uploadedBy?.name} className="w-6 h-6 rounded-full" />
+                  <span className="text-sm text-insight-gray">by {uploadedBy?.name}</span>
+               </div>
+               
+               <div className="flex space-x-2">
+                 {canEdit && (
+                   <Button 
+                     variant="outline" 
+                     size="sm" 
+                     iconName="Edit"
+                     onClick={() => onEditClick(roadmap)}
+                   >
+                     Edit
+                   </Button>
+                 )}
+                 <Button
+                   variant="default"
+                   size="sm"
+                   className="bg-academic-blue hover:bg-blue-700"
+                   onClick={() => {/* Navigate Logic would go here */}}
+                 >
+                   View Roadmap
+                 </Button>
+               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ==========================================
+  // GRID VIEW LOGIC (Unchanged)
+  // ==========================================
   return (
-    
-    <div className="knowledge-card relative bg-white border border-slate-200 rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300">
+    <div className="knowledge-card relative bg-white border border-slate-200 rounded-xl overflow-hidden hover:shadow-brand-lg transition-all duration-300">
       
       {/* Header with Thumbnail */}
       <div className="relative h-40 bg-slate-100 overflow-hidden">
@@ -140,7 +217,7 @@ const CareerRoadmapCard = ({ roadmap, onEditClick }) => {
           <div className="text-xs text-insight-gray">Lessons</div>
         </div>
          <div className="text-center">
-          <div className="font-bold text-academic-blue text-lg">{bookmarks?.length || 0}</div>
+          <div className="font-bold text-academic-blue text-lg">{roadmap.bookmarks?.length || 0}</div>
           <div className="text-xs text-insight-gray">Bookmarks</div>
         </div>
       </div>
@@ -167,7 +244,6 @@ const CareerRoadmapCard = ({ roadmap, onEditClick }) => {
       <div className="p-6 space-y-4 max-h-72 overflow-y-auto">
         {modules?.map((module, index) => (
           <div key={module._id || index} className="relative">
-            {/* Dotted line connector */}
             {index < modules.length - 1 && (
               <div className="absolute left-4 top-8 w-px h-full border-l-2 border-dashed border-slate-300"></div>
             )}
@@ -190,7 +266,6 @@ const CareerRoadmapCard = ({ roadmap, onEditClick }) => {
                   />
                 </div>
                 
-                {/* Expanded Section: Resources */}
                 {expandedModules[module._id || index] && (
                   <div className="mt-3 p-3 bg-slate-50 rounded-lg">
                     <p className="text-xs text-gray-600 mb-2">{module.moduleDescription}</p>
@@ -202,13 +277,12 @@ const CareerRoadmapCard = ({ roadmap, onEditClick }) => {
                             target="_blank"
                             rel="noopener noreferrer"
                             className="flex items-center gap-2 text-xs text-blue-600 hover:underline"
-                            onClick={(e) => e.stopPropagation()} // Prevents collapsing
+                            onClick={(e) => e.stopPropagation()} 
                           >
                             <Icon name="PlayCircle" size={12} />
                             {res.title}
                           </a>
                           
-                          {/* Checkbox Button */}
                           <button 
                             onClick={(e) => handleToggleLesson(res._id, e)} 
                             className={`p-1 rounded-full hover:bg-slate-200 ${isTogglingLesson === res._id ? 'animate-spin' : ''}`}
@@ -218,7 +292,7 @@ const CareerRoadmapCard = ({ roadmap, onEditClick }) => {
                             <Icon 
                               name={isTogglingLesson === res._id ? 'Loader' : (isLessonComplete(res._id) ? "CheckCircle" : "Circle")} 
                               size={20} 
-                              color={isLessonComplete(res._id) ? "#10B981" : "#6B7280"} // Green or Gray
+                              color={isLessonComplete(res._id) ? "#10B981" : "#6B7280"} 
                             />
                           </button>
                         </li>
@@ -249,7 +323,7 @@ const CareerRoadmapCard = ({ roadmap, onEditClick }) => {
             )}
           </div>
           <div className="flex space-x-2">
-            {canEdit && ( // <-- Use the new canEdit check
+            {canEdit && ( 
               <Button
                 variant="default"
                 size="sm"
@@ -263,7 +337,7 @@ const CareerRoadmapCard = ({ roadmap, onEditClick }) => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => { /* ... expand logic ... */ }}
+              onClick={() => {}}
             >
               View Roadmap
             </Button>

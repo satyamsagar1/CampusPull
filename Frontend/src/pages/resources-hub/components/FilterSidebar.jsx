@@ -6,9 +6,6 @@ const FilterSidebar = ({ filters, onFilterChange, onClearFilters, isMobile, onCl
   const [expandedSections, setExpandedSections] = useState({
     subject: true,
     semester: true,
-    university: false,
-    difficulty: true,
-    resourceType: true
   });
 
   const toggleSection = (section) => {
@@ -18,19 +15,20 @@ const FilterSidebar = ({ filters, onFilterChange, onClearFilters, isMobile, onCl
     }));
   };
 
+  // Fixed Taxonomy Options (Real Application Structure)
   const filterSections = [
     {
       key: 'subject',
       title: 'Subject',
       icon: 'BookOpen',
       options: [
-        { value: 'computer-science', label: 'Computer Science', count: 245 },
-        { value: 'mathematics', label: 'Mathematics', count: 189 },
-        { value: 'physics', label: 'Physics', count: 156 },
-        { value: 'chemistry', label: 'Chemistry', count: 134 },
-        { value: 'electronics', label: 'Electronics', count: 98 },
-        { value: 'mechanical', label: 'Mechanical Engineering', count: 87 },
-        { value: 'civil', label: 'Civil Engineering', count: 76 },
+        { value: 'computer-science', label: 'Computer Science' },
+        { value: 'mathematics', label: 'Mathematics' },
+        { value: 'physics', label: 'Physics' },
+        { value: 'chemistry', label: 'Chemistry' },
+        { value: 'electronics', label: 'Electronics' },
+        { value: 'mechanical', label: 'Mechanical Engineering' },
+        { value: 'civil', label: 'Civil Engineering' },
       ]
     },
     {
@@ -38,29 +36,14 @@ const FilterSidebar = ({ filters, onFilterChange, onClearFilters, isMobile, onCl
       title: 'Semester',
       icon: 'Calendar',
       options: [
-        { value: '1', label: '1st Semester', count: 89 },
-        { value: '2', label: '2nd Semester', count: 92 },
-        { value: '3', label: '3rd Semester', count: 156 },
-        { value: '4', label: '4th Semester', count: 178 },
-        { value: '5', label: '5th Semester', count: 203 },
-        { value: '6', label: '6th Semester', count: 234 },
-        { value: '7', label: '7th Semester', count: 189 },
-        { value: '8', label: '8th Semester', count: 167 }
-      ]
-    },
-   
-    
-    
-    
-    {
-      key: 'resourceType',
-      title: 'Resource Type',
-      icon: 'FileText',
-      options: [
-        { value: 'notes', label: 'Study Notes', count: 567 },
-        { value: 'roadmaps', label: 'Career Roadmaps', count: 234 },
-        { value: 'interview-pyqs', label: 'Interview PYQs', count: 345 },
-   
+        { value: '1', label: '1st Semester' },
+        { value: '2', label: '2nd Semester' },
+        { value: '3', label: '3rd Semester' },
+        { value: '4', label: '4th Semester' },
+        { value: '5', label: '5th Semester' },
+        { value: '6', label: '6th Semester' },
+        { value: '7', label: '7th Semester' },
+        { value: '8', label: '8th Semester' }
       ]
     }
   ];
@@ -79,20 +62,20 @@ const FilterSidebar = ({ filters, onFilterChange, onClearFilters, isMobile, onCl
   };
 
   const sidebarContent = (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col bg-white/80 backdrop-blur-xl border-r border-white/50 shadow-sm">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-slate-200">
+      <div className="flex items-center justify-between p-5 border-b border-indigo-50">
         <div className="flex items-center space-x-2">
-          <Icon name="Filter" size={20} color="var(--color-academic-blue)" />
-          <h3 className="font-inter font-semibold text-wisdom-charcoal">Filters</h3>
+          <Icon name="Filter" size={20} className="text-indigo-600" />
+          <h3 className="font-bold text-gray-800">Filters</h3>
           {getActiveFiltersCount() > 0 && (
-            <span className="bg-academic-blue text-white text-xs px-2 py-1 rounded-full">
+            <span className="bg-indigo-600 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-sm">
               {getActiveFiltersCount()}
             </span>
           )}
         </div>
         {isMobile && (
-          <Button variant="ghost" size="icon" onClick={onClose}>
+          <Button variant="ghost" size="icon" onClick={onClose} className="hover:bg-red-50 hover:text-red-500 rounded-full">
             <Icon name="X" size={20} />
           </Button>
         )}
@@ -100,64 +83,80 @@ const FilterSidebar = ({ filters, onFilterChange, onClearFilters, isMobile, onCl
 
       {/* Clear Filters */}
       {getActiveFiltersCount() > 0 && (
-        <div className="p-4 border-b border-slate-200">
+        <div className="p-4 border-b border-indigo-50">
           <Button 
             variant="outline" 
             size="sm" 
             onClick={onClearFilters}
-            className="w-full"
+            className="w-full border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 rounded-xl transition-all"
             iconName="RotateCcw"
             iconPosition="left"
           >
-            Clear All Filters
+            Reset Filters
           </Button>
         </div>
       )}
 
       {/* Filter Sections */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto scrollbar-hide p-3 space-y-2">
         {filterSections?.map((section) => (
-          <div key={section?.key} className="border-b border-slate-200">
+          <div key={section?.key} className="bg-white/50 rounded-xl border border-white/60 overflow-hidden">
             <button
               onClick={() => toggleSection(section?.key)}
-              className="w-full flex items-center justify-between p-4 hover:bg-surface transition-colors duration-200"
+              className="w-full flex items-center justify-between p-3 hover:bg-white/80 transition-colors duration-200"
             >
               <div className="flex items-center space-x-3">
-                <Icon name={section?.icon} size={18} color="var(--color-insight-gray)" />
-                <span className="font-inter font-medium text-wisdom-charcoal">
+                <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
+                    <Icon name={section?.icon} size={16} />
+                </div>
+                <span className="font-semibold text-gray-700 text-sm">
                   {section?.title}
                 </span>
               </div>
               <Icon 
                 name={expandedSections?.[section?.key] ? "ChevronUp" : "ChevronDown"} 
                 size={16} 
-                color="var(--color-insight-gray)" 
+                className="text-gray-400" 
               />
             </button>
 
             {expandedSections?.[section?.key] && (
-              <div className="px-4 pb-4 space-y-2">
-                {section?.options?.map((option) => (
-                  <label 
-                    key={option?.value}
-                    className="flex items-center justify-between p-2 rounded-lg hover:bg-surface cursor-pointer transition-colors duration-200"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <input
-                        type="checkbox"
-                        checked={filters?.[section?.key]?.includes(option?.value) || false}
-                        onChange={(e) => handleFilterChange(section?.key, option?.value, e?.target?.checked)}
-                        className="w-4 h-4 text-academic-blue border-slate-300 rounded focus:ring-academic-blue focus:ring-2"
-                      />
-                      <span className={`text-sm font-inter ${option?.color || 'text-wisdom-charcoal'}`}>
-                        {option?.label}
-                      </span>
-                    </div>
-                    <span className="text-xs text-insight-gray bg-slate-100 px-2 py-1 rounded-full">
-                      {option?.count}
-                    </span>
-                  </label>
-                ))}
+              <div className="px-3 pb-3 pt-1 space-y-1">
+                {section?.options?.map((option) => {
+                  const isChecked = filters?.[section?.key]?.includes(option?.value) || false;
+                  
+                  return (
+                    <label 
+                        key={option?.value}
+                        className={`flex items-center justify-between p-2 rounded-lg cursor-pointer transition-all duration-200 group ${
+                            isChecked ? 'bg-indigo-50 ring-1 ring-indigo-100' : 'hover:bg-gray-50'
+                        }`}
+                    >
+                        <div className="flex items-center space-x-3">
+                            {/* Custom Checkbox */}
+                            <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all duration-200 ${
+                                isChecked 
+                                ? 'bg-indigo-600 border-indigo-600 shadow-sm' 
+                                : 'border-gray-300 bg-white group-hover:border-indigo-400'
+                            }`}>
+                                {isChecked && <Icon name="Check" size={10} className="text-white" />}
+                            </div>
+                            
+                            {/* Hidden Native Checkbox */}
+                            <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={(e) => handleFilterChange(section?.key, option?.value, e?.target?.checked)}
+                                className="hidden"
+                            />
+                            
+                            <span className={`text-sm ${isChecked ? 'font-medium text-indigo-700' : 'text-gray-600 group-hover:text-gray-900'}`}>
+                                {option?.label}
+                            </span>
+                        </div>
+                    </label>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -168,8 +167,8 @@ const FilterSidebar = ({ filters, onFilterChange, onClearFilters, isMobile, onCl
 
   if (isMobile) {
     return (
-      <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-end">
-        <div className="bg-white w-full max-h-[80vh] rounded-t-2xl shadow-brand-xl">
+      <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-end sm:items-center sm:justify-center">
+        <div className="bg-white w-full sm:w-96 max-h-[85vh] sm:rounded-2xl rounded-t-2xl shadow-2xl overflow-hidden flex flex-col">
           {sidebarContent}
         </div>
       </div>
@@ -177,7 +176,7 @@ const FilterSidebar = ({ filters, onFilterChange, onClearFilters, isMobile, onCl
   }
 
   return (
-    <div className="w-80 bg-white border-r border-slate-200 shadow-brand-sm">
+    <div className="h-full rounded-2xl overflow-hidden shadow-sm border border-white/60">
       {sidebarContent}
     </div>
   );

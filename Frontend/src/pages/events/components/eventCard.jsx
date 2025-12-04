@@ -53,7 +53,13 @@ const EventCard = ({ event, onEdit, onDelete, isDeleting }) => {
 
   // console.log(`[EventCard] Received User Object:`, user);
 
-const currentUserId = user?.id;
+const currentUserId = user?._id;
+
+console.log("DEBUG EVENT CARD:", { 
+  hasUser: !!user, 
+  userID: currentUserId, 
+  interestedUsersProp: interestedUsers 
+});
 
 // 🎯 Ensure conversion to string for reliable comparison
 const currentUserIdString = currentUserId ? currentUserId.toString() : null;
@@ -140,7 +146,7 @@ const currentUserIsInterested = !!currentUserIdString
           <button
             onClick={handleInterestClick}
             disabled={isProcessingInterest || currentUserIsInterested} // Disable when loading OR already interested
-            className={`flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-sm font-semibold transition-all duration-150 border ${
+            className={`flex-1 rounded-xl inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-sm font-semibold transition-all duration-150 border ${
               isProcessingInterest
                 ? 'bg-slate-200 text-slate-500 border-slate-300 cursor-wait'       // Loading state
                 : currentUserIsInterested
@@ -162,10 +168,10 @@ const currentUserIsInterested = !!currentUserIdString
           {registrationLink && (
             <button
               onClick={handleRegisterClick}
-              className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-gradient-to-r from-[#3B82F6] to-[#6366F1] text-white rounded-md text-sm font-semibold hover:opacity-90 transition-opacity"
+              className="flex-1 rounded-xl inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-gradient-to-r from-[#3B82F6] to-[#6366F1] text-white rounded-md text-sm font-semibold hover:opacity-90 transition-opacity"
             >
               <LinkIcon size={14} />
-              Register / View Form
+              Register
             </button>
           )}
         </div>

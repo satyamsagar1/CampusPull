@@ -31,15 +31,15 @@ api.interceptors.response.use(
           originalRequest.headers["Authorization"] = `Bearer ${newToken}`;
           return api(originalRequest); // Retry the original failed request
         }
-      } catch (refreshErr) {
+      } catch (error_) {
         // If refresh fails, DO NOT RELOAD PAGE (window.location.href).
-        // Just reject the promise. AuthContext will catch this and set user=null.
-        console.error("Session expired:", refreshErr);
-        return Promise.reject(refreshErr);
+        // Just throw the error so upstream can handle setting user=null.
+        console.error("Session expired:", error_);
+        throw error_;
       }
     }
 
-    return Promise.reject(error);
+    throw error;
   }
 );
 
