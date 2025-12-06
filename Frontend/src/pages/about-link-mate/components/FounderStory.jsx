@@ -5,7 +5,7 @@ const FounderStory = () => {
     {
       year: "2023",
       detail:
-        "LinkMate began as an idea by passionate students of ABES Institute of Technology.",
+        "Campus-Pull began as an idea by passionate students of ABES Institute of Technology.",
     },
     {
       year: "Vision",
@@ -42,7 +42,7 @@ const FounderStory = () => {
 
       {/* Closing Statement */}
       <p className="text-center text-lg text-gray-700 mt-10 max-w-3xl mx-auto">
-        From a small idea at <strong>ABESIT</strong>, LinkMate is now shaping
+        From a small idea at <strong>ABESIT</strong>, Campus-Pull is now shaping
         the way students and alumni connect for growth and mentorship.
       </p>
     </section>

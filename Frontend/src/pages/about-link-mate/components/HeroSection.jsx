@@ -12,10 +12,10 @@ const HeroSection = () => {
       {/* Content */}
       <div className="relative z-10 px-4">
         <h1 className="text-5xl md:text-6xl font-extrabold text-white mb-6 drop-shadow-lg">
-          About <span className="text-yellow-300">LinkMate</span>
+          About <span className="text-yellow-300">Campus-Pull</span>
         </h1>
         <p className="text-lg md:text-xl text-white max-w-3xl mx-auto drop-shadow-md">
-          LinkMate is your companion for growth – bringing together students,
+          Campus-Pull is your companion for growth – bringing together students,
           alumni, and faculty into one connected ecosystem.
         </p>
       </div>

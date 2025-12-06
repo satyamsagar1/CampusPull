@@ -42,7 +42,7 @@ const AboutLinkMate = () => {
                   <span className="text-white font-poppins font-bold text-lg">L</span>
                 </div>
                 <div>
-                  <h3 className="text-2xl font-poppins font-bold">LinkMate</h3>
+                  <h3 className="text-2xl font-poppins font-bold">Campus-Pull</h3>
                   <p className="text-sm opacity-80 font-inter">Knowledge Without Boundaries</p>
                 </div>
               </div>
@@ -101,7 +101,7 @@ const AboutLinkMate = () => {
                 </div>
                 <div className="text-white/80 font-inter">
                   <p className="text-sm">Address:</p>
-                  <p>Bangalore, Karnataka, India</p>
+                  <p>Ghaziabad, India</p>
                 </div>
               </div>
             </div>
@@ -110,7 +110,7 @@ const AboutLinkMate = () => {
           {/* Bottom Bar */}
           <div className="border-t border-white/20 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
             <p className="text-white/60 font-inter text-sm">
-              © {new Date()?.getFullYear()} LinkMate. All rights reserved.
+              © {new Date()?.getFullYear()} Campus-Pull. All rights reserved.
             </p>
             <div className="flex space-x-6 mt-4 md:mt-0">
               <a href="#" className="text-white/60 hover:text-white transition-colors duration-300 font-inter text-sm">
