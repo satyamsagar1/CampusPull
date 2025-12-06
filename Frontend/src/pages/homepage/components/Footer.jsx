@@ -29,7 +29,7 @@ const Footer = () => {
     {
       title: "Company",
       links: [
-        { name: "About LinkMate", path: "/about-linke-mate" },
+        { name: "About Campus-pull", path: "/about-linke-mate" },
         { name: "Our Mission", path: "/mission" },
         { name: "Team", path: "/team" },
         { name: "Careers", path: "/careers" },
@@ -83,7 +83,7 @@ const Footer = () => {
                 </div>
                 <div>
                   <h3 className="text-2xl font-poppins font-bold text-white group-hover:text-academic-blue transition-colors duration-300">
-                    LinkMate
+                    Campus-pull
                   </h3>
                   <p className="text-sm text-slate-300 font-inter">Knowledge Without Boundaries</p>
                 </div>
@@ -183,7 +183,7 @@ const Footer = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
             <div className="flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-6 text-sm text-slate-400 font-inter">
-              <p>© {currentYear} LinkMate. All rights reserved.</p>
+              <p>© {currentYear} Campus-pull. All rights reserved.</p>
               <div className="flex items-center space-x-4">
                 <span>Made with</span>
                 <Icon name="Heart" size={16} color="#EF4444" />
