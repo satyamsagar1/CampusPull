@@ -55,12 +55,6 @@ const EventCard = ({ event, onEdit, onDelete, isDeleting }) => {
 
 const currentUserId = user?._id;
 
-console.log("DEBUG EVENT CARD:", { 
-  hasUser: !!user, 
-  userID: currentUserId, 
-  interestedUsersProp: interestedUsers 
-});
-
 // 🎯 Ensure conversion to string for reliable comparison
 const currentUserIdString = currentUserId ? currentUserId.toString() : null;
 
