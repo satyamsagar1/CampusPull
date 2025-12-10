@@ -38,18 +38,27 @@ export const searchUsers = async (req, res) => {
   try {
     const query = req.query.q;
 
-    if (!query || typeof query !== "string") {
-      return res.status(400).json({ message: "Query param 'q' is required" });
+    // Safety check for empty query
+    if (!query || typeof query !== "string" || query.trim() === "") {
+      return res.json([]); // Return empty array instead of error if search is empty
     }
+
+    // Create a standardized Regex (Case Insensitive)
+    const searchRegex = new RegExp(query, "i");
 
     const users = await user.find({
       $or: [
-        { name: new RegExp(query, "i") },
-        { skills: { $regex: query, $options: "i" } }
+        { name: searchRegex },               
+        { role: searchRegex },              
+        { skills: { $in: [searchRegex] } } 
       ]
-    }).select("-password");
+    })
+    .select("-passwordHash -tokenVersion");  
+
     res.json(users);
+
   } catch (err) {
+    console.error("Search Error:", err);
     res.status(500).json({ message: "Error searching users", error: err.message });
   }
 };

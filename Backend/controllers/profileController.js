@@ -1,7 +1,28 @@
 import User from "../models/user.js";
+import { v2 as cloudinary } from "cloudinary"; // ✅ Crucial for deleting old images
 
 // =================================================================
-// ✅ EXISTING CONTROLLERS (DO NOT TOUCH)
+// 🛠️ HELPER: Extract Public ID from Cloudinary URL
+// =================================================================
+const getPublicIdFromUrl = (url) => {
+  if (!url) return null;
+  try {
+    // Splits URL to find the part after the last slash and removes extension
+    // Example: "https://.../campuspull_profiles/abc.jpg" -> "campuspull_profiles/abc"
+    const parts = url.split("/");
+    const lastPart = parts[parts.length - 1]; 
+    const fileName = lastPart.split(".")[0];
+    const regex = /\/v\d+\/(.+)\.[a-z]+$/;
+    const match = url.match(regex);
+    return match ? match[1] : fileName;
+  } catch (error) {
+    console.error("Error extracting Public ID:", error);
+    return null;
+  }
+};
+
+// =================================================================
+// ✅ MAIN CONTROLLERS
 // =================================================================
 
 // 1. Get logged-in user profile
@@ -27,29 +48,35 @@ export const updateProfile = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    // Destructure ONLY the fields we allow users to update
+    // Destructure ALL allowed fields
     const {
       name, bio, phone,
+      department, section, year, // ✅ Added Academic Fields
       college, degree, graduationYear,
-      linkedin, github,
+      linkedin, github, twitter, portfolio, // ✅ Added Socials
       profileImage,
       skills,
       projects,
       experience,
       education,
-      certifications
+      certifications,
+      designation, // For Teachers
+      currentCompany // For Alumni
     } = req.body;
 
     const updateData = {
       name, bio, phone,
+      department, section, year,
       college, degree, graduationYear,
-      linkedin, github,
+      linkedin, github, twitter, portfolio,
       profileImage,
       skills,
       projects,
       experience,
       education,
-      certifications
+      certifications,
+      designation,
+      currentCompany
     };
 
     // Clean up: Remove undefined fields
@@ -122,27 +149,43 @@ export const toggleLessonProgress = async (req, res) => {
   }
 };
 
-// 4. Upload Profile Picture Controller
-export const uploadProfileImage = async(req, res) => {
+// =================================================================
+// 📸 UPLOAD PROFILE PHOTO (With Auto-Delete Old One)
+// =================================================================
+export const uploadProfileImage = async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: "No image file provided" });
     }
 
-    const imageUrl = req.file.path;
     const userId = req.user.id;
+    const newImageUrl = req.file.path; // New Cloudinary URL
 
+    // 1. Find the user to get the OLD image URL
+    const user = await User.findById(userId);
+
+    // 2. If an old image exists, DELETE it from Cloudinary
+    if (user && user.profileImage) {
+      const publicId = getPublicIdFromUrl(user.profileImage);
+      if (publicId) {
+        // We don't await this to speed up the response (Fire & Forget), 
+        // or await it if you want strict safety.
+        cloudinary.uploader.destroy(publicId).catch(err => console.error("Cloudinary delete error:", err));
+      }
+    }
+
+    // 3. Save the NEW image URL to DB
     await User.findByIdAndUpdate(
       userId,
-      { $set: { profileImage: imageUrl } },
+      { $set: { profileImage: newImageUrl } },
       { new: true }
     );
 
     res.json({
       success: true,
       message: "Upload successful",
-      url: imageUrl,
-      photoUrl: imageUrl
+      url: newImageUrl,
+      photoUrl: newImageUrl
     });
   } catch (error) {
     console.error("Upload controller error:", error);
@@ -150,16 +193,27 @@ export const uploadProfileImage = async(req, res) => {
   }
 };
 
-
-
-const ALLOWED_SECTIONS = ['projects', 'experience', 'education', 'certifications'];
-
-// 1. DELETE PROFILE PHOTO ONLY
-// Route: DELETE /api/profile/photo
+// =================================================================
+// 🗑️ DELETE PROFILE PHOTO (Remove from Cloudinary + DB)
+// =================================================================
 export const deleteProfilePhoto = async (req, res) => {
   try {
     const userId = req.user.id;
-    // We use $unset to completely remove the field
+
+    // 1. Find User to get the URL
+    const user = await User.findById(userId);
+    
+    if (!user || !user.profileImage) {
+        return res.status(404).json({ message: "No profile image found" });
+    }
+
+    // 2. Delete from Cloudinary
+    const publicId = getPublicIdFromUrl(user.profileImage);
+    if (publicId) {
+       await cloudinary.uploader.destroy(publicId);
+    }
+
+    // 3. Remove from MongoDB ($unset)
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       { $unset: { profileImage: "" } },
@@ -173,14 +227,18 @@ export const deleteProfilePhoto = async (req, res) => {
   }
 };
 
-// 2. SKILLS: ADD/APPEND
-// Route: POST /api/profile/skills
+// =================================================================
+// 🚀 ARRAY CONTROLLERS (Skills, Projects, etc.)
+// =================================================================
+
+const ALLOWED_SECTIONS = ['projects', 'experience', 'education', 'certifications'];
+
+// 1. SKILLS: ADD/APPEND
 export const updateSkills = async (req, res) => {
-  const { skills } = req.body; // Expecting { skills: ["Java", "React"] }
+  const { skills } = req.body;
   const userId = req.user.id;
 
   try {
-    // Uses $addToSet to add new skills without duplicates
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       { $addToSet: { skills: { $each: skills } } },
@@ -194,8 +252,7 @@ export const updateSkills = async (req, res) => {
   }
 };
 
-// 3. SKILLS: DELETE SINGLE SKILL
-// Route: DELETE /api/profile/skills/:skillName
+// 2. SKILLS: DELETE SINGLE SKILL
 export const deleteSkill = async (req, res) => {
   const { skillName } = req.params;
   const userId = req.user.id;
@@ -203,7 +260,7 @@ export const deleteSkill = async (req, res) => {
   try {
     const updatedUser = await User.findByIdAndUpdate(
       userId,
-      { $pull: { skills: skillName } }, // Removes the specific string
+      { $pull: { skills: skillName } },
       { new: true }
     ).select("skills");
 
@@ -214,8 +271,7 @@ export const deleteSkill = async (req, res) => {
   }
 };
 
-// 4. GENERIC: ADD ITEM (Project, Exp, etc.)
-// Route: POST /api/profile/:section
+// 3. GENERIC: ADD ITEM
 export const addArrayItem = async (req, res) => {
   const { section } = req.params;
   const userId = req.user.id;
@@ -227,7 +283,7 @@ export const addArrayItem = async (req, res) => {
   try {
     const updatedUser = await User.findByIdAndUpdate(
       userId,
-      { $push: { [section]: req.body } }, // Pushes new object to array
+      { $push: { [section]: req.body } },
       { new: true, runValidators: true }
     ).select(section);
 
@@ -238,8 +294,7 @@ export const addArrayItem = async (req, res) => {
   }
 };
 
-// 5. GENERIC: EDIT ITEM
-// Route: PUT /api/profile/:section/:itemId
+// 4. GENERIC: EDIT ITEM
 export const updateArrayItem = async (req, res) => {
   const { section, itemId } = req.params;
   const userId = req.user.id;
@@ -248,7 +303,6 @@ export const updateArrayItem = async (req, res) => {
     return res.status(400).json({ message: `Invalid section. Allowed: ${ALLOWED_SECTIONS.join(', ')}` });
   }
 
-  // Convert req.body to dot notation (e.g. "projects.$.title")
   const updateFields = {};
   for (const [key, value] of Object.entries(req.body)) {
     updateFields[`${section}.$.${key}`] = value;
@@ -270,8 +324,7 @@ export const updateArrayItem = async (req, res) => {
   }
 };
 
-// 6. GENERIC: DELETE ITEM
-// Route: DELETE /api/profile/:section/:itemId
+// 5. GENERIC: DELETE ITEM
 export const deleteArrayItem = async (req, res) => {
   const { section, itemId } = req.params;
   const userId = req.user.id;

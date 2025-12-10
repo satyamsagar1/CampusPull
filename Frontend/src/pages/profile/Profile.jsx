@@ -13,10 +13,12 @@ import {
   FaTrash,
   FaPen,
   FaTimes,
-  FaSave
+  FaSave,
+  FaUser,
+  FaUniversity
 } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
-import { ProfileContext } from "../../context/profileContext"; // Ensure path is correct
+import { ProfileContext } from "../../context/ProfileContext"; 
 
 // ✅ Card Component
 const Card = ({ children, className = "" }) => (
@@ -87,27 +89,59 @@ export default function Profile() {
     addSkill
   } = useContext(ProfileContext);
 
+  // --- STATE ---
   const [bio, setBio] = useState("");
   const [editBio, setEditBio] = useState(false);
   const [newSkill, setNewSkill] = useState("");
   const [resume, setResume] = useState(null);
   const [uploadingImage, setUploadingImage] = useState(false);
 
+  // State for Personal & Academic Info Form
+  const [isEditingInfo, setIsEditingInfo] = useState(false);
+  const [infoForm, setInfoForm] = useState({
+    name: "",
+    phone: "",
+    linkedin: "",
+    github: "",
+    college: "",
+    degree: "",
+    course: "",        
+    department: "",    
+    section: "",     // Note: Backend might return 'section' (lowercase) or 'Section'
+    year: "",          
+    graduationYear: "" 
+  });
+
   // --- Edit Modal State ---
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingSection, setEditingSection] = useState(null); // 'projects', 'experience', etc.
-  const [editingItemData, setEditingItemData] = useState({}); // Copy of the item being edited
+  const [editingSection, setEditingSection] = useState(null); 
+  const [editingItemData, setEditingItemData] = useState({}); 
   const [editingItemId, setEditingItemId] = useState(null);
 
-  // Form States
+  // Form States for Arrays
   const [newProject, setNewProject] = useState({ title: "", description: "", link: "" });
   const [newExperience, setNewExperience] = useState({ role: "", company: "", description: "", year: "" });
   const [newEducation, setNewEducation] = useState({ degree: "", institution: "", year: "" });
   const [newCert, setNewCert] = useState({ name: "", provider: "", link: "" });
 
+  // ✅ SYNC PROFILE DATA TO STATE
   useEffect(() => {
     if (profile) {
       setBio(profile.bio || "");
+      
+      setInfoForm({
+        name: profile.name || "",
+        phone: profile.phone || "",
+        linkedin: profile.linkedin || "",
+        github: profile.github || "",
+        college: profile.college || "",
+        degree: profile.degree || "",
+        course: profile.course || "",
+        department: profile.department || "",
+        section: profile.section || profile.Section || "", // Handle both casing
+        year: profile.year || "",
+        graduationYear: profile.graduationYear || ""
+      });
     }
   }, [profile]);
 
@@ -144,9 +178,6 @@ export default function Profile() {
     setNewSkill("");
   };
   
-  // If you used `addSkill` in context, swap the line above.
-  // For now I'll assume your generic `addItemToProfile` can handle it or you have `addSkill`.
-  // Let's use the explicit `removeSkill` you likely added.
   const handleRemoveSkill = async (skill) => {
     await removeSkill(skill);
   };
@@ -158,22 +189,19 @@ export default function Profile() {
     setItem(emptyState);
   };
 
-  // --- DELETE Item ---
   const handleDeleteItem = async (section, id) => {
     if (window.confirm("Are you sure you want to delete this item?")) {
       await deleteArrayItem(section, id);
     }
   };
 
-  // --- EDIT Item (Open Modal) ---
   const handleEditClick = (section, item) => {
     setEditingSection(section);
     setEditingItemId(item._id);
-    setEditingItemData({ ...item }); // Create a copy
+    setEditingItemData({ ...item }); 
     setIsModalOpen(true);
   };
 
-  // --- SAVE Edit ---
   const handleSaveEdit = async () => {
     if (!editingSection || !editingItemId) return;
     try {
@@ -189,9 +217,33 @@ export default function Profile() {
     setEditBio(false);
   };
 
+  const saveInfo = async () => {
+    try {
+      await updateProfile(infoForm);
+      setIsEditingInfo(false);
+    } catch (err) {
+      alert("Failed to update info");
+    }
+  };
+
   const generateResume = () => {
-    // ... (Keep existing resume logic)
-    const resumeData = `📌 Name: ${profile.name}\n...`; // Shortened for brevity
+    const resumeData = `
+📌 Name: ${profile.name || ""}
+🎓 Degree: ${profile.degree || ""}
+🏫 College: ${profile.college || ""}
+
+💡 About:
+${profile.bio || ""}
+
+🛠 Skills:
+${profile.skills?.join(", ") || "None"}
+
+🚀 Projects:
+${profile.projects?.map(p => `- ${p.title}: ${p.description}`).join("\n") || "None"}
+
+💼 Experience:
+${profile.experience?.map(e => `- ${e.role} at ${e.company} (${e.year})`).join("\n") || "None"}
+    `;
     setResume(resumeData);
   };
 
@@ -228,15 +280,15 @@ export default function Profile() {
     },
     {
       key: "education",
-      title: "Education",
+      title: "Education History",
       icon: <FaGraduationCap />,
       data: profile.education,
       inputs: newEducation,
       setInputs: setNewEducation,
       emptyState: { degree: "", institution: "", year: "" },
       fields: [
-        { name: "degree", placeholder: "Degree (e.g. B.Tech CS)" },
-        { name: "institution", placeholder: "College / University" },
+        { name: "degree", placeholder: "Degree" },
+        { name: "institution", placeholder: "Institution" },
         { name: "year", placeholder: "Year" }
       ]
     },
@@ -270,13 +322,11 @@ export default function Profile() {
                 alt="Profile"
                 className="w-32 h-32 rounded-full border-4 border-white shadow-lg object-cover bg-white"
               />
-              {/* Upload Button */}
               <label className="absolute bottom-0 right-0 bg-indigo-600 hover:bg-indigo-700 text-white p-2 rounded-full cursor-pointer shadow-md transition-colors z-10">
                 {uploadingImage ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <FaCamera size={14} />}
                 <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" disabled={uploadingImage} />
               </label>
 
-              {/* DELETE PHOTO BUTTON (Only if photo exists) */}
               {profile.profileImage && (
                   <button 
                     onClick={handleRemovePhoto}
@@ -289,7 +339,7 @@ export default function Profile() {
             </div>
 
             <h2 className="text-2xl font-bold mt-4 text-gray-800">{profile.name || "User"}</h2>
-            <p className="text-gray-500">{profile.role || "Student"}</p>
+            <p className="text-gray-500">{profile.degree} Student</p>
             
             <div className="flex gap-5 mt-4 text-2xl text-gray-600">
               {profile.linkedin && <a href={profile.linkedin} target="_blank" rel="noreferrer" className="hover:text-blue-600 transition"><FaLinkedin /></a>}
@@ -297,7 +347,10 @@ export default function Profile() {
             </div>
 
             <div className="mt-6 w-full">
-               {/* Streak or other info */}
+               <div className="bg-gradient-to-r from-orange-100 to-yellow-100 text-orange-700 px-4 py-2 rounded-xl font-semibold flex items-center justify-center gap-2 shadow-sm border border-orange-200">
+                <span role="img" aria-label="fire">🔥</span>
+                <span>{profile.streakCount || 0} Day Streak</span>
+              </div>
             </div>
           </div>
 
@@ -308,7 +361,6 @@ export default function Profile() {
                 profile.skills.map((skill, idx) => (
                   <span key={idx} className="group flex items-center gap-2 bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-sm font-medium hover:bg-indigo-200 transition">
                     {skill}
-                    {/* Remove Skill Button */}
                     <button onClick={() => handleRemoveSkill(skill)} className="text-indigo-400 hover:text-red-500 transition">
                         <FaTimes size={12} />
                     </button>
@@ -316,22 +368,141 @@ export default function Profile() {
                 ))
               ) : <p className="text-sm text-gray-400 italic">No skills added.</p>}
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 w-full">
               <input
                 type="text"
                 value={newSkill}
                 onChange={(e) => setNewSkill(e.target.value)}
                 placeholder="Add skill..."
-                className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-400 outline-none"
+                className="flex-1 min-w-0 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-400 outline-none"
                 onKeyDown={(e) => e.key === 'Enter' && handleAddSkill()}
               />
-              <button onClick={handleAddSkill} className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm transition"><FaPlus /></button>
+              <button onClick={handleAddSkill} className="flex-shrink-0 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm transition"><FaPlus /></button>
             </div>
           </div>
         </Card>
 
         {/* ================= MAIN CONTENT ================= */}
         <div className="md:col-span-2 space-y-6">
+
+          {/* Personal & Academic Info Card */}
+          <Card>
+            <div className="flex justify-between items-start mb-4">
+              <h3 className="text-lg font-semibold text-indigo-700 flex items-center gap-2">
+                <FaUniversity /> Personal & Academic Info
+              </h3>
+              {!isEditingInfo && (
+                <button onClick={() => setIsEditingInfo(true)} className="text-sm text-indigo-600 font-medium hover:underline flex items-center gap-1">
+                  <FaPen size={12}/> Edit
+                </button>
+              )}
+            </div>
+
+            {isEditingInfo ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Identity */}
+                <div className="col-span-1 md:col-span-2">
+                   <label className="text-xs font-bold text-gray-500 uppercase">Full Name</label>
+                   <input type="text" value={infoForm.name} onChange={(e) => setInfoForm({...infoForm, name: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-300" />
+                </div>
+                
+                {/* Contact & Socials */}
+                <div>
+                   <label className="text-xs font-bold text-gray-500 uppercase">Phone (Confidential)</label>
+                   <input type="text" value={infoForm.phone} onChange={(e) => setInfoForm({...infoForm, phone: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-300" />
+                </div>
+                <div>
+                   <label className="text-xs font-bold text-gray-500 uppercase">LinkedIn URL</label>
+                   <input type="text" value={infoForm.linkedin} onChange={(e) => setInfoForm({...infoForm, linkedin: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-300" />
+                </div>
+                <div>
+                   <label className="text-xs font-bold text-gray-500 uppercase">GitHub URL</label>
+                   <input type="text" value={infoForm.github} onChange={(e) => setInfoForm({...infoForm, github: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-300" />
+                </div>
+
+                {/* Academic Info */}
+                <div>
+                   <label className="text-xs font-bold text-gray-500 uppercase">College</label>
+                   <input type="text" value={infoForm.college} onChange={(e) => setInfoForm({...infoForm, college: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-300" />
+                </div>
+                <div>
+                   <label className="text-xs font-bold text-gray-500 uppercase">Degree</label>
+                   <input type="text" value={infoForm.degree} onChange={(e) => setInfoForm({...infoForm, degree: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-300" />
+                </div>
+                <div>
+                   <label className="text-xs font-bold text-gray-500 uppercase">Course</label>
+                   <input type="text" value={infoForm.course} onChange={(e) => setInfoForm({...infoForm, course: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-300" />
+                </div>
+                <div>
+                   <label className="text-xs font-bold text-gray-500 uppercase">Department</label>
+                   <input type="text" value={infoForm.department} onChange={(e) => setInfoForm({...infoForm, department: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-300" />
+                </div>
+                <div>
+                   <label className="text-xs font-bold text-gray-500 uppercase">Section</label>
+                   <input type="text" value={infoForm.section} onChange={(e) => setInfoForm({...infoForm, section: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-300" />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-xs font-bold text-gray-500 uppercase">Year (1-4)</label>
+                    <input type="number" value={infoForm.year} onChange={(e) => setInfoForm({...infoForm, year: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-300" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-gray-500 uppercase">Grad Year</label>
+                    <input type="number" value={infoForm.graduationYear} onChange={(e) => setInfoForm({...infoForm, graduationYear: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-300" />
+                  </div>
+                </div>
+
+                <div className="col-span-1 md:col-span-2 flex justify-end gap-2 mt-2">
+                   <button onClick={() => setIsEditingInfo(false)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg text-sm">Cancel</button>
+                   <button onClick={saveInfo} className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm flex items-center gap-2">
+                     <FaSave /> Save Info
+                   </button>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 text-sm text-gray-700">
+                 
+                 {/* Phone Removed from View Mode for Confidentiality */}
+
+                 <div>
+                    <span className="font-semibold text-gray-500 block text-xs uppercase">College</span>
+                    <span>{profile.college || "N/A"}</span>
+                 </div>
+
+                 <div>
+                    <span className="font-semibold text-gray-500 block text-xs uppercase">Degree & Course</span>
+                    <span>{profile.degree} {profile.course ? `- ${profile.course}` : ""}</span>
+                 </div>
+                 <div>
+                    <span className="font-semibold text-gray-500 block text-xs uppercase">Department</span>
+                    <span>{profile.department || "N/A"}</span>
+                 </div>
+
+                 {/* Year and Section Separated */}
+                 <div>
+                    <span className="font-semibold text-gray-500 block text-xs uppercase">Year</span>
+                    <span>{profile.year ? `${profile.year}` : "N/A"}</span>
+                 </div>
+                 <div>
+                    <span className="font-semibold text-gray-500 block text-xs uppercase">Section</span>
+                    <span>{profile.section || profile.Section || "N/A"}</span>
+                 </div>
+
+                 <div>
+                    <span className="font-semibold text-gray-500 block text-xs uppercase">Graduation Year</span>
+                    <span>{profile.graduationYear || "N/A"}</span>
+                 </div>
+                 
+                 {/* Socials Display
+                 <div className="col-span-1 md:col-span-2 pt-2 border-t border-gray-100 flex gap-4">
+                    {profile.linkedin && <a href={profile.linkedin} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline flex items-center gap-1"><FaLinkedin/> LinkedIn</a>}
+                    {profile.github && <a href={profile.github} target="_blank" rel="noreferrer" className="text-gray-800 hover:underline flex items-center gap-1"><FaGithub/> GitHub</a>}
+                 </div> */}
+              </div>
+            )}
+          </Card>
+
+          {/* About Card */}
           <Card>
             <div className="flex justify-between items-start mb-2">
               <h3 className="text-lg font-semibold text-indigo-700">About</h3>

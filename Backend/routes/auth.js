@@ -29,15 +29,19 @@ const accessCookieOpts = {
 router.post('/signup', async (req, res) => {
  
   try {
+    req.body.college = "ABESIT";
     const parsed = signupSchema.safeParse(req.body);
     if (!parsed.success) {
+      // 🚨 ADD THIS LOG TO SEE THE ERROR IN VS CODE TERMINAL
+      console.log("❌ ZOD VALIDATION ERROR:", JSON.stringify(parsed.error.format(), null, 2));
+      
       return res.status(400).json({
         message: 'Invalid input',
-        errors: parsed.error?.errors, // <--- updated for cleaner errors
+        errors: parsed.error?.errors,
       });
     }
 
-    const { name, email, password, role, college, degree, graduationYear, phone, linkedin, bio, skills } = parsed.data;
+    const { name, email, password, role, college, department, section, year, designation, currentCompany, degree, graduationYear, phone, linkedin, bio, skills } = parsed.data;
 
     const exists = await User.findOne({ email });
     if (exists) return res.status(409).json({ message: 'Email already registered' });
@@ -46,8 +50,11 @@ router.post('/signup', async (req, res) => {
 
     // <--- added all new fields here
     const userDoc = await User.create({
-      name, email, passwordHash, role, college, degree, graduationYear,
-       phone, linkedin, bio, skills
+      name, email, passwordHash, role,
+      college, department,
+      degree,section, year, graduationYear,
+      designation, currentCompany,
+      phone, linkedin, bio, skills
     });
 
     const user = userDoc.toObject(); // <--- convert Mongoose doc to plain object
@@ -60,7 +67,7 @@ router.post('/signup', async (req, res) => {
 
     return res.status(201).json({
       user: {
-        _id: user._id.toString(), // <--- fixed missing ()
+        _id: user._id.toString(), 
         name: user.name,
         email: user.email,
         role: user.role,
@@ -71,6 +78,11 @@ router.post('/signup', async (req, res) => {
         linkedin: user.linkedin,
         bio: user.bio,
         skills: user.skills,
+        department: user.department,
+        section: user.section,
+        year: user.year,
+        designation: user.designation,
+        currentCompany: user.currentCompany,
       },
       accessToken,
     });
