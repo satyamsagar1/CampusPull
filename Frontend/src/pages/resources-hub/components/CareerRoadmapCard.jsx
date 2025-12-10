@@ -15,7 +15,7 @@ const CareerRoadmapCard = ({ roadmap, viewMode = 'grid', onEditClick }) => {
 
   const isOwner = user?._id === uploadedBy?._id;
   const isAdmin = user?.role === 'admin';
-  const canEdit = isOwner && isAdmin;
+  const canEdit = isOwner || isAdmin;
 
   // --- Logic: Progress Calculation ---
   const { totalLessons, completedLessons, progressPercentage } = useMemo(() => {

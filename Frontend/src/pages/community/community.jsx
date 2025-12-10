@@ -64,7 +64,7 @@ const CommunityPage = () => {
                         {canPost && (
                             <Button
                                 onClick={() => setShowCreateModal(true)}
-                                className="w-full sm:w-auto bg-gradient-to-r from-[#3B82F6] to-[#6366F1] text-white shadow-md"
+                                className="w-auto bg-gradient-to-r from-[#3B82F6] to-[#6366F1] text-white shadow-md rounded-xl flex items-center"
                             >
                                 <PlusCircle size={18} className="mr-1" /> Ask Question
                             </Button>

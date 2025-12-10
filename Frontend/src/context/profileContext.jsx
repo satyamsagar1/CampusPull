@@ -31,41 +31,110 @@ export const ProfileProvider = ({ children }) => {
     }
   }, [accessToken]);
 
-  // --- 2. Generic Update ---
+  // --- 2. Generic Update (For Bio, Name, Links etc.) ---
+  // Keeps existing functionality for non-array fields
   const updateProfile = useCallback(async (updates) => {
     if (!accessToken) return;
     setError(null);
-    // Don't set global loading here to avoid full UI freeze, handle locally if needed
     try {
       const { data } = await api.put("/profile", updates, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
-      setProfile(data); 
+      setProfile(data); // Full profile update
       return data;
     } catch (err) {
       console.error("Update Profile Error:", err);
-      throw err; 
+      throw err;
     }
   }, [accessToken]);
 
-  // --- 3. Helper: Add Item to Array (Skills, Projects, etc.) ---
-  const addItemToProfile = useCallback(async (key, newItem) => {
-    if (!profile) return;
-    const currentArray = profile[key] || [];
-    const updatedArray = [...currentArray, newItem];
-    await updateProfile({ [key]: updatedArray });
-  }, [profile, updateProfile]);
+  // --- 3. 🚀 NEW: Add Item (Projects, Exp, Certs, Education) ---
+  // Calls: POST /api/profile/:section
+  const addItemToProfile = useCallback(async (section, newItem) => {
+    if (!accessToken) return;
+    try {
+      const { data } = await api.post(`/profile/${section}`, newItem, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      // Backend returns ONLY the updated array (e.g., just the projects list)
+      // We merge it into the local state
+      setProfile((prev) => ({ ...prev, [section]: data }));
+      return data;
+    } catch (err) {
+      console.error(`Error adding to ${section}:`, err);
+      throw err;
+    }
+  }, [accessToken]);
 
-  // --- 4. Helper: Upload Image Logic ---
+  // --- 4. 🚀 NEW: Edit Item (Projects, Exp, Certs, Education) ---
+  // Calls: PUT /api/profile/:section/:itemId
+  const editArrayItem = useCallback(async (section, itemId, updates) => {
+    if (!accessToken) return;
+    try {
+      const { data } = await api.put(`/profile/${section}/${itemId}`, updates, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      // Backend returns updated array
+      setProfile((prev) => ({ ...prev, [section]: data.data || data })); 
+      return data;
+    } catch (err) {
+      console.error(`Error editing ${section}:`, err);
+      throw err;
+    }
+  }, [accessToken]);
+
+  // --- 5. 🚀 NEW: Delete Item (Projects, Exp, Certs, Education) ---
+  // Calls: DELETE /api/profile/:section/:itemId
+  const deleteArrayItem = useCallback(async (section, itemId) => {
+    if (!accessToken) return;
+    try {
+      const { data } = await api.delete(`/profile/${section}/${itemId}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      // Backend returns updated array
+      setProfile((prev) => ({ ...prev, [section]: data.data || data })); 
+    } catch (err) {
+      console.error(`Error deleting from ${section}:`, err);
+      throw err;
+    }
+  }, [accessToken]);
+
+  // --- 6. 🚀 NEW: Skill Management ---
+  const addSkill = useCallback(async (newSkill) => {
+    if (!accessToken) return;
+    try {
+      // Send as array: { skills: ["Java"] }
+      const { data } = await api.post("/profile/skills", { skills: [newSkill] }, {
+         headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      setProfile((prev) => ({ ...prev, skills: data }));
+    } catch (err) {
+      console.error("Error adding skill:", err);
+      throw err;
+    }
+  }, [accessToken]);
+
+  const removeSkill = useCallback(async (skillName) => {
+    if (!accessToken) return;
+    try {
+      const { data } = await api.delete(`/profile/skills/${skillName}`, {
+         headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      setProfile((prev) => ({ ...prev, skills: data }));
+    } catch (err) {
+      console.error("Error removing skill:", err);
+      throw err;
+    }
+  }, [accessToken]);
+
+
+  // --- 7. Upload Image Logic (Updated) ---
   const uploadPhoto = useCallback(async (file) => {
     if (!accessToken) return;
-    
-    // Create Form Data
     const formData = new FormData();
     formData.append("photo", file);
 
     try {
-      // Axios returns the response object, we destruct 'data' from it directly
       const { data } = await api.post("/profile/upload-photo", formData, {
         headers: { 
           "Content-Type": "multipart/form-data",
@@ -73,18 +142,31 @@ export const ProfileProvider = ({ children }) => {
         },
       });
 
-      // No need for 'res.json()' or checking 'res.ok' with Axios
       const photoUrl = data.photoUrl || data.url;
-
-      // 2. Save URL to Profile
-      await updateProfile({ profileImage: photoUrl });
+      // Manually update local state so UI updates instantly
+      setProfile(prev => ({ ...prev, profileImage: photoUrl }));
       
       return photoUrl;
     } catch (err) {
       console.error("Upload Logic Error:", err);
       throw err;
     }
-  }, [accessToken, updateProfile]);
+  }, [accessToken]);
+
+  // --- 8. 🚀 NEW: Delete Profile Photo ---
+  const deleteProfilePhoto = useCallback(async () => {
+    if (!accessToken) return;
+    try {
+      await api.delete("/profile/photo", {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      setProfile((prev) => ({ ...prev, profileImage: "" }));
+    } catch (err) {
+       console.error("Error deleting photo:", err);
+       throw err;
+    }
+  }, [accessToken]);
+
 
   // Initial Load
   useEffect(() => {
@@ -102,10 +184,18 @@ export const ProfileProvider = ({ children }) => {
         error, 
         fetchProfile, 
         updateProfile,
-        addItemToProfile, // Exported Helper
-        uploadPhoto       // Exported Helper
+        // Array Helpers
+        addItemToProfile, 
+        editArrayItem,
+        deleteArrayItem,
+        // Skill Helpers
+        addSkill,
+        removeSkill,
+        // Photo Helpers
+        uploadPhoto,
+        deleteProfilePhoto
     }),
-    [profile, loading, error, fetchProfile, updateProfile, addItemToProfile, uploadPhoto]
+    [profile, loading, error, fetchProfile, updateProfile, addItemToProfile, editArrayItem, deleteArrayItem, addSkill, removeSkill, uploadPhoto, deleteProfilePhoto]
   );
 
   return <ProfileContext.Provider value={contextValue}>{children}</ProfileContext.Provider>;

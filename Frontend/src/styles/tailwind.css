@@ -55,9 +55,9 @@
     --color-action-crimson: #DC2626; /* red-600 */
   }
 
-  * {
+  /* * {
     @apply border-border;
-  }
+  } */
   
   body {
     @apply bg-background text-foreground font-inter;
