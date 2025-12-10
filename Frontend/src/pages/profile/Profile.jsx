@@ -18,7 +18,7 @@ import {
   FaUniversity
 } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
-import { ProfileContext } from "../../context/ProfileContext"; 
+import { ProfileContext } from "../../context/profileContext"; 
 
 // ✅ Card Component
 const Card = ({ children, className = "" }) => (
