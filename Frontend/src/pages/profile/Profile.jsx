@@ -80,11 +80,11 @@ export default function Profile() {
     updateProfile, 
     addItemToProfile, 
     uploadPhoto,
-    // New Context Functions
     deleteArrayItem,
     editArrayItem,
     deleteProfilePhoto,
-    removeSkill
+    removeSkill,
+    addSkill
   } = useContext(ProfileContext);
 
   const [bio, setBio] = useState("");
@@ -140,10 +140,7 @@ export default function Profile() {
 
   const handleAddSkill = async () => {
     if (!newSkill.trim()) return;
-    await addItemToProfile("skills", newSkill); // This helper handles adding single skill now?
-    // Note: If you updated Context as discussed, `addItemToProfile` handles generic sections. 
-    // If you made a specific `addSkill` function, use that. 
-    // Assuming you are using the generic logic or the specific skill logic via context:
+    await addSkill(newSkill);
     setNewSkill("");
   };
   

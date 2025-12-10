@@ -123,13 +123,20 @@ export const toggleLessonProgress = async (req, res) => {
 };
 
 // 4. Upload Profile Picture Controller
-export const uploadProfileImage = (req, res) => {
+export const uploadProfileImage = async(req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: "No image file provided" });
     }
 
     const imageUrl = req.file.path;
+    const userId = req.user.id;
+
+    await User.findByIdAndUpdate(
+      userId,
+      { $set: { profileImage: imageUrl } },
+      { new: true }
+    );
 
     res.json({
       success: true,
@@ -143,9 +150,7 @@ export const uploadProfileImage = (req, res) => {
   }
 };
 
-// =================================================================
-// 🚀 NEW CONTROLLERS (GRANULAR EDIT/DELETE)
-// =================================================================
+
 
 const ALLOWED_SECTIONS = ['projects', 'experience', 'education', 'certifications'];
 
