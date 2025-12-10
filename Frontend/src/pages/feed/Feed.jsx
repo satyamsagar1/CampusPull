@@ -10,12 +10,11 @@ import {
   Trash2,
   Edit,
   Flame,
-  Hash,
   X,
   Loader,
 } from "lucide-react";
-import { useFeed } from "../../context/feedContext"; // REAL CONTEXT
-import { useAuth } from "../../context/AuthContext";   // REAL CONTEXT
+import { useFeed } from "../../context/feedContext"; 
+import { useAuth } from "../../context/AuthContext";
 
 // --- Helper: Time Formatter ---
 const formatTime = (dateString) => {
@@ -39,10 +38,36 @@ const isVideo = (mediaUrl) => {
   return mediaUrl.match(/\.(mp4|webm|mov)$/i) != null;
 };
 
+// ===================================================================
+// --- NEW COMPONENT: MediaViewer (Handles Sizing Logic) ---
+// ===================================================================
+const MediaViewer = ({ url, className = "", maxHeight = "500px" }) => {
+  if (!url) return null;
+  const isVid = isVideo(url);
+
+  return (
+    <div className={`rounded-xl overflow-hidden bg-white border border-gray-100 flex justify-center ${className}`}>
+      {isVid ? (
+        <video 
+          src={url} 
+          controls 
+          className="w-full h-auto object-contain" 
+          style={{ maxHeight }} 
+        />
+      ) : (
+        <img 
+          src={url} 
+          alt="Post media" 
+          className="w-full h-auto object-contain" 
+          style={{ maxHeight }} 
+        />
+      )}
+    </div>
+  );
+};
 
 // --- Main Feed Page Component ---
 const FeedPage = () => {
-  // --- Get Real Data from Contexts ---
   const { 
     feed: posts, 
     loading, 
@@ -52,24 +77,21 @@ const FeedPage = () => {
     commentPost,
     deletePost,
     sharePost,
-    replyToComment, // <-- Get new functions
-    likeComment,    // <-- Get new functions
+    replyToComment, 
+    likeComment,    
   } = useFeed();
   const { user } = useAuth();
 
-  // --- State for New Post ---
   const [newPost, setNewPost] = useState("");
   const [newMediaPreview, setNewMediaPreview] = useState(null);
   const [newMediaFile, setNewMediaFile] = useState(null);
   const [mediaType, setMediaType] = useState(null);
   const [isPosting, setIsPosting] = useState(false);
 
-  // --- State for Comments ---
   const [activeCommentBox, setActiveCommentBox] = useState(null);
   const [commentText, setCommentText] = useState("");
   const [isCommenting, setIsCommenting] = useState(false);
 
-  // --- Handle Media Selection ---
   const handleMediaUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -86,7 +108,6 @@ const FeedPage = () => {
     setMediaType(null);
   }
 
-  // --- Handle Create Post ---
   const handlePost = async () => {
     if (newPost.trim() === "" && !newMediaFile) return;
     setIsPosting(true);
@@ -100,19 +121,16 @@ const FeedPage = () => {
     finally { setIsPosting(false); }
   };
 
-  // --- Handle Like Post ---
   const handleLike = async (postId) => {
     try { await likePost(postId); } 
     catch (err) { console.error("Failed to like post:", err); }
   };
 
-  // --- Handle Toggle Comment Box ---
   const toggleCommentBox = (postId) => {
     setActiveCommentBox(activeCommentBox === postId ? null : postId);
     setCommentText("");
   };
 
-  // --- Handle Add Comment ---
   const handleAddComment = async (postId) => {
     if (commentText.trim() === "") return;
     setIsCommenting(true);
@@ -123,7 +141,6 @@ const FeedPage = () => {
     finally { setIsCommenting(false); }
   };
 
-  // --- Handle Share ---
   const handleShare = async (postId) => {
     const sharedContent = prompt("Add a comment to your share (optional):");
     if (sharedContent === null) return;
@@ -157,11 +174,12 @@ const FeedPage = () => {
           </div>
 
           {newMediaPreview && (
-            <div className="mb-3 rounded-xl overflow-hidden relative">
+            <div className="mb-3 rounded-xl overflow-hidden relative bg-black flex justify-center">
+               {/* Manually applying sizing here to keep the Close button logic simple */}
               {mediaType === "video" ? (
-                <video src={newMediaPreview} controls className="w-full rounded-xl max-h-80" />
+                <video src={newMediaPreview} controls className="w-full h-auto max-h-[300px] object-contain" />
               ) : (
-                <img src={newMediaPreview} alt="Preview" className="rounded-xl max-h-80 object-cover" />
+                <img src={newMediaPreview} alt="Preview" className="w-full h-auto max-h-[300px] object-contain" />
               )}
               <button onClick={clearMedia} className="absolute top-2 right-2 bg-black/50 text-white rounded-full p-1.5 hover:bg-black/75">
                 <X size={18} />
@@ -214,7 +232,6 @@ const FeedPage = () => {
               commentText={commentText}
               setCommentText={setCommentText}
               isCommenting={isCommenting}
-              // Pass reply functions down
               onReplyToComment={replyToComment}
               onLikeComment={likeComment}
             />
@@ -258,20 +275,17 @@ const PostCard = ({
   onReplyToComment,
   onLikeComment
 }) => {
-  const { updatePost } = useFeed(); // Get the updatePost function
+  const { updatePost } = useFeed(); 
 
-  // --- State for Edit/Delete ---
   const [menuOpen, setMenuOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(post.content);
   const [isUpdating, setIsUpdating] = useState(false);
 
-  // --- NEW STATE for editing media ---
-  const [editMediaFile, setEditMediaFile] = useState(null);     // The new File object to upload
-  const [editMediaPreview, setEditMediaPreview] = useState(null); // The preview URL
-  const [editMediaType, setEditMediaType] = useState(null);     // 'image' or 'video'
+  const [editMediaFile, setEditMediaFile] = useState(null);     
+  const [editMediaPreview, setEditMediaPreview] = useState(null); 
+  const [editMediaType, setEditMediaType] = useState(null);     
 
-  
   const isLiked = post.likes.includes(user?._id);
   const isAuthor = post.author._id === user?._id;
 
@@ -292,41 +306,36 @@ const PostCard = ({
     setIsEditing(editing);
     setMenuOpen(false);
     
-    // When opening/closing edit, reset all edit state
-    // to match the original post
     setEditContent(post.content);
-    setEditMediaFile(null); // Clear any staged new file
-    setEditMediaPreview(post.media || null); // Show the *current* media
+    setEditMediaFile(null); 
+    setEditMediaPreview(post.media || null); 
     setEditMediaType(post.media && isVideo(post.media) ? 'video' : 'image');
   };
 
-  // --- NEW: Handler for changing media in edit mode ---
   const handleEditMediaUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
     const type = file.type.startsWith("video") ? "video" : "image";
     setEditMediaType(type);
-    setEditMediaFile(file); // Store the new file for upload
-    setEditMediaPreview(URL.createObjectURL(file)); // Set the new preview
+    setEditMediaFile(file); 
+    setEditMediaPreview(URL.createObjectURL(file)); 
     e.target.value = null;
   };
 
   const handleUpdate = async () => {
     const contentChanged = editContent.trim() !== post.content.trim();
-    const mediaChanged = editMediaFile !== null; // A new file was staged
+    const mediaChanged = editMediaFile !== null; 
     
     if (!contentChanged && !mediaChanged) {
-      setIsEditing(false); // Nothing changed
+      setIsEditing(false); 
       return;
     }
     
     setIsUpdating(true);
     try {
-      // Pass the new file (or null if unchanged) to updatePost
       await updatePost(post._id, editContent, editMediaFile); 
       setIsEditing(false);
-      // Clear file state after successful update
       setEditMediaFile(null);
     } catch (err) {
       console.error("Failed to update post:", err);
@@ -375,7 +384,7 @@ const PostCard = ({
                   className="absolute right-0 top-6 bg-white shadow-lg rounded-md border border-gray-200 w-32 z-10"
                 >
                   <button 
-                    onClick={handleEditToggle} // Toggles edit mode
+                    onClick={handleEditToggle} 
                     className="flex items-center gap-2 w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   >
                     <Edit size={14} /> Edit
@@ -404,15 +413,15 @@ const PostCard = ({
             rows="4"
           />
           
-          {/* --- NEW: Edit Media Preview --- */}
+          {/* Edit Media Preview */}
           {editMediaPreview && (
-            <div className="my-3 rounded-xl overflow-hidden relative">
+            <div className="my-3 rounded-xl overflow-hidden relative bg-black flex justify-center">
+               {/* Manually applying classes for Edit Preview to support Close button */}
               {editMediaType === "video" ? (
-                <video src={editMediaPreview} controls className="w-full rounded-xl max-h-80" />
+                <video src={editMediaPreview} controls className="w-full h-auto max-h-[300px] object-contain" />
               ) : (
-                <img src={editMediaPreview} alt="Preview" className="rounded-xl max-h-80 object-cover" />
+                <img src={editMediaPreview} alt="Preview" className="w-full h-auto max-h-[300px] object-contain" />
               )}
-              {/* This button just clears the *staged* new file, it doesn't remove the original */}
               {editMediaFile && (
                 <button onClick={() => { setEditMediaFile(null); setEditMediaPreview(post.media || null); setEditMediaType(post.media && isVideo(post.media) ? 'video' : 'image'); }} 
                         className="absolute top-2 right-2 bg-black/50 text-white rounded-full p-1.5 hover:bg-black/75">
@@ -422,7 +431,6 @@ const PostCard = ({
             </div>
           )}
           
-          {/* --- NEW: Edit Media Upload Buttons --- */}
           <div className="flex items-center justify-between mt-2">
             <div className="flex gap-4 text-gray-500 text-sm">
               <label className="flex items-center gap-1 cursor-pointer hover:text-blue-500">
@@ -438,7 +446,6 @@ const PostCard = ({
             </div>
           </div>
 
-          {/* --- Edit Action Buttons --- */}
           <div className="flex gap-2 mt-4">
             <button 
               onClick={handleUpdate}
@@ -448,7 +455,7 @@ const PostCard = ({
               {isUpdating ? <Loader size={16} className="animate-spin" /> : 'Save'}
             </button>
             <button 
-              onClick={handleEditToggle} // This is now the "Cancel" button
+              onClick={handleEditToggle} 
               className="bg-gray-200 text-gray-700 px-3 py-1 text-sm rounded-md font-medium"
             >
               Cancel
@@ -464,14 +471,11 @@ const PostCard = ({
           {post.content && !post.originalPost && (
             <p className="text-gray-800 mb-3 leading-relaxed">{post.content}</p>
           )}
+          {/* USING NEW COMPONENT */}
           {post.media && !post.originalPost && (
-            <div className="mb-3 rounded-xl overflow-hidden">
-              {isVideo(post.media) ? (
-                <video src={post.media} controls className="w-full rounded-xl max-h-96" />
-              ) : (
-                <img src={post.media} alt="Post media" className="w-full rounded-xl" />
-              )}
-            </div>
+             <div className="mb-3">
+                <MediaViewer url={post.media} maxHeight="500px" />
+             </div>
           )}
         </>
       )}
@@ -479,7 +483,6 @@ const PostCard = ({
       {/* --- Shared Post Card (if it exists) --- */}
       {!isEditing && post.originalPost && (
         <div className="border border-gray-200 rounded-xl p-4 mt-2">
-          {/* ... (shared post content, same as before) ... */}
           <div className="flex items-center gap-3 mb-3">
             <div className="w-8 h-8 bg-gray-400 text-white rounded-full flex items-center justify-center font-semibold overflow-hidden">
               {post.originalPost.author?.avatar ? (
@@ -496,14 +499,12 @@ const PostCard = ({
           {post.originalPost.content && (
             <p className="text-gray-700 mb-3 text-sm">{post.originalPost.content}</p>
           )}
+          
+          {/* USING NEW COMPONENT (Smaller Height for Shared Posts) */}
           {post.originalPost.media && (
-             <div className="mb-3 rounded-lg overflow-hidden">
-              {isVideo(post.originalPost.media) ? (
-                <video src={post.originalPost.media} controls className="w-full rounded-lg max-h-80" />
-              ) : (
-                <img src={post.originalPost.media} alt="Post media" className="w-full rounded-lg" />
-              )}
-            </div>
+             <div className="mb-3">
+                <MediaViewer url={post.originalPost.media} maxHeight="400px" />
+             </div>
           )}
         </div>
       )}
@@ -546,7 +547,6 @@ const PostCard = ({
             exit={{ opacity: 0, height: 0 }}
             className="mt-4"
           >
-            {/* ... (comment input form, same as before) ... */}
             <div className="flex items-start gap-2">
               <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-semibold overflow-hidden mt-1">
                 {user?.avatar ? (
@@ -594,7 +594,7 @@ const PostCard = ({
 
 
 // ===================================================================
-// --- Comment Item Component (UPGRADED FOR REPLIES) ---
+// --- Comment Item Component ---
 // ===================================================================
 const CommentItem = ({ comment, user, postId, onReplyToComment, onLikeComment }) => {
   const [showReplyForm, setShowReplyForm] = useState(false);
@@ -705,7 +705,7 @@ const CommentItem = ({ comment, user, postId, onReplyToComment, onLikeComment })
 };
 
 // ===================================================================
-// --- Reply Item Component (NEW) ---
+// --- Reply Item Component ---
 // ===================================================================
 const ReplyItem = ({ reply, user, postId, commentId, onLikeComment }) => {
   const isLiked = reply.likes.includes(user?._id);
