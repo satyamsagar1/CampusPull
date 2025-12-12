@@ -175,8 +175,8 @@ export const getConnections = async (req, res) => {
         { requester: userId, status: "accepted" },
         { recipient: userId, status: "accepted" }
       ]
-    }).populate("requester", "name email profileImage year skills college degree graduationYear linkedin ")
-    .populate("recipient", "name email profileImage year skills college degree graduationYear linkedin ");
+    }).populate("requester", "name email role profileImage year skills college degree graduationYear linkedin ")
+    .populate("recipient", "name email role profileImage year skills college degree graduationYear linkedin ");
 
     const connectedUsers = connections.map((conn) => {
       return conn.requester._id.toString() === userId

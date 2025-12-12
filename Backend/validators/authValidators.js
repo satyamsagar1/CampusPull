@@ -16,9 +16,15 @@ export const signupSchema = z.object({
 
   // --- 3. Conditional Fields
   degree: z.string().optional(),            
-  graduationYear: z.number().optional(), 
+  graduationYear: z.preprocess(
+    (val) => (val === "" ? undefined : Number(val)), 
+    z.number().optional()
+  ),
   
-  year: z.number().min(1).max(5).optional(), 
+  year: z.preprocess(
+    (val) => (val === "" ? undefined : Number(val)), 
+    z.number().min(1).max(5).optional()
+  ),
   section: z.string().optional(),            
   
   designation: z.string().optional(),    

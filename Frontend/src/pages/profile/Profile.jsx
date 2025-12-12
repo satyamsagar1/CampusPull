@@ -14,11 +14,12 @@ import {
   FaPen,
   FaTimes,
   FaSave,
+  FaGlobe,
   FaUser,
-  FaUniversity
+  FaUniversity,
 } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
-import { ProfileContext } from "../../context/profileContext"; 
+import { ProfileContext } from "../../context/profileContext";
 
 // ✅ Card Component
 const Card = ({ children, className = "" }) => (
@@ -32,11 +33,19 @@ const Card = ({ children, className = "" }) => (
 );
 
 // ✅ Modal for Editing Items
-const EditModal = ({ isOpen, onClose, onSave, data, setData, fields, title }) => {
+const EditModal = ({
+  isOpen,
+  onClose,
+  onSave,
+  data,
+  setData,
+  fields,
+  title,
+}) => {
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.9 }}
@@ -44,7 +53,10 @@ const EditModal = ({ isOpen, onClose, onSave, data, setData, fields, title }) =>
       >
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-xl font-bold text-gray-800">Edit {title}</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600"
+          >
             <FaTimes size={20} />
           </button>
         </div>
@@ -57,15 +69,25 @@ const EditModal = ({ isOpen, onClose, onSave, data, setData, fields, title }) =>
               <input
                 type="text"
                 value={data[field.name] || ""}
-                onChange={(e) => setData({ ...data, [field.name]: e.target.value })}
+                onChange={(e) =>
+                  setData({ ...data, [field.name]: e.target.value })
+                }
                 className="w-full mt-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
               />
             </div>
           ))}
         </div>
         <div className="mt-6 flex gap-3 justify-end">
-          <button onClick={onClose} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">Cancel</button>
-          <button onClick={onSave} className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center gap-2">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onSave}
+            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center gap-2"
+          >
             <FaSave /> Save Changes
           </button>
         </div>
@@ -75,18 +97,18 @@ const EditModal = ({ isOpen, onClose, onSave, data, setData, fields, title }) =>
 };
 
 export default function Profile() {
-  const { 
-    profile, 
-    loading, 
-    error, 
-    updateProfile, 
-    addItemToProfile, 
+  const {
+    profile,
+    loading,
+    error,
+    updateProfile,
+    addItemToProfile,
     uploadPhoto,
     deleteArrayItem,
     editArrayItem,
     deleteProfilePhoto,
     removeSkill,
-    addSkill
+    addSkill,
   } = useContext(ProfileContext);
 
   // --- STATE ---
@@ -103,49 +125,71 @@ export default function Profile() {
     phone: "",
     linkedin: "",
     github: "",
+    portfolio: "",
     college: "",
     degree: "",
-    course: "",        
-    department: "",    
-    section: "",     // Note: Backend might return 'section' (lowercase) or 'Section'
-    year: "",          
-    graduationYear: "" 
+    course: "",
+    department: "",
+    section: "", // Note: Backend might return 'section' (lowercase) or 'Section'
+    year: "",
+    graduationYear: "",
+    designation: "",
   });
 
   // --- Edit Modal State ---
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingSection, setEditingSection] = useState(null); 
-  const [editingItemData, setEditingItemData] = useState({}); 
+  const [editingSection, setEditingSection] = useState(null);
+  const [editingItemData, setEditingItemData] = useState({});
   const [editingItemId, setEditingItemId] = useState(null);
 
   // Form States for Arrays
-  const [newProject, setNewProject] = useState({ title: "", description: "", link: "" });
-  const [newExperience, setNewExperience] = useState({ role: "", company: "", description: "", year: "" });
-  const [newEducation, setNewEducation] = useState({ degree: "", institution: "", year: "" });
+  const [newProject, setNewProject] = useState({
+    title: "",
+    description: "",
+    link: "",
+  });
+  const [newExperience, setNewExperience] = useState({
+    role: "",
+    company: "",
+    description: "",
+    year: "",
+  });
+  const [newEducation, setNewEducation] = useState({
+    degree: "",
+    institution: "",
+    year: "",
+  });
   const [newCert, setNewCert] = useState({ name: "", provider: "", link: "" });
 
   // ✅ SYNC PROFILE DATA TO STATE
   useEffect(() => {
     if (profile) {
       setBio(profile.bio || "");
-      
+
       setInfoForm({
         name: profile.name || "",
         phone: profile.phone || "",
         linkedin: profile.linkedin || "",
         github: profile.github || "",
+        portfolio: profile.portfolio || "",
         college: profile.college || "",
         degree: profile.degree || "",
         course: profile.course || "",
         department: profile.department || "",
         section: profile.section || profile.Section || "", // Handle both casing
         year: profile.year || "",
-        graduationYear: profile.graduationYear || ""
+        graduationYear: profile.graduationYear || "",
+        designation: profile.designation || "",
       });
     }
   }, [profile]);
 
-  if (loading) return <p className="p-6 text-center text-gray-600">Loading profile...</p>;
+  const isStudent = profile?.role === "student";
+  const isAlumni = profile?.role === "alumni";
+  const isTeacher = profile?.role === "teacher";
+
+  if (loading)
+    return <p className="p-6 text-center text-gray-600">Loading profile...</p>;
   if (error) return <p className="p-6 text-red-500">{error}</p>;
   if (!profile) return <p className="p-6">No profile data</p>;
 
@@ -177,13 +221,13 @@ export default function Profile() {
     await addSkill(newSkill);
     setNewSkill("");
   };
-  
+
   const handleRemoveSkill = async (skill) => {
     await removeSkill(skill);
   };
 
   const handleAddSection = async (key, item, setItem, emptyState) => {
-    const isValid = Object.values(item).some(val => val.trim() !== "");
+    const isValid = Object.values(item).some((val) => val.trim() !== "");
     if (!isValid) return;
     await addItemToProfile(key, item);
     setItem(emptyState);
@@ -198,17 +242,17 @@ export default function Profile() {
   const handleEditClick = (section, item) => {
     setEditingSection(section);
     setEditingItemId(item._id);
-    setEditingItemData({ ...item }); 
+    setEditingItemData({ ...item });
     setIsModalOpen(true);
   };
 
   const handleSaveEdit = async () => {
     if (!editingSection || !editingItemId) return;
     try {
-        await editArrayItem(editingSection.key, editingItemId, editingItemData);
-        setIsModalOpen(false);
+      await editArrayItem(editingSection.key, editingItemId, editingItemData);
+      setIsModalOpen(false);
     } catch (err) {
-        alert("Failed to update item");
+      alert("Failed to update item");
     }
   };
 
@@ -239,10 +283,17 @@ ${profile.bio || ""}
 ${profile.skills?.join(", ") || "None"}
 
 🚀 Projects:
-${profile.projects?.map(p => `- ${p.title}: ${p.description}`).join("\n") || "None"}
+${
+  profile.projects?.map((p) => `- ${p.title}: ${p.description}`).join("\n") ||
+  "None"
+}
 
 💼 Experience:
-${profile.experience?.map(e => `- ${e.role} at ${e.company} (${e.year})`).join("\n") || "None"}
+${
+  profile.experience
+    ?.map((e) => `- ${e.role} at ${e.company} (${e.year})`)
+    .join("\n") || "None"
+}
     `;
     setResume(resumeData);
   };
@@ -260,8 +311,8 @@ ${profile.experience?.map(e => `- ${e.role} at ${e.company} (${e.year})`).join("
       fields: [
         { name: "title", placeholder: "Project Title" },
         { name: "description", placeholder: "Description" },
-        { name: "link", placeholder: "Link (GitHub/Live)" }
-      ]
+        { name: "link", placeholder: "Link (GitHub/Live)" },
+      ],
     },
     {
       key: "experience",
@@ -275,8 +326,8 @@ ${profile.experience?.map(e => `- ${e.role} at ${e.company} (${e.year})`).join("
         { name: "role", placeholder: "Role / Job Title" },
         { name: "company", placeholder: "Company Name" },
         { name: "year", placeholder: "Year" },
-        { name: "description", placeholder: "Description" }
-      ]
+        { name: "description", placeholder: "Description" },
+      ],
     },
     {
       key: "education",
@@ -289,8 +340,8 @@ ${profile.experience?.map(e => `- ${e.role} at ${e.company} (${e.year})`).join("
       fields: [
         { name: "degree", placeholder: "Degree" },
         { name: "institution", placeholder: "Institution" },
-        { name: "year", placeholder: "Year" }
-      ]
+        { name: "year", placeholder: "Year" },
+      ],
     },
     {
       key: "certifications",
@@ -303,15 +354,14 @@ ${profile.experience?.map(e => `- ${e.role} at ${e.company} (${e.year})`).join("
       fields: [
         { name: "name", placeholder: "Certificate Name" },
         { name: "provider", placeholder: "Provider" },
-        { name: "link", placeholder: "Verification Link" }
-      ]
-    }
+        { name: "link", placeholder: "Verification Link" },
+      ],
+    },
   ];
 
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100 px-4 md:px-10 py-12">
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
-        
         {/* ================= SIDEBAR ================= */}
         <Card className="h-fit">
           <div className="flex flex-col items-center text-center relative">
@@ -323,50 +373,92 @@ ${profile.experience?.map(e => `- ${e.role} at ${e.company} (${e.year})`).join("
                 className="w-32 h-32 rounded-full border-4 border-white shadow-lg object-cover bg-white"
               />
               <label className="absolute bottom-0 right-0 bg-indigo-600 hover:bg-indigo-700 text-white p-2 rounded-full cursor-pointer shadow-md transition-colors z-10">
-                {uploadingImage ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <FaCamera size={14} />}
-                <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" disabled={uploadingImage} />
+                {uploadingImage ? (
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  <FaCamera size={14} />
+                )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                  disabled={uploadingImage}
+                />
               </label>
 
               {profile.profileImage && (
-                  <button 
-                    onClick={handleRemovePhoto}
-                    className="absolute top-0 right-0 bg-red-500 hover:bg-red-600 text-white p-1.5 rounded-full shadow-md transition opacity-0 group-hover:opacity-100"
-                    title="Remove Photo"
-                  >
-                    <FaTrash size={12} />
-                  </button>
+                <button
+                  onClick={handleRemovePhoto}
+                  className="absolute top-0 right-0 bg-red-500 hover:bg-red-600 text-white p-1.5 rounded-full shadow-md transition opacity-0 group-hover:opacity-100"
+                  title="Remove Photo"
+                >
+                  <FaTrash size={12} />
+                </button>
               )}
             </div>
 
-            <h2 className="text-2xl font-bold mt-4 text-gray-800">{profile.name || "User"}</h2>
+            <h2 className="text-2xl font-bold mt-4 text-gray-800">
+              {profile.name || "User"}
+            </h2>
             <p className="text-gray-500">{profile.degree} Student</p>
-            
+
             <div className="flex gap-5 mt-4 text-2xl text-gray-600">
-              {profile.linkedin && <a href={profile.linkedin} target="_blank" rel="noreferrer" className="hover:text-blue-600 transition"><FaLinkedin /></a>}
-              {profile.github && <a href={profile.github} target="_blank" rel="noreferrer" className="hover:text-black transition"><FaGithub /></a>}
+              {profile.linkedin && (
+                <a
+                  href={profile.linkedin}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="hover:text-blue-600 transition"
+                >
+                  <FaLinkedin />
+                </a>
+              )}
+              {profile.github && (
+                <a
+                  href={profile.github}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="hover:text-black transition"
+                >
+                  <FaGithub />
+                </a>
+              )}
             </div>
 
             <div className="mt-6 w-full">
-               <div className="bg-gradient-to-r from-orange-100 to-yellow-100 text-orange-700 px-4 py-2 rounded-xl font-semibold flex items-center justify-center gap-2 shadow-sm border border-orange-200">
-                <span role="img" aria-label="fire">🔥</span>
+              <div className="bg-gradient-to-r from-orange-100 to-yellow-100 text-orange-700 px-4 py-2 rounded-xl font-semibold flex items-center justify-center gap-2 shadow-sm border border-orange-200">
+                <span role="img" aria-label="fire">
+                  🔥
+                </span>
                 <span>{profile.streakCount || 0} Day Streak</span>
               </div>
             </div>
           </div>
 
           <div className="mt-8">
-            <h3 className="text-lg font-semibold flex items-center gap-2 text-indigo-700 mb-3"><FaTools /> Skills</h3>
+            <h3 className="text-lg font-semibold flex items-center gap-2 text-indigo-700 mb-3">
+              <FaTools /> Skills
+            </h3>
             <div className="flex flex-wrap gap-2 mb-4">
               {profile.skills?.length > 0 ? (
                 profile.skills.map((skill, idx) => (
-                  <span key={idx} className="group flex items-center gap-2 bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-sm font-medium hover:bg-indigo-200 transition">
+                  <span
+                    key={idx}
+                    className="group flex items-center gap-2 bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-sm font-medium hover:bg-indigo-200 transition"
+                  >
                     {skill}
-                    <button onClick={() => handleRemoveSkill(skill)} className="text-indigo-400 hover:text-red-500 transition">
-                        <FaTimes size={12} />
+                    <button
+                      onClick={() => handleRemoveSkill(skill)}
+                      className="text-indigo-400 hover:text-red-500 transition"
+                    >
+                      <FaTimes size={12} />
                     </button>
                   </span>
                 ))
-              ) : <p className="text-sm text-gray-400 italic">No skills added.</p>}
+              ) : (
+                <p className="text-sm text-gray-400 italic">No skills added.</p>
+              )}
             </div>
             <div className="flex gap-2 w-full">
               <input
@@ -375,16 +467,21 @@ ${profile.experience?.map(e => `- ${e.role} at ${e.company} (${e.year})`).join("
                 onChange={(e) => setNewSkill(e.target.value)}
                 placeholder="Add skill..."
                 className="flex-1 min-w-0 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-400 outline-none"
-                onKeyDown={(e) => e.key === 'Enter' && handleAddSkill()}
+                onKeyDown={(e) => e.key === "Enter" && handleAddSkill()}
               />
-              <button onClick={handleAddSkill} className="flex-shrink-0 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm transition"><FaPlus /></button>
+              <button
+                onClick={handleAddSkill}
+                className="flex-shrink-0 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm transition"
+              >
+                <FaPlus />
+              </button>
             </div>
           </div>
         </Card>
 
         {/* ================= MAIN CONTENT ================= */}
         <div className="md:col-span-2 space-y-6">
-
+        
           {/* Personal & Academic Info Card */}
           <Card>
             <div className="flex justify-between items-start mb-4">
@@ -392,112 +489,319 @@ ${profile.experience?.map(e => `- ${e.role} at ${e.company} (${e.year})`).join("
                 <FaUniversity /> Personal & Academic Info
               </h3>
               {!isEditingInfo && (
-                <button onClick={() => setIsEditingInfo(true)} className="text-sm text-indigo-600 font-medium hover:underline flex items-center gap-1">
-                  <FaPen size={12}/> Edit
+                <button
+                  onClick={() => setIsEditingInfo(true)}
+                  className="text-sm text-indigo-600 font-medium hover:underline flex items-center gap-1"
+                >
+                  <FaPen size={12} /> Edit
                 </button>
               )}
             </div>
 
             {isEditingInfo ? (
+              // ================== EDIT MODE ==================
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Identity */}
+                {/* 1. Identity */}
                 <div className="col-span-1 md:col-span-2">
-                   <label className="text-xs font-bold text-gray-500 uppercase">Full Name</label>
-                   <input type="text" value={infoForm.name} onChange={(e) => setInfoForm({...infoForm, name: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-300" />
-                </div>
-                
-                {/* Contact & Socials */}
-                <div>
-                   <label className="text-xs font-bold text-gray-500 uppercase">Phone (Confidential)</label>
-                   <input type="text" value={infoForm.phone} onChange={(e) => setInfoForm({...infoForm, phone: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-300" />
-                </div>
-                <div>
-                   <label className="text-xs font-bold text-gray-500 uppercase">LinkedIn URL</label>
-                   <input type="text" value={infoForm.linkedin} onChange={(e) => setInfoForm({...infoForm, linkedin: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-300" />
-                </div>
-                <div>
-                   <label className="text-xs font-bold text-gray-500 uppercase">GitHub URL</label>
-                   <input type="text" value={infoForm.github} onChange={(e) => setInfoForm({...infoForm, github: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-300" />
+                  <label className="text-xs font-bold text-gray-500 uppercase">
+                    Full Name
+                  </label>
+                  <input
+                    type="text"
+                    value={infoForm.name}
+                    onChange={(e) =>
+                      setInfoForm({ ...infoForm, name: e.target.value })
+                    }
+                    className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-300"
+                  />
                 </div>
 
-                {/* Academic Info */}
-                <div>
-                   <label className="text-xs font-bold text-gray-500 uppercase">College</label>
-                   <input type="text" value={infoForm.college} onChange={(e) => setInfoForm({...infoForm, college: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-300" />
-                </div>
-                <div>
-                   <label className="text-xs font-bold text-gray-500 uppercase">Degree</label>
-                   <input type="text" value={infoForm.degree} onChange={(e) => setInfoForm({...infoForm, degree: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-300" />
-                </div>
-                <div>
-                   <label className="text-xs font-bold text-gray-500 uppercase">Course</label>
-                   <input type="text" value={infoForm.course} onChange={(e) => setInfoForm({...infoForm, course: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-300" />
-                </div>
-                <div>
-                   <label className="text-xs font-bold text-gray-500 uppercase">Department</label>
-                   <input type="text" value={infoForm.department} onChange={(e) => setInfoForm({...infoForm, department: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-300" />
-                </div>
-                <div>
-                   <label className="text-xs font-bold text-gray-500 uppercase">Section</label>
-                   <input type="text" value={infoForm.section} onChange={(e) => setInfoForm({...infoForm, section: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-300" />
-                </div>
-                <div className="grid grid-cols-2 gap-2">
+                {/* 2. Contact & Social Links (ALWAYS VISIBLE IN EDIT MODE) */}
+                <div className="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 border-b border-gray-100 pb-4 mb-2">
                   <div>
-                    <label className="text-xs font-bold text-gray-500 uppercase">Year (1-4)</label>
-                    <input type="number" value={infoForm.year} onChange={(e) => setInfoForm({...infoForm, year: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-300" />
+                    <label className="text-xs font-bold text-gray-500 uppercase">
+                      Phone (Confidential)
+                    </label>
+                    <input
+                      type="text"
+                      value={infoForm.phone}
+                      onChange={(e) =>
+                        setInfoForm({ ...infoForm, phone: e.target.value })
+                      }
+                      className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-300"
+                    />
                   </div>
                   <div>
-                    <label className="text-xs font-bold text-gray-500 uppercase">Grad Year</label>
-                    <input type="number" value={infoForm.graduationYear} onChange={(e) => setInfoForm({...infoForm, graduationYear: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-300" />
+                    <label className="text-xs font-bold text-gray-500 uppercase flex items-center gap-1">
+                      <FaGlobe /> Portfolio / Website
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="https://..."
+                      value={infoForm.portfolio}
+                      onChange={(e) =>
+                        setInfoForm({ ...infoForm, portfolio: e.target.value })
+                      }
+                      className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-300"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-gray-500 uppercase flex items-center gap-1">
+                      <FaLinkedin /> LinkedIn URL
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="https://linkedin.com/in/..."
+                      value={infoForm.linkedin}
+                      onChange={(e) =>
+                        setInfoForm({ ...infoForm, linkedin: e.target.value })
+                      }
+                      className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-300"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-gray-500 uppercase flex items-center gap-1">
+                      <FaGithub /> GitHub URL
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="https://github.com/..."
+                      value={infoForm.github}
+                      onChange={(e) =>
+                        setInfoForm({ ...infoForm, github: e.target.value })
+                      }
+                      className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-300"
+                    />
                   </div>
                 </div>
 
-                <div className="col-span-1 md:col-span-2 flex justify-end gap-2 mt-2">
-                   <button onClick={() => setIsEditingInfo(false)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg text-sm">Cancel</button>
-                   <button onClick={saveInfo} className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm flex items-center gap-2">
-                     <FaSave /> Save Info
-                   </button>
+                {/* 3. Academic Info (Common) */}
+                <div>
+                  <label className="text-xs font-bold text-gray-500 uppercase">
+                    College
+                  </label>
+                  <input
+                    type="text"
+                    value={infoForm.college}
+                    onChange={(e) =>
+                      setInfoForm({ ...infoForm, college: e.target.value })
+                    }
+                    className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-300"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-500 uppercase">
+                    Department
+                  </label>
+                  <input
+                    type="text"
+                    value={infoForm.department}
+                    onChange={(e) =>
+                      setInfoForm({ ...infoForm, department: e.target.value })
+                    }
+                    className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-300"
+                  />
+                </div>
+
+                {/* 4. Role Specific Fields */}
+                {isTeacher && (
+                  <div>
+                    <label className="text-xs font-bold text-gray-500 uppercase">
+                      Designation
+                    </label>
+                    <input
+                      type="text"
+                      value={infoForm.designation}
+                      onChange={(e) =>
+                        setInfoForm({
+                          ...infoForm,
+                          designation: e.target.value,
+                        })
+                      }
+                      className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-300"
+                    />
+                  </div>
+                )}
+
+                {(isStudent || isAlumni) && (
+                  <>
+                    <div>
+                      <label className="text-xs font-bold text-gray-500 uppercase">
+                        Degree
+                      </label>
+                      <input
+                        type="text"
+                        value={infoForm.degree}
+                        onChange={(e) =>
+                          setInfoForm({ ...infoForm, degree: e.target.value })
+                        }
+                        className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-300"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-gray-500 uppercase">
+                        Graduation Year
+                      </label>
+                      <input
+                        type="number"
+                        value={infoForm.graduationYear}
+                        onChange={(e) =>
+                          setInfoForm({
+                            ...infoForm,
+                            graduationYear: e.target.value,
+                          })
+                        }
+                        className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-300"
+                      />
+                    </div>
+                  </>
+                )}
+
+                {isStudent && (
+                  <>
+                    <div>
+                      <label className="text-xs font-bold text-gray-500 uppercase">
+                        Current Year (1-4)
+                      </label>
+                      <input
+                        type="number"
+                        value={infoForm.year}
+                        onChange={(e) =>
+                          setInfoForm({ ...infoForm, year: e.target.value })
+                        }
+                        className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-300"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-gray-500 uppercase">
+                        Section
+                      </label>
+                      <input
+                        type="text"
+                        value={infoForm.section}
+                        onChange={(e) =>
+                          setInfoForm({ ...infoForm, section: e.target.value })
+                        }
+                        className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-300"
+                      />
+                    </div>
+                  </>
+                )}
+
+                <div className="col-span-1 md:col-span-2 flex justify-end gap-2 mt-4 pt-2 border-t border-gray-100">
+                  <button
+                    onClick={() => setIsEditingInfo(false)}
+                    className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg text-sm"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={saveInfo}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm flex items-center gap-2"
+                  >
+                    <FaSave /> Save Info
+                  </button>
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 text-sm text-gray-700">
-                 
-                 {/* Phone Removed from View Mode for Confidentiality */}
-
-                 <div>
-                    <span className="font-semibold text-gray-500 block text-xs uppercase">College</span>
+              // ================== VIEW MODE ==================
+              <div className="flex flex-col gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 text-sm text-gray-700">
+                  {/* Standard Info Display (College, Dept, etc.) */}
+                  <div>
+                    <span className="font-semibold text-gray-500 block text-xs uppercase">
+                      College
+                    </span>
                     <span>{profile.college || "N/A"}</span>
-                 </div>
-
-                 <div>
-                    <span className="font-semibold text-gray-500 block text-xs uppercase">Degree & Course</span>
-                    <span>{profile.degree} {profile.course ? `- ${profile.course}` : ""}</span>
-                 </div>
-                 <div>
-                    <span className="font-semibold text-gray-500 block text-xs uppercase">Department</span>
+                  </div>
+                  <div>
+                    <span className="font-semibold text-gray-500 block text-xs uppercase">
+                      Department
+                    </span>
                     <span>{profile.department || "N/A"}</span>
-                 </div>
+                  </div>
 
-                 {/* Year and Section Separated */}
-                 <div>
-                    <span className="font-semibold text-gray-500 block text-xs uppercase">Year</span>
-                    <span>{profile.year ? `${profile.year}` : "N/A"}</span>
-                 </div>
-                 <div>
-                    <span className="font-semibold text-gray-500 block text-xs uppercase">Section</span>
-                    <span>{profile.section || profile.Section || "N/A"}</span>
-                 </div>
+                  {isTeacher && (
+                    <div>
+                      <span className="font-semibold text-gray-500 block text-xs uppercase">
+                        Designation
+                      </span>
+                      <span>{profile.designation || "N/A"}</span>
+                    </div>
+                  )}
 
-                 <div>
-                    <span className="font-semibold text-gray-500 block text-xs uppercase">Graduation Year</span>
-                    <span>{profile.graduationYear || "N/A"}</span>
-                 </div>
-                 
-                 {/* Socials Display
-                 <div className="col-span-1 md:col-span-2 pt-2 border-t border-gray-100 flex gap-4">
-                    {profile.linkedin && <a href={profile.linkedin} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline flex items-center gap-1"><FaLinkedin/> LinkedIn</a>}
-                    {profile.github && <a href={profile.github} target="_blank" rel="noreferrer" className="text-gray-800 hover:underline flex items-center gap-1"><FaGithub/> GitHub</a>}
-                 </div> */}
+                  {(isStudent || isAlumni) && (
+                    <>
+                      <div>
+                        <span className="font-semibold text-gray-500 block text-xs uppercase">
+                          Degree
+                        </span>
+                        <span>{profile.degree}</span>
+                      </div>
+                      <div>
+                        <span className="font-semibold text-gray-500 block text-xs uppercase">
+                          Graduation Year
+                        </span>
+                        <span>{profile.graduationYear || "N/A"}</span>
+                      </div>
+                    </>
+                  )}
+
+                  {isStudent && (
+                    <>
+                      <div>
+                        <span className="font-semibold text-gray-500 block text-xs uppercase">
+                          Current Year
+                        </span>
+                        <span>{profile.year ? `${profile.year}` : "N/A"}</span>
+                      </div>
+                      <div>
+                        <span className="font-semibold text-gray-500 block text-xs uppercase">
+                          Section
+                        </span>
+                        <span>
+                          {profile.section || profile.Section || "N/A"}
+                        </span>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* ✅ DYNAMIC SOCIAL LINKS (Only show if added) */}
+                {(profile.linkedin || profile.github || profile.portfolio) && (
+                  <div className="mt-2 pt-4 border-t border-gray-100 flex flex-wrap gap-4">
+                    {profile.linkedin && (
+                      <a
+                        href={profile.linkedin}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-blue-700 hover:text-blue-900 transition flex items-center gap-1.5 text-xs font-bold bg-blue-50 px-3 py-1.5 rounded-full border border-blue-100"
+                      >
+                        <FaLinkedin size={14} /> LinkedIn
+                      </a>
+                    )}
+                    {profile.github && (
+                      <a
+                        href={profile.github}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-gray-800 hover:text-black transition flex items-center gap-1.5 text-xs font-bold bg-gray-100 px-3 py-1.5 rounded-full border border-gray-200"
+                      >
+                        <FaGithub size={14} /> GitHub
+                      </a>
+                    )}
+                    {profile.portfolio && (
+                      <a
+                        href={profile.portfolio}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-indigo-600 hover:text-indigo-800 transition flex items-center gap-1.5 text-xs font-bold bg-indigo-50 px-3 py-1.5 rounded-full border border-indigo-100"
+                      >
+                        <FaGlobe size={14} /> Portfolio
+                      </a>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </Card>
@@ -506,70 +810,117 @@ ${profile.experience?.map(e => `- ${e.role} at ${e.company} (${e.year})`).join("
           <Card>
             <div className="flex justify-between items-start mb-2">
               <h3 className="text-lg font-semibold text-indigo-700">About</h3>
-              {!editBio && <button onClick={() => setEditBio(true)} className="text-sm text-indigo-600 font-medium hover:underline">✏️ Edit</button>}
+              {!editBio && (
+                <button
+                  onClick={() => setEditBio(true)}
+                  className="text-sm text-indigo-600 font-medium hover:underline"
+                >
+                  ✏️ Edit
+                </button>
+              )}
             </div>
             {editBio ? (
               <div className="flex flex-col gap-3">
-                <textarea value={bio} onChange={(e) => setBio(e.target.value)} className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none min-h-[100px]" placeholder="Tell us about yourself..." />
+                <textarea
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none min-h-[100px]"
+                  placeholder="Tell us about yourself..."
+                />
                 <div className="flex gap-2 self-end">
-                   <button onClick={() => setEditBio(false)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg text-sm">Cancel</button>
-                   <button onClick={saveBio} className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm">Save Bio</button>
+                  <button
+                    onClick={() => setEditBio(false)}
+                    className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg text-sm"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={saveBio}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm"
+                  >
+                    Save Bio
+                  </button>
                 </div>
               </div>
             ) : (
-              <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{bio || "No about information yet."}</p>
+              <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                {bio || "No about information yet."}
+              </p>
             )}
           </Card>
 
           {/* DYNAMIC SECTIONS */}
           {sections.map((section) => (
             <Card key={section.key}>
-              <h3 className="text-lg font-semibold flex items-center gap-2 text-indigo-700 mb-4">{section.icon} {section.title}</h3>
-              
+              <h3 className="text-lg font-semibold flex items-center gap-2 text-indigo-700 mb-4">
+                {section.icon} {section.title}
+              </h3>
+
               {/* List Existing Items */}
               <div className="space-y-3 mb-4">
                 {section.data?.length > 0 ? (
                   section.data.map((item, i) => (
-                    <div key={item._id || i} className="group relative p-4 border border-gray-200 rounded-lg bg-white/50 shadow-sm hover:shadow-md transition-shadow">
-                      
+                    <div
+                      key={item._id || i}
+                      className="group relative p-4 border border-gray-200 rounded-lg bg-white/50 shadow-sm hover:shadow-md transition-shadow"
+                    >
                       {/* ACTION BUTTONS (Edit/Delete) - Top Right */}
                       <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                         <button 
-                            onClick={() => handleEditClick(section, item)} 
-                            className="text-gray-400 hover:text-indigo-600" 
-                            title="Edit"
-                         >
-                             <FaPen size={14} />
-                         </button>
-                         <button 
-                            onClick={() => handleDeleteItem(section.key, item._id)} 
-                            className="text-gray-400 hover:text-red-500" 
-                            title="Delete"
-                         >
-                             <FaTrash size={14} />
-                         </button>
+                        <button
+                          onClick={() => handleEditClick(section, item)}
+                          className="text-gray-400 hover:text-indigo-600"
+                          title="Edit"
+                        >
+                          <FaPen size={14} />
+                        </button>
+                        <button
+                          onClick={() =>
+                            handleDeleteItem(section.key, item._id)
+                          }
+                          className="text-gray-400 hover:text-red-500"
+                          title="Delete"
+                        >
+                          <FaTrash size={14} />
+                        </button>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 pr-10">
-                          {Object.entries(item).map(([k, v]) => {
-                            if (k === '_id') return null;
-                            const isLink = k === 'link' || (typeof v === 'string' && (v.startsWith('http://') || v.startsWith('https://')));
+                        {Object.entries(item).map(([k, v]) => {
+                          if (k === "_id") return null;
+                          const isLink =
+                            k === "link" ||
+                            (typeof v === "string" &&
+                              (v.startsWith("http://") ||
+                                v.startsWith("https://")));
 
-                            return (
-                              <div key={k} className="text-sm">
-                                <span className="font-semibold text-gray-600 capitalize">{k}: </span>
-                                {isLink ? (
-                                    <a href={v} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline break-all">{v}</a>
-                                ) : (
-                                    <span className="text-gray-800">{v}</span>
-                                )}
-                              </div>
-                            );
-                          })}
+                          return (
+                            <div key={k} className="text-sm">
+                              <span className="font-semibold text-gray-600 capitalize">
+                                {k}:{" "}
+                              </span>
+                              {isLink ? (
+                                <a
+                                  href={v}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-blue-600 hover:underline break-all"
+                                >
+                                  {v}
+                                </a>
+                              ) : (
+                                <span className="text-gray-800">{v}</span>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   ))
-                ) : <p className="text-sm text-gray-400 italic">No {section.title.toLowerCase()} added yet.</p>}
+                ) : (
+                  <p className="text-sm text-gray-400 italic">
+                    No {section.title.toLowerCase()} added yet.
+                  </p>
+                )}
               </div>
 
               {/* Add New Item Form (Bottom of card) */}
@@ -580,14 +931,28 @@ ${profile.experience?.map(e => `- ${e.role} at ${e.company} (${e.year})`).join("
                       key={field.name}
                       type="text"
                       value={section.inputs[field.name]}
-                      onChange={(e) => section.setInputs({ ...section.inputs, [field.name]: e.target.value })}
+                      onChange={(e) =>
+                        section.setInputs({
+                          ...section.inputs,
+                          [field.name]: e.target.value,
+                        })
+                      }
                       placeholder={field.placeholder}
-                      className={`px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-400 outline-none ${field.name === 'description' ? 'sm:col-span-2' : ''}`}
+                      className={`px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-400 outline-none ${
+                        field.name === "description" ? "sm:col-span-2" : ""
+                      }`}
                     />
                   ))}
                 </div>
                 <button
-                  onClick={() => handleAddSection(section.key, section.inputs, section.setInputs, section.emptyState)}
+                  onClick={() =>
+                    handleAddSection(
+                      section.key,
+                      section.inputs,
+                      section.setInputs,
+                      section.emptyState
+                    )
+                  }
                   className="w-full sm:w-auto px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm transition flex items-center justify-center gap-2"
                 >
                   <FaPlus size={12} /> Add {section.title}
@@ -596,9 +961,19 @@ ${profile.experience?.map(e => `- ${e.role} at ${e.company} (${e.year})`).join("
             </Card>
           ))}
 
-          <motion.div whileHover={{ y: -3 }} className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-2xl shadow-lg p-6">
-            <h3 className="text-lg font-semibold flex items-center gap-2"><FaMagic /> AI Resume Builder</h3>
-            <button onClick={generateResume} className="mt-4 px-5 py-2 bg-white text-indigo-600 font-semibold rounded-lg shadow hover:bg-indigo-50 transition text-sm">Generate Resume</button>
+          <motion.div
+            whileHover={{ y: -3 }}
+            className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-2xl shadow-lg p-6"
+          >
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              <FaMagic /> AI Resume Builder
+            </h3>
+            <button
+              onClick={generateResume}
+              className="mt-4 px-5 py-2 bg-white text-indigo-600 font-semibold rounded-lg shadow hover:bg-indigo-50 transition text-sm"
+            >
+              Generate Resume
+            </button>
             {resume && (
               <div className="mt-4 bg-white/95 text-gray-800 rounded-xl p-4 max-h-64 overflow-y-auto shadow-inner font-mono text-xs sm:text-sm border-2 border-indigo-200">
                 <pre className="whitespace-pre-wrap">{resume}</pre>
@@ -611,18 +986,17 @@ ${profile.experience?.map(e => `- ${e.role} at ${e.company} (${e.year})`).join("
       {/* EDIT MODAL OVERLAY */}
       <AnimatePresence>
         {isModalOpen && editingSection && (
-            <EditModal 
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                onSave={handleSaveEdit}
-                data={editingItemData}
-                setData={setEditingItemData}
-                fields={editingSection.fields}
-                title={editingSection.title}
-            />
+          <EditModal
+            isOpen={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+            onSave={handleSaveEdit}
+            data={editingItemData}
+            setData={setEditingItemData}
+            fields={editingSection.fields}
+            title={editingSection.title}
+          />
         )}
       </AnimatePresence>
-
     </div>
   );
 }

@@ -66,7 +66,7 @@ export default function ConnectionsPage({ onBack }) {
                     
                     {/* Role / Headline */}
                     <p className="text-sm text-pink-600 font-medium text-center mb-2">
-                        {user.role || "Student / Developer"}
+                        {user.role}
                     </p>
 
                     {/* College/Location (Optional fallback) */}
