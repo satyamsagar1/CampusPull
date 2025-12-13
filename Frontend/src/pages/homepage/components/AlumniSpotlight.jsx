@@ -13,79 +13,129 @@ const AlumniSpotlight = () => {
     {
       id: 1,
       name: "Swati Yadav",
-      currentRole: " Software Engineer",
+      currentRole: " IT Project Manager",
       company: "Black Orange",
       companyLogo: "https://images.pexels.com/photos/4164418/pexels-photo-4164418.jpeg?auto=compress&cs=tinysrgb&w=100",
-      profileImage: "https://images.pexels.com/photos/3785079/pexels-photo-3785079.jpeg?auto=compress&cs=tinysrgb&w=400",
+      profileImage: "/assets/images/swati.png",
       university: "ABESIT",
       graduationYear: "2026",
       mentorshipStatus: "Available",
-      specialization: ["System Design", "Cloud Architecture", "Microservices"],
+      specialization: ["Management", "Team Work", "Microservices"],
       quote: `The transition from college to corporate wasn't easy, but having the right guidance made all the difference. Now I want to be that bridge for the next generation.`,
       achievements: [
-        "Led migration of legacy systems to cloud",
-        "Mentored 15+ junior developers",
-        "Speaker at 3 international conferences"
+        "Led Team to work on time",
+        "Mentored 4+ junior developers",
+        <a
+  href="https://youtu.be/SH9OT4Sf5g8?si=QUq34LaSQ5LKpiK1"
+  target="_blank"
+  rel="noopener noreferrer"
+  className="flex items-center gap-1 text-red-600 underline hover:text-red-700"
+>
+  ▶ Watch Podcast
+</a>
+
       ],
       beforeImage: "https://images.pexels.com/photos/3769021/pexels-photo-3769021.jpeg?auto=compress&cs=tinysrgb&w=300",
       journey: {
         college: "Computer Science Student",
-        firstJob: "IT Project Manager at Startup",
+        firstJob: "IT Project Manager at Startup(Dehix)",
         current: " Engineer at BlackOrange"
       },
-      menteeCount: 23,
+      menteeCount: 5,
       responseTime: "< 2 hours",
-      rating: 4.9
+      rating: 5.0
     },
-    {
+     {
       id: 2,
-      name: "Sakshi Sharma",
-      currentRole: "UI/UX Designer",
-      company: "Indilearn",
-      companyLogo: "https://images.pexels.com/photos/3861958/pexels-photo-3861958.jpeg?auto=compress&cs=tinysrgb&w=100",
-      profileImage: "https://images.pexels.com/photos/3769021/pexels-photo-3769021.jpeg?auto=compress&cs=tinysrgb&w=400",
+      name: "Ashiya Rana",
+      currentRole: "Trainee",
+      company: "Erasmith",
+      companyLogo: "https://images.pexels.com/photos/4164418/pexels-photo-4164418.jpeg?auto=compress&cs=tinysrgb&w=100",
+      profileImage: "/assets/images/ashi.png",
       university: "ABESIT",
       graduationYear: "2026",
       mentorshipStatus: "Available",
-      specialization: ["Product Strategy", "User Research", "Data Analytics"],
-      quote: `From engineering to product management - the journey taught me that technical skills are just the foundation. Understanding users and business impact is what creates real value.`,
+      specialization: ["Version Control (Git)", "Team Work", "Corporate Communication"],
+      quote: `Being a trainee in a fast-paced tech environment has helped me build strong fundamentals and a problem-solving mindset. Every challenge I face today is shaping me into a better professional for tomorrow.`,
       achievements: [
-        "Launched 2 products with 10M+ users",
-        "Increased user engagement by 40%",
-        "Built cross-functional teams of 20+"
+         "Successfully completed trainee onboarding program",
+  "Actively contributed to team tasks and internal projects",
+  "Recognized for adaptability and learning attitude",
+  "Participated in corporate training and skill development sessions"
       ],
       beforeImage: "https://images.pexels.com/photos/3769021/pexels-photo-3769021.jpeg?auto=compress&cs=tinysrgb&w=300",
       journey: {
-        college: "Electronics Engineering Student",
-        firstJob: "Software Developer",
-        current: "Product Manager at Google"
+        college: "Computer Science Student",
+        firstJob: "Internship at CodeCraft Infotech",
+        current: " Engineer at Erasmith"
       },
-      menteeCount: 31,
-      responseTime: "< 4 hours",
-      rating: 4.8
+      menteeCount: 5,
+      responseTime: "< 2 hours",
+      rating: 5.0
     },
     {
       id: 3,
+      name: "Riya Sharma",
+      currentRole: "Software Tranee",
+      company: "Contevolve",
+      companyLogo: "https://images.pexels.com/photos/3861958/pexels-photo-3861958.jpeg?auto=compress&cs=tinysrgb&w=100",
+      profileImage: "/assets/images/riya.png",
+      university: "ABESIT",
+      graduationYear: "2026",
+      mentorshipStatus: "Available",
+      specialization: ["Core Java & OOPs",
+  "Data Structures Basics",
+  "Frontend Development (HTML, CSS, JavaScript)",
+  "REST API Consumption",
+  "Debugging & Code Optimization"],
+      quote: `Starting my journey as a software trainee has taught me that strong fundamentals and consistency matter more than titles. Every line of code I write today is preparing me for bigger challenges tomorrow.`,
+      achievements: [
+       "Completed structured software trainee onboarding program",
+  "Developed and maintained small frontend modules",
+  "Worked with REST APIs under senior developer guidance",
+  "Improved debugging and problem-solving skills through live projects"
+      ],
+      beforeImage: "https://images.pexels.com/photos/3769021/pexels-photo-3769021.jpeg?auto=compress&cs=tinysrgb&w=300",
+      journey: {
+        college: "Software Engineering Student",
+        firstJob: "Software Developer",
+        current: "Software Tranee at Contevovle"
+      },
+      menteeCount: 4,
+      responseTime: "< 4 hours",
+      rating: 5.0
+    },
+    {
+      id: 4,
       name: "Samayak Vansh",
-      currentRole: "Data Science Lead",
+      currentRole: "Product Development Intern",
       company: "Black Orange",
       companyLogo: "https://images.pexels.com/photos/3184291/pexels-photo-3184291.jpeg?auto=compress&cs=tinysrgb&w=100",
       profileImage: "https://images.pexels.com/photos/3785079/pexels-photo-3785079.jpeg?auto=compress&cs=tinysrgb&w=400",
-      university: "NIT Delhi",
-      graduationYear: "2017",
-      mentorshipStatus: "Limited Availability",
-      specialization: ["Machine Learning", "Deep Learning", "MLOps"],
-      quote: `Data science is not just about algorithms and models. It's about solving real business problems and creating impact. The key is to stay curious and keep learning.`,
+      university: "ABESIT",
+      graduationYear: "2026",
+      mentorshipStatus: "Available",
+      specialization: ["Machine Learning", "Deep Learning",],
+      quote: `Working as a product development intern has shown me how data and technology come together to build meaningful products. I believe learning fundamentals well and applying them to real problems is the key to long-term growth.`,
       achievements: [
-        "Built ML models serving 100M+ customers",
-        "Published 8 research papers",
-        "Led data science team of 12 engineers"
+        "Worked on data preprocessing and model training tasks",
+        "Running an NGO",
+  "Assisted in developing ML-based features for internal products",
+   <a
+  href="https://youtu.be/BuKWVegZKLI?si=orh4b4Y3xv7S67yP"
+  target="_blank"
+  rel="noopener noreferrer"
+  className="flex items-center gap-1 text-red-600 underline hover:text-red-700"
+>
+  ▶ Watch Podcast
+</a>
+  
       ],
       beforeImage: "https://images.pexels.com/photos/3785079/pexels-photo-3785079.jpeg?auto=compress&cs=tinysrgb&w=300",
       journey: {
-        college: "Mathematics & Computing Student",
+        college: "Software Student",
         firstJob: "Data Analyst",
-        current: "Data Science Lead at Amazon"
+        current: "Product Development Intern"
       },
       menteeCount: 18,
       responseTime: "< 1 day",
