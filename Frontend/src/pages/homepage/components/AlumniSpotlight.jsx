@@ -93,8 +93,17 @@ const AlumniSpotlight = () => {
        "Completed structured software trainee onboarding program",
   "Developed and maintained small frontend modules",
   "Worked with REST APIs under senior developer guidance",
-  "Improved debugging and problem-solving skills through live projects"
+  "Improved debugging and problem-solving skills through live projects",
+  <a
+  href="https://youtu.be/oJXNEOpPCoI?si=kjDNbsgCwT7jR-2P"
+  target="_blank"
+  rel="noopener noreferrer"
+  className="flex items-center gap-1 text-red-600 underline hover:text-red-700"
+>
+  ▶ Watch Podcast
+</a>
       ],
+      
       beforeImage: "https://images.pexels.com/photos/3769021/pexels-photo-3769021.jpeg?auto=compress&cs=tinysrgb&w=300",
       journey: {
         college: "Software Engineering Student",

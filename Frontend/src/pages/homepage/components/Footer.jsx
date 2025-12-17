@@ -10,9 +10,7 @@ const Footer = () => {
       title: "Platform",
       links: [
         { name: "Resources Hub", path: "/resources-hub" },
-        { name: "Alumni Network", path: "/alumni-network" },
         { name: "Community Forum", path: "/community" },
-        { name: "Career Center", path: "/career-center" },
         { name: "Events", path: "/events" }
       ]
     },
@@ -49,11 +47,8 @@ const Footer = () => {
   ];
 
   const socialLinks = [
-    { name: "Twitter", icon: "Twitter", url: "https://twitter.com/linkemate" },
-    { name: "LinkedIn", icon: "Linkedin", url: "https://linkedin.com/company/linkemate" },
-    { name: "Instagram", icon: "Instagram", url: "https://instagram.com/linkemate" },
-    { name: "YouTube", icon: "Youtube", url: "https://youtube.com/linkemate" },
-    { name: "Discord", icon: "MessageSquare", url: "https://discord.gg/linkemate" }
+    { name: "LinkedIn", icon: "Linkedin", url: "https://www.linkedin.com/company/campus-pull/posts/?feedView=all" },
+    { name: "YouTube", icon: "Youtube", url: "https://www.youtube.com/@campuspull" },
   ];
 
   const achievements = [
