@@ -6,6 +6,7 @@ import AlumniSpotlight from './components/AlumniSpotlight';
 import CommunityFeed from './components/CommunityFeed';
 import MobileSearchBar from './components/MobileSearchBar';
 import Footer from './components/Footer';
+import PodcastSection from './components/podcastSection';
 
 const Homepage = () => {
   return (
@@ -21,14 +22,11 @@ const Homepage = () => {
         {/* Hero Section */}
         <HeroSection />
         
-        {/* Resource Preview Grid */}
-        <ResourcePreviewGrid />
+        {/* Podcast Section */}
+        <PodcastSection />
         
         {/* Alumni Spotlight */}
         <AlumniSpotlight />
-        
-        {/* Community Feed */}
-        <CommunityFeed />
       </main>
       
       {/* Footer */}

@@ -49,10 +49,9 @@ const Footer = () => {
   ];
 
   const socialLinks = [
-    { name: "Twitter", icon: "Twitter", url: "https://twitter.com/linkemate" },
-    { name: "LinkedIn", icon: "Linkedin", url: "https://linkedin.com/company/linkemate" },
+    { name: "LinkedIn", icon: "Linkedin", url: "http://linkedin.com/company/campus-pull" },
     { name: "Instagram", icon: "Instagram", url: "https://instagram.com/linkemate" },
-    { name: "YouTube", icon: "Youtube", url: "https://youtube.com/linkemate" },
+    { name: "YouTube", icon: "Youtube", url: "https://youtube.com/@campuspull?si=9_l52LtDOq849cXY" },
     { name: "Discord", icon: "MessageSquare", url: "https://discord.gg/linkemate" }
   ];
 
