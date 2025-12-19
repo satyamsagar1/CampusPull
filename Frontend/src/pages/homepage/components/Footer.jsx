@@ -10,9 +10,7 @@ const Footer = () => {
       title: "Platform",
       links: [
         { name: "Resources Hub", path: "/resources-hub" },
-        { name: "Alumni Network", path: "/alumni-network" },
         { name: "Community Forum", path: "/community" },
-        { name: "Career Center", path: "/career-center" },
         { name: "Events", path: "/events" }
       ]
     },
