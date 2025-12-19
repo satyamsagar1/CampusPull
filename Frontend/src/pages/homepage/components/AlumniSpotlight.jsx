@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Icon from '../../../components/AppIcon';
 import Image from '../../../components/AppImage';
-import { useExplore } from '../../../context/ExploreContext'; // ✅ Ensure path is correct
+import { useExplore } from '../../../context/exploreContext'; 
 
 const AlumniSpotlight = () => {
   const navigate = useNavigate();
