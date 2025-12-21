@@ -17,6 +17,7 @@ import {
   FaGlobe,
   FaUser,
   FaUniversity,
+  FaLock,
 } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import { ProfileContext } from "../../context/profileContext";
@@ -109,9 +110,16 @@ export default function Profile() {
     deleteProfilePhoto,
     removeSkill,
     addSkill,
+    sendPasswordOTP,
+    verifyPasswordOTP
   } = useContext(ProfileContext);
 
   // --- STATE ---
+  const [passStep, setPassStep] = useState(1); 
+  const [passOtp, setPassOtp] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [passLoading, setPassLoading] = useState(false);
+
   const [bio, setBio] = useState("");
   const [editBio, setEditBio] = useState(false);
   const [newSkill, setNewSkill] = useState("");
@@ -298,6 +306,38 @@ ${
     setResume(resumeData);
   };
 
+  const handleSendOTP = async () => {
+    setPassLoading(true);
+    try {
+      await sendPasswordOTP();
+      alert("OTP sent to your email!");
+      setPassStep(2);
+    } catch (err) {
+      alert(err.response?.data?.message || "Error sending OTP");
+    } finally {
+      setPassLoading(false);
+    }
+  };
+
+  const handleUpdatePassword = async () => {
+    if(!passOtp || !newPassword) return alert("Please fill all fields");
+    setPassLoading(true);
+    try {
+      await verifyPasswordOTP(passOtp, newPassword);
+      alert("Password updated successfully!");
+      // Reset State
+      setPassStep(1);
+      setPassOtp("");
+      setNewPassword("");
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to update password");
+    } finally {
+      setPassLoading(false);
+    }
+  };
+
+
+
   // Configuration for sections
   const sections = [
     {
@@ -477,7 +517,70 @@ ${
               </button>
             </div>
           </div>
+          <br />
+          <br />
+          {/* ================= SECURITY CARD ================= */}
+          <Card>
+            <h3 className="text-lg font-semibold text-indigo-700 flex items-center gap-2 mb-4">
+              <FaLock /> Security & Password
+            </h3>
+            
+            <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+              <p className="text-sm text-gray-600 mb-4">
+                To change your password, we will send a verification OTP to your registered email address.
+              </p>
+
+              {passStep === 1 ? (
+                <button
+                  onClick={handleSendOTP}
+                  disabled={passLoading}
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition text-sm disabled:bg-gray-400"
+                >
+                  {passLoading ? "Sending OTP..." : "Change Password"}
+                </button>
+              ) : (
+                <div className="space-y-3 max-w-sm">
+                  <div className="animate-fade-in-up">
+                    <label className="text-xs font-bold text-gray-500 uppercase">Enter OTP</label>
+                    <input
+                      type="text"
+                      value={passOtp}
+                      onChange={(e) => setPassOtp(e.target.value)}
+                      placeholder="6-digit OTP"
+                      className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-300"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-gray-500 uppercase">New Password</label>
+                    <input
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="New secure password"
+                      className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-300"
+                    />
+                  </div>
+                  <div className="flex gap-2 mt-2">
+                    <button
+                      onClick={() => setPassStep(1)}
+                      className="px-3 py-2 text-gray-600 hover:bg-gray-200 rounded-lg text-sm"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleUpdatePassword}
+                      disabled={passLoading}
+                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm disabled:bg-gray-400"
+                    >
+                      {passLoading ? "Verifying..." : "Update Password"}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </Card>
         </Card>
+        
 
         {/* ================= MAIN CONTENT ================= */}
         <div className="md:col-span-2 space-y-6">

@@ -167,6 +167,35 @@ export const ProfileProvider = ({ children }) => {
     }
   }, [accessToken]);
 
+  const sendPasswordOTP = useCallback(async () => {
+    if (!accessToken) return;
+    try {
+      // Assuming your route is /api/users/change-password-otp
+      // Adjust the URL if your backend route prefix is different
+      const { data } = await api.post("/profile/change-password-otp", {}, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      return data;
+    } catch (err) {
+      console.error("Error sending OTP:", err);
+      throw err;
+    }
+  }, [accessToken]);
+
+  const verifyPasswordOTP = useCallback(async (otp, newPassword) => {
+    if (!accessToken) return;
+    try {
+      const { data } = await api.put("/profile/change-password-verify", 
+        { otp, newPassword }, 
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      return data;
+    } catch (err) {
+      console.error("Error verifying password:", err);
+      throw err;
+    }
+  }, [accessToken]);
+
 
   // Initial Load
   useEffect(() => {
@@ -184,18 +213,17 @@ export const ProfileProvider = ({ children }) => {
         error, 
         fetchProfile, 
         updateProfile,
-        // Array Helpers
         addItemToProfile, 
         editArrayItem,
         deleteArrayItem,
-        // Skill Helpers
         addSkill,
         removeSkill,
-        // Photo Helpers
+        sendPasswordOTP,
+        verifyPasswordOTP,
         uploadPhoto,
         deleteProfilePhoto
     }),
-    [profile, loading, error, fetchProfile, updateProfile, addItemToProfile, editArrayItem, deleteArrayItem, addSkill, removeSkill, uploadPhoto, deleteProfilePhoto]
+    [profile, loading, error, fetchProfile, updateProfile, addItemToProfile, editArrayItem, deleteArrayItem, addSkill, removeSkill, uploadPhoto, deleteProfilePhoto, sendPasswordOTP, verifyPasswordOTP]
   );
 
   return <ProfileContext.Provider value={contextValue}>{children}</ProfileContext.Provider>;

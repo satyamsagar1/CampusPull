@@ -1,3 +1,6 @@
+import { EventEmitter } from 'events';
+EventEmitter.defaultMaxListeners = 20;
+
 import "dotenv/config";
 import express from "express";
 import mongoSanitize from "express-mongo-sanitize";
@@ -15,6 +18,8 @@ import messageRoutes from "./routes/message.js";
 import profileRoutes from "./routes/profile.js";
 import resourceRoutes from "./routes/resource.js";
 import announcementRoutes from './routes/announcement.js';
+import adminRoutes from './routes/admin.js';
+import { passwordChange } from './controllers/passwordChange.js';
 import http from "node:http";
 import {initSocket}  from "./socket.js";
 
@@ -52,6 +57,8 @@ app.use("/api/message", messageRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/resources", resourceRoutes);
 app.use('/api/announcements', announcementRoutes);
+app.use('/api/admin', adminRoutes);
+app.post('/api/password-change', passwordChange);
 
 // -------------------- START SERVER --------------------
 const PORT = process.env.PORT || 5000;

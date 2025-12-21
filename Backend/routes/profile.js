@@ -17,6 +17,8 @@ import {
   deleteArrayItem
 } from "../controllers/profileController.js";
 
+import { passwordChange, verifyOtpAndChangePassword } from "../controllers/passwordChange.js";
+
 const router = express.Router();
 
 // Configure Cloudinary Middleware
@@ -36,6 +38,8 @@ router.patch("/progress/toggle", authMiddleware, toggleLessonProgress);
 // POST /api/profile/upload-photo (For Profile Picture Upload)
 router.post("/upload-photo", authMiddleware, profileUpload.single("photo"), uploadProfileImage);
 
+router.post('/change-password-otp', authMiddleware, passwordChange);
+router.put('/change-password-verify', authMiddleware, verifyOtpAndChangePassword);
 
 // ---------------- 🚀 NEW ROUTES ----------------
 
@@ -58,5 +62,6 @@ router.put("/:section/:itemId", authMiddleware, updateArrayItem);
 
 // Route: DELETE /api/profile/certifications/65a1b2...
 router.delete("/:section/:itemId", authMiddleware, deleteArrayItem);
+
 
 export default router;

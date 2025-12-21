@@ -26,6 +26,8 @@ import Header from "./components/ui/Header.jsx";  
 import { FeedProvider } from "./context/feedContext.jsx";
 import { ResourceProvider } from "./context/resourceContext.jsx"; 
 import { AnnouncementProvider } from "./context/announcementContext.jsx"; 
+import AdminDashboard from './pages/Admin/adminDashboard';
+import UsersTable from './pages/Admin/usersTable';
 
 const ProtectedLayout = ({ children }) => {
   return (
@@ -164,6 +166,8 @@ const Routes = () => {
                   </ProtectedRoute>
                 }
               />
+              <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/admin/users" element={<UsersTable />} />
 
               {/* Public Auth Page (no header) */}
               <Route path="/auth" element={<Auth />} />

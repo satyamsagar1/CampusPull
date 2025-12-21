@@ -23,7 +23,9 @@ export const getSuggestedUsers = async (req, res) => {
     const perPage = parseInt(req.query.perPage) || 20;
 
     const suggestedUsers = await user.find({
-         _id: { $nin: excludeIds }})
+         _id: { $nin: excludeIds },
+        role: { $in: ['student', 'teacher', 'alumni'] }
+      })
         .select("-password")
         .skip((page - 1) * perPage)
         .limit(perPage);
@@ -47,12 +49,17 @@ export const searchUsers = async (req, res) => {
     const searchRegex = new RegExp(query, "i");
 
     const users = await user.find({
-      $or: [
-        { name: searchRegex },               
-        { role: searchRegex },              
-        { skills: { $in: [searchRegex] } } 
-      ]
-    })
+            $and: [
+                {
+                    $or: [
+                        { name: searchRegex },
+                        { role: searchRegex },
+                        { skills: { $in: [searchRegex] } }
+                    ]
+                },
+                { role: { $in: ['student', 'teacher', 'alumni'] } } // STRICT FILTER ADDED
+            ]
+        })
     .select("-passwordHash -tokenVersion");  
 
     res.json(users);
