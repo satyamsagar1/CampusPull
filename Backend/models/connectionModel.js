@@ -7,11 +7,6 @@ const connectionSchema = new mongoose.Schema({
         type: String, 
         enum: ['pending', 'accepted', 'rejected'], 
         default: 'pending' 
-    },
-    note: { 
-        type: String, 
-        maxlength: 500, // Good practice to limit length
-        trim: true 
     }
 }, { timestamps: true });
 

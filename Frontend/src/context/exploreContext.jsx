@@ -86,7 +86,7 @@ export const ExploreProvider = ({ children }) => {
     try {
       await api.post(
         "/connection/request",
-        { recipientId, note },
+        { recipientId },
         { headers: { Authorization: `Bearer ${accessToken}` } }
       );
       // Optimistically update outgoing requests
