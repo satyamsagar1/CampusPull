@@ -31,7 +31,7 @@ export const AuthProvider = ({ children }) => {
       
       navigate("/homepage", { replace: true });
     } catch (err) {
-      throw err; // Let the UI handle the toast
+      throw err;
     }
   };
 
@@ -65,42 +65,45 @@ export const AuthProvider = ({ children }) => {
     }
   }, [navigate]);
 
-  // --- SILENT REFRESH LOGIC ---
+// --- SILENT REFRESH LOGIC ---
   const refreshAuth = useCallback(async () => {
     try {
       const res = await api.post("/auth/refresh", {}, { withCredentials: true });
       const { accessToken: newToken } = res.data;
       
+      // 1. Update State
       setAccessToken(newToken);
+      
+      // 2. Update global defaults for future calls
       setAuthHeader(newToken);
       
-      // After refreshing token, get user data if not already present
-      const userRes = await api.get("/auth/me");
+      const userRes = await api.get("/auth/me", {
+        headers: { Authorization: `Bearer ${newToken}` }
+      });
+      
       setUser(userRes.data.user);
       return true;
     } catch (err) {
+      console.error("Refresh auth failed:", err.response?.data?.message || err.message);
       setAuthHeader(null);
+      setUser(null); // Ensure user is null if check fails
       return false;
+    } finally {
+      setLoading(false); 
     }
   }, []);
 
-  // 1. Initial Load: Check if user is logged in
+  // 1. Initial Load
   useEffect(() => {
-    const initAuth = async () => {
-      await refreshAuth();
-      setLoading(false);
-    };
-    initAuth();
+    refreshAuth();
   }, [refreshAuth]);
 
-  // 2. Scheduled Refresh (Every 14 mins)
+  // 2. Scheduled Refresh
   useEffect(() => {
     if (!accessToken) return;
-    
     const interval = setInterval(() => {
       refreshAuth();
     }, 14 * 60 * 1000); 
-
     return () => clearInterval(interval);
   }, [accessToken, refreshAuth]);
 
@@ -120,7 +123,9 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider value={contextValue}>
-      {!loading && children} 
+      {/* 🚀 CHANGED BACK: Render children immediately so your existing 
+          routing logic handles the redirection correctly */}
+      {children} 
     </AuthContext.Provider>
   );
 };

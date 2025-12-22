@@ -1,13 +1,14 @@
 import jwt from "jsonwebtoken";
 
 export function signAccessToken(user) {
+    const userId = user._id ? user._id.toString() : user.id;
+    
     return jwt.sign({
-        id: user._id.toString(),      // user id
-      role: user.role,   // add role here
-
-    }, process.env.JWT_ACCESS_SECRET,{
-    expiresIn: process.env.JWT_ACCESS_EXPIRES || '15m',
-});
+        id: userId,
+        role: user.role,
+    }, process.env.JWT_ACCESS_SECRET, {
+        expiresIn: '15m', // Keep it short for security
+    });
 }
 
 export function signRefreshToken(user, tokenVersion = 0) {

@@ -2,23 +2,28 @@ import jwt from "jsonwebtoken";
 
 // Auth middleware
 export const authMiddleware = (req, res, next) => {
-  
+  // 🚀 PRO LOGIC: Check Header first, then Cookie
+  const authHeader = req.headers.authorization;
+  let token = null;
 
-  const token = req.cookies.linkmate_at;
- 
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    token = authHeader.split(" ")[1];
+  } else if (req.cookies) {
+    token = req.cookies.linkmate_at;
+  }
 
-  if (!token) return res.status(401).json({ message: "Unauthorized. No token." });
-
-  
+  if (!token) {
+    return res.status(401).json({ message: "Unauthorized. No token provided." });
+  }
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
-    req.user = decoded; // attach user info
-    
+    req.user = decoded; 
     next();
   } catch (err) {
-    console.log("JWT verification error:", err.name, err.message);
-    return res.status(401).json({ message: "Invalid or expired token" });
+    console.log("JWT Error:", err.name);
+    // If it's expired, we send 401 so the frontend interceptor can catch it and refresh
+    return res.status(401).json({ message: "Token expired or invalid" });
   }
 };
 
