@@ -1,34 +1,51 @@
 import mongoose from "mongoose";
 import Message from "../models/message.js";
 import Connection from "../models/connectionModel.js";
-// import User from "../models/user.js";
-import { encryptText, decryptText } from "../utils/encrypt.js";
+import { encryptText, decryptText  } from "../utils/encrypt.js";
 import { onlineUsers } from "../socket.js";
 
 // --- Send a new message ---
 export const sendMessage = async (req, res) => {
   try {
     const { sender, recipient, content } = req.body;
-    if (!sender || !recipient || !content?.trim()) {
-      return res.status(400).json({ message: "Sender, recipient, and content are required." });
+    
+    // ✅ FIX 1: Access the file uploaded by Multer
+    const file = req.file; 
+
+    // ✅ FIX 2: Allow message if either Content OR File exists
+    if (!sender || !recipient || (!content?.trim() && !file)) {
+      return res.status(400).json({ message: "Sender, recipient, and content OR file are required." });
     }
 
-    const encrypted = encryptText(content.trim());
+    let encryptedContent = null;
+    let iv = null;
+    let tag = null;
+
+    // ✅ FIX 3: Only encrypt if there is actual text
+    if (content && content.trim() !== "") {
+        const encrypted = encryptText(content.trim());
+        encryptedContent = encrypted.content;
+        iv = encrypted.iv;
+        tag = encrypted.tag;
+    }
 
     const message = await Message.create({
       sender,
       recipient,
-      content: encrypted.content,
-      iv: encrypted.iv,
-      tag: encrypted.tag,
+      content: encryptedContent, 
+      iv,
+      tag,
+      // ✅ FIX 4: Save the file path to the database
+      file: file ? file.path : null, 
     });
 
-    const fullMessage = await message.populate("sender recipient", "name");
+    const fullMessage = await message.populate("sender recipient", "name profileImage");
 
     // Create a consistent payload with decrypted content for all clients
     const payload = {
       ...fullMessage._doc,
-      content: content.trim(),
+      content: content ? content.trim() : "", // Send empty string if no text
+      file: file ? file.path : null,         // Send file path back to frontend
     };
 
     const io = req.app.get("io");
@@ -71,7 +88,10 @@ export const getMessages = async (req, res) => {
 
     const decryptedMessages = messages.map((msg) => ({
       ...msg._doc,
-      content: decryptText({ content: msg.content, iv: msg.iv, tag: msg.tag }),
+      // ✅ FIX 5: Only try to decrypt if content exists (prevents crash on file-only messages)
+      content: msg.content 
+        ? decryptText({ content: msg.content, iv: msg.iv, tag: msg.tag })
+        : "", 
     }));
 
     res.json(decryptedMessages);
@@ -82,8 +102,6 @@ export const getMessages = async (req, res) => {
 };
 
 // --- Mark a message as read ---
-// backend/controllers/messageController.js
-
 export const markAsRead = async (req, res) => {
   try {
     const { id } = req.params;
@@ -100,8 +118,8 @@ export const markAsRead = async (req, res) => {
     const senderSocket = onlineUsers.get(senderId);
     
     if (senderSocket) {
-      io.to(senderSocket).emit("messageRead", message._id);}
-    else {
+      io.to(senderSocket).emit("messageRead", message._id);
+    } else {
       console.log("[DEBUG] Sender is offline, cannot emit read receipt.");
     }
 
@@ -120,7 +138,7 @@ export const getChatList = async (req, res) => {
     const connections = await Connection.find({
       $or: [{ requester: userId }, { recipient: userId }],
       status: "accepted",
-    }).populate("requester recipient", "_id name email");
+    }).populate("requester recipient", "_id name email profileImage");
 
     const validConnections = connections.filter((c) => c.requester && c.recipient);
 
@@ -147,20 +165,25 @@ export const getChatList = async (req, res) => {
       let decryptedLastMessage = null;
 
       if (lastMessageData) {
-        try {
-          decryptedLastMessage = decryptText({
-            content: lastMessageData.content,
-            iv: lastMessageData.iv,
-            tag: lastMessageData.tag,
-          });
-        } catch (decryptionError) {
-          console.error(`Failed to decrypt message for chat with ${chatPartner.name}:`, decryptionError);
-          decryptedLastMessage = { error: "Unable to display this message due to decryption error." };
+         // ✅ FIX 6: Handle decryption for file-only messages in sidebar
+        if (lastMessageData.file && !lastMessageData.content) {
+            decryptedLastMessage = "📎 Attachment";
+        } else {
+            try {
+              decryptedLastMessage = decryptText({
+                content: lastMessageData.content,
+                iv: lastMessageData.iv,
+                tag: lastMessageData.tag,
+              });
+            } catch (decryptionError) {
+              console.error(`Failed to decrypt message for chat with ${chatPartner.name}:`, decryptionError);
+              decryptedLastMessage = "Error decrypting message";
+            }
         }
       }
 
       return {
-        chatWith: { _id: chatPartner._id, name: chatPartner.name },
+        chatWith: { _id: chatPartner._id, name: chatPartner.name, profileImage: chatPartner.profileImage },
         email: chatPartner.email,
         lastMessage: decryptedLastMessage,
         lastMessageTime: lastMessageData?.createdAt || null,

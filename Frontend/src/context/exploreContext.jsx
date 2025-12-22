@@ -70,8 +70,9 @@ export const ExploreProvider = ({ children }) => {
       const { data: connectedUsers } = await api.get("/connection/connections", { 
         headers: { Authorization: `Bearer ${accessToken}` }
       });
-      setConnections(connectedUsers);
-      const ids = new Set(connectedUsers.map(u => u._id));
+      const validConnections = connectedUsers.filter(u => u !== null && u !== undefined);
+      setConnections(validConnections);
+      const ids = new Set(val.map(u => u._id));
       setAcceptedConnectionIds(ids);
     } catch (err) {
       console.error("Failed to fetch connections", err);

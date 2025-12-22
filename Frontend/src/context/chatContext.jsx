@@ -12,13 +12,15 @@ export const ChatProvider = ({ children }) => {
   const [messages, setMessages] = useState({});
   const [activeChat, setActiveChat] = useState(null);
   const [chatList, setChatList] = useState([]);
+  
+  // ✅ ADDED: State for unread counts
+  const [unreadCounts, setUnreadCounts] = useState({});
 
   // --- SOCKET CONNECTION & LISTENERS ---
+  useEffect(() => {
+    if (!user?._id) return;
 
-useEffect(() => {
-  if (!user?._id) return;
-
-  {
+    // Connect to Socket
     const newSocket = io(api.defaults.baseURL.replace("/api", ""), {
       query: { userId: user._id },
     });
@@ -26,23 +28,41 @@ useEffect(() => {
 
     newSocket.on("getOnlineUsers", setOnlineUsers);
 
+    // ✅ HANDLE NEW MESSAGE
     newSocket.on("newMessage", (message) => {
       const chatId = message.sender._id === user._id ? message.recipient._id : message.sender._id;
 
+      // 1. Update Messages
       setMessages((prev) => ({
         ...prev,
         [chatId]: [...(prev[chatId] || []), message],
       }));
 
+      // 2. Update Unread Counts (if not currently looking at this chat)
+      if (activeChat !== chatId && message.sender._id !== user._id) {
+        setUnreadCounts((prev) => ({
+          ...prev,
+          [chatId]: (prev[chatId] || 0) + 1
+        }));
+      }
+
+      // 3. Update Chat List (Bubble to top)
       setChatList((prev) => {
         const existingIndex = prev.findIndex((c) => c.chatWith._id === chatId);
-        const chatPartnerName = message.sender._id === user._id ? message.recipient.name : message.sender.name;
+        const existingChat = prev[existingIndex] || {};
+
         const updatedChatItem = {
-          ...(prev[existingIndex] || {}),
-          chatWith: { _id: chatId, name: chatPartnerName },
-          lastMessage: message.content,
+          ...existingChat,
+          chatWith: { 
+            // ✅ CRITICAL FIX: Preserve existing details (like profileImage)
+            ...existingChat.chatWith, 
+            _id: chatId, 
+            name: message.sender._id === user._id ? message.recipient.name : message.sender.name 
+          },
+          lastMessage: message.file ? "📎 Attachment" : message.content, // Show attachment icon if file
           lastMessageTime: message.createdAt,
         };
+
         let updatedList = [...prev];
         if (existingIndex > -1) {
           updatedList.splice(existingIndex, 1);
@@ -51,35 +71,31 @@ useEffect(() => {
       });
     });
 
-    // --- THIS IS THE CORRECTED LISTENER ---
+    // ✅ HANDLE MESSAGE READ RECEIPT
     newSocket.on("messageRead", (payload) => {
       const messageIdToUpdate = typeof payload === 'object' && payload._id ? payload._id : payload;
 
       setMessages((prevMessages) => {
-        // Create a deep copy to guarantee React sees a change
         const newMessagesState = JSON.parse(JSON.stringify(prevMessages));
         
-        // Find the specific message and update its 'read' status
         for (const chatId in newMessagesState) {
           const messageIndex = newMessagesState[chatId].findIndex(m => m._id === messageIdToUpdate);
           if (messageIndex !== -1) {
             newMessagesState[chatId][messageIndex].read = true;
-            break; // Stop searching once the message is found and updated
+            break;
           }
         }
         return newMessagesState;
       });
     });
 
-    // Cleanup function
     return () => {
       newSocket.off("getOnlineUsers");
       newSocket.off("newMessage");
       newSocket.off("messageRead");
       newSocket.disconnect();
     };
-  }
-}, [user]); // Rerun this effect if the user object changes (e.g., on login/logout)
+  }, [user, activeChat]); // Added activeChat dependency for unread logic
 
   // --- FETCH INITIAL CHAT LIST ---
   useEffect(() => {
@@ -95,7 +111,7 @@ useEffect(() => {
     fetchChats();
   }, [user?._id]);
 
-  // --- LOAD MESSAGES FOR A SPECIFIC CHAT ---
+  // --- LOAD MESSAGES ---
   const loadMessages = useCallback(async (recipientId) => {
     if (!user?._id || !recipientId) return;
     try {
@@ -109,49 +125,75 @@ useEffect(() => {
     }
   }, [user?._id]);
 
-  // --- SEND A NEW MESSAGE ---
-  const sendMessage = useCallback(async (recipientId, text) => {
-    if (!user?._id || !recipientId || !text?.trim()) return;
+  // --- ✅ FIXED: SEND MESSAGE (Supports Files) ---
+  const sendMessage = useCallback(async (recipientId, text, file) => {
+    if (!user?._id || !recipientId) return;
+    if (!text?.trim() && !file) return;
 
     try {
-      // The backend will save this and emit a "newMessage" event via socket.
-      // Our own client will receive that event in the listener above,
-      // which will then update the state for a consistent real-time experience.
-      await api.post("/message", {
-        sender: user._id,
-        recipient: recipientId,
-        content: text.trim(),
-      });
+      let response;
+      
+      // If there is a file, we MUST use FormData
+      if (file) {
+        const formData = new FormData();
+        formData.append("sender", user._id);
+        formData.append("recipient", recipientId);
+        if (text) formData.append("content", text.trim());
+        formData.append("file", file); // Backend must use Multer to catch this
+
+        response = await api.post("/message", formData, {
+            headers: { "Content-Type": "multipart/form-data" }
+        });
+      } else {
+        // Text only (JSON)
+        response = await api.post("/message", {
+            sender: user._id,
+            recipient: recipientId,
+            content: text.trim(),
+        });
+      }
+      
+      // We rely on the socket "newMessage" event to update state
+      // to avoid duplicates.
     } catch (err) {
       console.error("Error sending message:", err);
-      // You can add logic here to show an error to the user
     }
   }, [user, socket]);
 
   // --- MARK MESSAGES AS READ ---
- const markAsRead = useCallback(async (messagesToMarkAsRead) => {
-  // This function now receives the exact messages to process.
-  if (!user?._id || messagesToMarkAsRead.length === 0) return;
+  const markAsRead = useCallback(async (messagesToMarkAsRead) => {
+    if (!user?._id || messagesToMarkAsRead.length === 0) return;
 
-  for (const msg of messagesToMarkAsRead) {
-    // We get the recipient ID from the first message in the list
-    const recipientId = msg.sender._id === user._id ? msg.recipient._id : msg.sender._id;
-    try {
-      await api.patch(`/message/read/${msg._id}`);
+    // Get Chat ID to clear unread counts locally
+    const chatId = messagesToMarkAsRead[0].sender._id === user._id 
+        ? messagesToMarkAsRead[0].recipient._id 
+        : messagesToMarkAsRead[0].sender._id;
 
-      setMessages((prev) => ({
-        ...prev,
-        [recipientId]: prev[recipientId]?.map((m) =>
-          m._id === msg._id ? { ...m, read: true } : m
-        ),
-      }));
-    } catch (err) {
-      console.error("Error marking message as read:", err);
+    // 1. Clear Unread Count in State immediately
+    setUnreadCounts(prev => ({ ...prev, [chatId]: 0 }));
+
+    // 2. Call API for each message (Keep existing loop logic)
+    for (const msg of messagesToMarkAsRead) {
+      try {
+        await api.patch(`/message/read/${msg._id}`);
+
+        setMessages((prev) => ({
+          ...prev,
+          [chatId]: prev[chatId]?.map((m) =>
+            m._id === msg._id ? { ...m, read: true } : m
+          ),
+        }));
+      } catch (err) {
+        console.error("Error marking message as read:", err);
+      }
     }
-  }
-}, [user?._id, socket]); 
+  }, [user?._id]); 
 
-  // --- MEMOIZED CONTEXT VALUE ---
+  // --- Helper to clear unread manually when clicking a chat ---
+  const clearUnreadCount = (chatId) => {
+      setUnreadCounts(prev => ({ ...prev, [chatId]: 0 }));
+  };
+
   const contextValue = useMemo(
     () => ({
       socket,
@@ -163,8 +205,10 @@ useEffect(() => {
       loadMessages,
       sendMessage,
       markAsRead,
+      unreadCounts,     // ✅ Exported
+      clearUnreadCount, // ✅ Exported
     }),
-    [socket, onlineUsers, messages, activeChat, chatList, loadMessages, sendMessage, markAsRead]
+    [socket, onlineUsers, messages, activeChat, chatList, loadMessages, sendMessage, markAsRead, unreadCounts]
   );
 
   return (

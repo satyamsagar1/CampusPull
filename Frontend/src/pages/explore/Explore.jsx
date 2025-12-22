@@ -1,4 +1,5 @@
-import React, { useState } from "react"; 
+import React from "react"; 
+import { Link, useNavigate } from "react-router-dom"; // ✅ 1. Import useNavigate
 import {
   FaSearch,
   FaUserCircle,
@@ -10,11 +11,8 @@ import {
   FaBriefcase
 } from "react-icons/fa";
 import { useExplore } from "../../context/exploreContext"; 
-import RequestsPage from "./RequestsPage";
 import { useAuth } from "../../context/AuthContext"; 
-import ConnectionsPage from "./connectionsPage";
 
-const BASE_URL = "http://localhost:5000";
 
 export default function Explore() {
   const { 
@@ -29,17 +27,10 @@ export default function Explore() {
     connectionCount
   } = useExplore();
 
-  const [activePage, setActivePage] = useState('explore'); 
+  const navigate = useNavigate(); // 
 
   const displayedUsers = suggestions;
 
-  // --- Render Sub-Pages ---
-  if (activePage === 'requests') {
-    return <RequestsPage onBack={() => setActivePage('explore')} />;
-  }
-  if (activePage === 'connections') {
-    return <ConnectionsPage onBack={() => setActivePage('explore')} />;
-  }
 
   return (
     <div className="min-h-screen p-4 md:p-10 bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100">
@@ -56,7 +47,7 @@ export default function Explore() {
         <div className="flex gap-4">
           {/* Requests Button */}
           <button
-            onClick={() => setActivePage('requests')}
+            onClick={() => navigate('/requests')} // ✅ 3. Real Navigation
             className="relative px-6 py-3 bg-white/80 backdrop-blur-md hover:bg-white border border-white/40 text-indigo-700 rounded-2xl font-semibold shadow-sm flex items-center gap-2 transition-all hover:scale-105"
           >
             <FaUserPlus className="text-lg"/> Requests
@@ -69,7 +60,7 @@ export default function Explore() {
           
           {/* Connections Button */}
           <button
-            onClick={() => setActivePage('connections')}
+            onClick={() => navigate('/connections')} // ✅ 4. Real Navigation
             className="relative px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl font-semibold shadow-md flex items-center gap-2 transition-all hover:shadow-lg hover:scale-105"
           >
             <FaUsers className="text-lg"/> Connections
@@ -149,7 +140,7 @@ const UserCard = ({ cardUser, sendRequest, outgoingRequestIds }) => {
   const hasIncomingRequest = incomingRequests.some(req => req.requester._id === cardUser._id);
 
   const imgSrc = cardUser.profileImage 
-    ? (cardUser.profileImage.startsWith("http") ? cardUser.profileImage : `${BASE_URL}${cardUser.profileImage}`) 
+    ? (cardUser.profileImage.startsWith("http") ? cardUser.profileImage : `${cardUser.profileImage}`) 
     : null;
 
   let buttonContent = <><FaUserPlus /> Connect</>;
@@ -172,17 +163,27 @@ const UserCard = ({ cardUser, sendRequest, outgoingRequestIds }) => {
 
   return (
       <div className="bg-white/70 backdrop-blur-xl border border-white/50 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 p-6 flex flex-col items-center group">
+        
+        {/* --- CLICKABLE IMAGE --- */}
         <div className="relative">
-            <div className="w-24 h-24 rounded-full mb-4 overflow-hidden border-4 border-white shadow-md group-hover:scale-105 transition-transform bg-gray-50">
-            {imgSrc ? (
-                <img src={imgSrc} alt={cardUser.name} className="w-full h-full object-cover" />
-            ) : (
-                <FaUserCircle className="text-indigo-200 text-7xl w-full h-full p-2" />
-            )}
-            </div>
+            <Link to={`/profile/${cardUser._id}`}>
+                <div className="w-24 h-24 rounded-full mb-4 overflow-hidden border-4 border-white shadow-md group-hover:scale-105 transition-transform bg-gray-50 cursor-pointer">
+                {imgSrc ? (
+                    <img src={imgSrc} alt={cardUser.name} className="w-full h-full object-cover" />
+                ) : (
+                    <FaUserCircle className="text-indigo-200 text-7xl w-full h-full p-2" />
+                )}
+                </div>
+            </Link>
         </div>
 
-        <h2 className="text-lg font-bold text-gray-800 text-center">{cardUser.name}</h2>
+        {/* --- CLICKABLE NAME --- */}
+        <Link to={`/profile/${cardUser._id}`} className="hover:underline decoration-indigo-500 underline-offset-4">
+            <h2 className="text-lg font-bold text-gray-800 text-center hover:text-indigo-600 transition-colors">
+                {cardUser.name}
+            </h2>
+        </Link>
+
         <p className="text-sm text-indigo-600 font-medium text-center mb-2 flex items-center justify-center gap-1">
             <FaBriefcase size={12} className="opacity-70"/> {cardUser.role || "Student"}
         </p>
@@ -214,7 +215,7 @@ const UserCard = ({ cardUser, sendRequest, outgoingRequestIds }) => {
           className={`mt-auto w-full py-2.5 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2 shadow-md hover:shadow-lg ${buttonClasses}`}
           disabled={buttonDisabled}
           onClick={(e) => { 
-              e.stopPropagation(); 
+              e.stopPropagation(); // Prevents clicking the button from triggering any parent clicks
               if (!buttonDisabled) sendRequest(cardUser._id); 
           }} 
         >

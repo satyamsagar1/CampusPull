@@ -41,3 +41,5 @@ export function decryptText({ content, iv, tag }) {
   const decrypted = Buffer.concat([decipher.update(Buffer.from(content, "base64")), decipher.final()]);
   return decrypted.toString("utf8");
 }
+
+

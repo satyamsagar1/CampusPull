@@ -215,3 +215,22 @@ export const getConnectionCount = async (req, res) => {
     res.status(500).json({ message: "Error counting connections", error: error.message });
   }
 };
+export const getUserProfile = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Find user by ID but exclude sensitive info
+        const userProfile = await user.findById(id)
+            .select("-password -passwordHash -tokenVersion"); 
+
+        if (!userProfile) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        res.status(200).json(userProfile);
+
+    } catch (err) {
+        console.error("Get User Profile Error:", err);
+        res.status(500).json({ message: "Server error", error: err.message });
+    }
+};

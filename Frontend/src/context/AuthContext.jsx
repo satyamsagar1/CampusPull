@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useMemo } from "react";
+import { createContext, useContext, useState, useEffect, useMemo, useCallback } from "react";
 import api from "../utils/api";
 import { useNavigate } from "react-router-dom";
 
@@ -7,30 +7,31 @@ export const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
   const [accessToken, setAccessToken] = useState("");
+  const navigate = useNavigate();
 
-  const partialUpdateUser = (updates) => {
-    setUser(prevUser => ({
-      ...prevUser,
-      ...updates
-    }));
+  // Helper: Set Auth Header
+  const setAuthHeader = (token) => {
+    if (token) {
+      api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+    } else {
+      delete api.defaults.headers.common["Authorization"];
+    }
   };
 
   // --- LOGIN ---
   const login = async (credentials) => {
     try {
       const res = await api.post("/auth/login", credentials, { withCredentials: true });
+      const { user, accessToken: newToken } = res.data;
       
-      // --- FIX: Set header immediately after login ---
-      api.defaults.headers.common["Authorization"] = `Bearer ${res.data.accessToken}`;
-      setUser(res.data.user);
-
-      setAccessToken(res.data.accessToken);
+      setAccessToken(newToken);
+      setAuthHeader(newToken);
+      setUser(user);
+      
       navigate("/homepage", { replace: true });
     } catch (err) {
-      console.error("Login failed:", err.response?.data || err.message);
-      throw err;
+      throw err; // Let the UI handle the toast
     }
   };
 
@@ -38,93 +39,88 @@ export const AuthProvider = ({ children }) => {
   const signup = async (data) => {
     try {
       const res = await api.post("/auth/signup", data, { withCredentials: true });
+      const { user, accessToken: newToken } = res.data;
 
-      // --- FIX: Set header immediately after signup ---
-      api.defaults.headers.common["Authorization"] = `Bearer ${res.data.accessToken}`;
-
-      setUser(res.data.user);
-      setAccessToken(res.data.accessToken);
+      setAccessToken(newToken);
+      setAuthHeader(newToken);
+      setUser(user);
+      
       navigate("/homepage", { replace: true });
     } catch (err) {
-      console.error("Signup failed:", err.response?.data || err.message);
       throw err;
     }
   };
 
   // --- LOGOUT ---
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       await api.post("/auth/logout", {}, { withCredentials: true });
     } catch (err) {
-      console.error("Logout failed:", err);
+      console.error("Logout error:", err);
     } finally {
-      // --- FIX: Clear header immediately on logout ---
-      delete api.defaults.headers.common["Authorization"];
-
-      setUser(null);
       setAccessToken("");
-      navigate("/auth", { replace: true }); 
+      setAuthHeader(null);
+      setUser(null);
+      navigate("/auth", { replace: true });
     }
-  };
+  }, [navigate]);
 
-  // Your useEffect hooks are well-written and can remain as they are.
-  // They provide a great fallback and handle the refresh logic perfectly.
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const refreshRes = await api.post("/auth/refresh", {}, { withCredentials: true });
-        const newToken = refreshRes.data.accessToken;
-        setAccessToken(newToken);
-        api.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
-        const userRes = await api.get("/auth/me", { withCredentials: true });
-        setUser(userRes.data.user);
-      } catch (err) {
-        if (err.response?.status === 401) {
-         console.log("Session expired or no user found. Redirecting to login...");
-        } else {
-          console.error("Unexpected Auth Error:", err);
-        }
-        setUser(null);
-        setAccessToken("");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchUser();
+  // --- SILENT REFRESH LOGIC ---
+  const refreshAuth = useCallback(async () => {
+    try {
+      const res = await api.post("/auth/refresh", {}, { withCredentials: true });
+      const { accessToken: newToken } = res.data;
+      
+      setAccessToken(newToken);
+      setAuthHeader(newToken);
+      
+      // After refreshing token, get user data if not already present
+      const userRes = await api.get("/auth/me");
+      setUser(userRes.data.user);
+      return true;
+    } catch (err) {
+      setAuthHeader(null);
+      return false;
+    }
   }, []);
 
+  // 1. Initial Load: Check if user is logged in
+  useEffect(() => {
+    const initAuth = async () => {
+      await refreshAuth();
+      setLoading(false);
+    };
+    initAuth();
+  }, [refreshAuth]);
+
+  // 2. Scheduled Refresh (Every 14 mins)
   useEffect(() => {
     if (!accessToken) return;
-    const timer = setTimeout(async () => {
-      try {
-        const res = await api.post("/auth/refresh", {}, { withCredentials: true });
-        const newToken = res.data.accessToken;
-        setAccessToken(newToken);
-        api.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
-      } catch (err) {
-        console.error("Scheduled refresh failed:", err);
-      }
-    }, 14 * 60 * 1000);
-    return () => clearTimeout(timer);
-  }, [accessToken]);
-  
-  // This effect is now a helpful backup, but our immediate sets in login/logout do the main work.
-  useEffect(() => {
-    if (accessToken) {
-      api.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;
-    } else {
-      delete api.defaults.headers.common["Authorization"];
-    }
-  }, [accessToken]);
+    
+    const interval = setInterval(() => {
+      refreshAuth();
+    }, 14 * 60 * 1000); 
 
-  const contextValue = useMemo(
-    () => ({ user, loading, accessToken, login, signup, logout, partialUpdateUser }),
-    [user, accessToken, loading]
-  );
+    return () => clearInterval(interval);
+  }, [accessToken, refreshAuth]);
+
+  const partialUpdateUser = (updates) => {
+    setUser(prev => prev ? { ...prev, ...updates } : null);
+  };
+
+  const contextValue = useMemo(() => ({
+    user,
+    loading,
+    accessToken,
+    login,
+    signup,
+    logout,
+    partialUpdateUser
+  }), [user, loading, accessToken, logout]);
 
   return (
     <AuthContext.Provider value={contextValue}>
-      {children}
+      {!loading && children} 
     </AuthContext.Provider>
   );
 };

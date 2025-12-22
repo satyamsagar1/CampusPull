@@ -94,11 +94,16 @@ const userSchema = new mongoose.Schema({
   // --- 3. Profile Details ---
   headline: { type: String, trim: true, default: '' }, // 🆕 "MERN Stack Developer | Final Year"
   bio: { type: String, default: '' },
-  profileImage: { type: String, default: '' },
+  profileImage: { type: String, default: '',maxlength: [500, "Bio cannot exceed 500 characters, buddy."] },
   location: { type: String, default: '' }, // 🆕 e.g., "Noida, India"
   
   // Socials
-  phone: { type: String, default: '' },
+  phone: { type: String, default: '', validate: {
+      validator: function(v) {
+        return v === '' || /^\d{10}$/.test(v);
+      },
+      message: props => `${props.value} is not a valid 10-digit phone number!`
+    } },
   linkedin: { type: String, default: '' },
   github: { type: String, default: '' },
   twitter: { type: String, default: '' }, // 🆕 Good for tech community

@@ -1,12 +1,13 @@
 import express from 'express';
 import {authMiddleware} from '../middleware/authMiddleware.js';
-import { getSuggestedUsers, searchUsers, sendConnectionRequest, respondToConnectionRequest, getConnections, getConnectionCount,getPendingRequests } from '../controllers/connectionController.js';
+import { getSuggestedUsers, searchUsers, sendConnectionRequest, respondToConnectionRequest, getConnections, getConnectionCount,getPendingRequests, getUserProfile } from '../controllers/connectionController.js';
 
 const router = express.Router();
 
 router.get('/suggestions', authMiddleware, getSuggestedUsers);
 router.get('/search', authMiddleware, searchUsers);
 
+router.get("/profile/:id", authMiddleware, getUserProfile);
 router.post('/request', authMiddleware, sendConnectionRequest);
 router.post('/respond', authMiddleware, respondToConnectionRequest);    
 router.get('/connections', authMiddleware, getConnections);

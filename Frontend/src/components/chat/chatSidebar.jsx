@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react"; 
 import { useChat } from "../../context/chatContext";
-import { FaCircle } from "react-icons/fa";
+import { FaCircle } from "react-icons/fa"; // Removed unused FaUserCircle
+import api from "../../utils/api"; // ✅ Import API
 
 const ChatSidebar = () => {
   const { chatList, onlineUsers, loadMessages, activeChat, setActiveChat, unreadCounts, clearUnreadCount } = useChat();
@@ -12,6 +13,16 @@ const ChatSidebar = () => {
       chat?.chatWith?.name?.toLowerCase().includes(search.toLowerCase())
     );
   }, [chatList, search]);
+
+  // ✅ Helper for dynamic image URL
+  const getImageUrl = (path) => {
+    if (!path) return null;
+    if (path.startsWith("http")) return path;
+    
+    let baseUrl = api.defaults.baseURL || "";
+    baseUrl = baseUrl.replace(/\/api\/?$/, ""); // Strip /api to get root
+    return `${baseUrl}${path}`;
+  };
 
   return (
     <div className="w-80 h-full flex flex-col bg-gradient-to-b from-pink-50 via-white to-blue-50 border-r border-white/40 shadow-lg">
@@ -32,9 +43,11 @@ const ChatSidebar = () => {
         {filteredChats.map(chat => {
           const chatUser = chat.chatWith;
           if (!chatUser?._id) return null;
+          
           const isOnline = onlineUsers.includes(chatUser._id);
           const unreadCount = unreadCounts?.[chatUser._id] || 0;
           const isActive = activeChat === chatUser._id;
+          const imgSrc = getImageUrl(chatUser.profileImage); // ✅ Use helper
 
           return (
             <button
@@ -52,15 +65,25 @@ const ChatSidebar = () => {
               }`}
             >
               <div className="relative">
-                <div className="w-10 h-10 rounded-full bg-white/50 flex items-center justify-center font-bold text-gray-700 shadow">
-                  {chatUser.name?.charAt(0).toUpperCase() || "U"}
+                <div className="w-10 h-10 rounded-full bg-white/50 flex items-center justify-center overflow-hidden shadow border border-white/50">
+                  {imgSrc ? (
+                    <img 
+                        src={imgSrc} 
+                        alt={chatUser.name} 
+                        className="w-full h-full object-cover"
+                        // ✅ SAFETY: Hides image if it fails to load (404)
+                        onError={(e) => { e.target.style.display = 'none'; }} 
+                    />
+                  ) : (
+                    <span className="font-bold text-gray-700">{chatUser.name?.charAt(0).toUpperCase()}</span>
+                  )}
                 </div>
-                {isOnline && <FaCircle className="absolute bottom-0 right-0 w-3 h-3 text-green-500" />}
+                {isOnline && <FaCircle className="absolute bottom-0 right-0 w-3 h-3 text-green-500 border-2 border-white rounded-full" />}
               </div>
 
-              <div className="ml-3 flex-1 overflow-hidden">
+              <div className="ml-3 flex-1 overflow-hidden text-left">
                 <h4 className="font-medium truncate">{chatUser.name || "Unknown"}</h4>
-                <p className={`text-xs truncate ${unreadCount > 0 ? "font-bold" : "text-gray-600"}`}>
+                <p className={`text-xs truncate ${unreadCount > 0 ? "font-bold" : "opacity-80"}`}>
                   {chat.lastMessage || "No messages yet"}
                 </p>
               </div>

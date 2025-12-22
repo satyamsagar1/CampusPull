@@ -2,196 +2,146 @@ import { Router } from 'express';
 import User from '../models/user.js';
 import { signupSchema, loginSchema } from '../validators/authValidators.js';
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../utils/generateTokens.js';
-import {authMiddleware} from '../middleware/authMiddleware.js';
+import { authMiddleware } from '../middleware/authMiddleware.js';
 
 const router = Router();
-
-// Cookie options for refresh token
 const isProd = process.env.NODE_ENV === "production";
 
-const refreshCookieOpts = {
+// Unified Cookie Configuration
+const COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: isProd,               // ✅ true in production, false in localhost
+  secure: isProd,
   sameSite: isProd ? "None" : "Lax",
   path: "/",
-  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
 };
 
-const accessCookieOpts = {
-  httpOnly: true,
-  secure: isProd,               // ✅ true in production
-  sameSite: isProd ? "None" : "Lax",
-  path: "/",
-  maxAge: 15 * 60 * 1000, // 15 minutes
-};
+const refreshCookieOpts = { ...COOKIE_OPTIONS, maxAge: 7 * 24 * 60 * 60 * 1000 };
+const accessCookieOpts = { ...COOKIE_OPTIONS, maxAge: 15 * 60 * 1000 };
 
-// --- SIGNUP ROUTE (updated) ---
+// --- SIGNUP ---
 router.post('/signup', async (req, res) => {
- 
   try {
-    req.body.college = "ABESIT";
+    req.body.college = "ABESIT"; // Enforcement
     const parsed = signupSchema.safeParse(req.body);
+
     if (!parsed.success) {
-      // 🚨 ADD THIS LOG TO SEE THE ERROR IN VS CODE TERMINAL
-      console.log("❌ ZOD VALIDATION ERROR:", JSON.stringify(parsed.error.format(), null, 2));
-      
       return res.status(400).json({
-        message: 'Invalid input',
-        errors: parsed.error?.errors,
+        message: 'Validation failed',
+        errors: parsed.error.flatten().fieldErrors, // Cleaner error format for frontend
       });
     }
 
-    const { name, email, password, role, college, department, section, year, designation, currentCompany, degree, graduationYear, phone, linkedin, bio, skills } = parsed.data;
+    const { email, password, ...rest } = parsed.data;
 
-    const exists = await User.findOne({ email });
-    if (exists) return res.status(409).json({ message: 'Email already registered' });
+    // Check existence early
+    const exists = await User.findOne({ email }).select('_id');
+    if (exists) return res.status(409).json({ message: 'This email is already registered, buddy.' });
 
     const passwordHash = await User.hashPassword(password);
 
-    // <--- added all new fields here
     const userDoc = await User.create({
-      name, email, passwordHash, role,
-      college, department,
-      degree,section, year, graduationYear,
-      designation, currentCompany,
-      phone, linkedin, bio, skills
+      ...rest,
+      email,
+      passwordHash,
     });
 
-    const user = userDoc.toObject(); // <--- convert Mongoose doc to plain object
-
+    const user = userDoc.toObject();
     const accessToken = signAccessToken(user._id);
     const refreshToken = signRefreshToken(user._id, user.tokenVersion);
 
     res.cookie('linkmate_rft', refreshToken, refreshCookieOpts);
     res.cookie('linkmate_at', accessToken, accessCookieOpts);
 
+    // Remove sensitive data before sending
+    const { passwordHash: _, tokenVersion: __, ...userResponse } = user;
+
     return res.status(201).json({
-      user: {
-        _id: user._id.toString(), 
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        college: user.college,
-        degree: user.degree,
-        graduationYear: user.graduationYear,
-        phone: user.phone,
-        linkedin: user.linkedin,
-        bio: user.bio,
-        skills: user.skills,
-        department: user.department,
-        section: user.section,
-        year: user.year,
-        designation: user.designation,
-        currentCompany: user.currentCompany,
-      },
+      message: "Account created successfully!",
+      user: userResponse,
       accessToken,
     });
   } catch (err) {
-    console.error('Signup error', err);
-    return res.status(500).json({ message: 'Server error' });
+    console.error('❌ Signup Error:', err.message);
+    if (err.code === 11000) return res.status(409).json({ message: 'Duplicate data detected.' });
+    return res.status(500).json({ message: 'Internal server error. Try again later.' });
   }
 });
 
-// --- LOGIN, REFRESH, LOGOUT remain the same ---
+// --- LOGIN ---
 router.post('/login', async (req, res) => {
-  try { 
+  try {
     const parsed = loginSchema.safeParse(req.body);
-    if (!parsed.success) {
-      return res.status(400).json({ 
-        message: 'Invalid input', 
-        errors: parsed.error?.errors,
-      });
-    }
+    if (!parsed.success) return res.status(400).json({ message: 'Invalid input data.' });
 
     const { email, password } = parsed.data;
     const user = await User.findOne({ email });
-    if (!user) return res.status(401).json({ message: 'Invalid credentials' });
 
-    const ok = await user.comparePassword(password);
-    if (!ok) return res.status(401).json({ message: 'Invalid credentials' });
+    // Professional Tip: Use generic messages for login failures to prevent user enumeration
+    if (!user || !(await user.comparePassword(password))) {
+      return res.status(401).json({ message: 'Invalid email or password.' });
+    }
 
     const accessToken = signAccessToken(user);
     const refreshToken = signRefreshToken(user, user.tokenVersion);
 
     res.cookie('linkmate_rft', refreshToken, refreshCookieOpts);
     res.cookie('linkmate_at', accessToken, accessCookieOpts);
-    
 
     return res.json({
-      user: { _id: user._id, name: user.name, email: user.email, role: user.role, completedLessons: user.completedLessons },
+      message: `Welcome back, ${user.name.split(' ')[0]}!`,
+      user: { _id: user._id, name: user.name, email: user.email, role: user.role },
       accessToken,
     });
   } catch (err) {
-    console.error('Login error', err);
-    return res.status(500).json({ message: 'Server error' });
+    console.error('❌ Login Error:', err);
+    return res.status(500).json({ message: 'Server error during login.' });
   }
 });
 
+// --- REFRESH ---
 router.post('/refresh', async (req, res) => {
   try {
     const token = req.cookies?.linkmate_rft;
-     if (!token) {
-      return res.status(401).json({ message: 'Missing refresh token' });
-    }
-    const payload = verifyRefreshToken(token); // throws on invalid
+    if (!token) return res.status(401).json({ message: 'Session expired. Please login again.' });
+
+    const payload = verifyRefreshToken(token);
     const user = await User.findById(payload.id);
-    if (!user) return res.status(401).json({ message: 'User not found' });
 
-    // Refresh token rotation guard
-    if (payload.tv !== user.tokenVersion) return res.status(401).json({ message: 'Refresh token revoked' });
+    if (!user || payload.tv !== user.tokenVersion) {
+      // If token version doesn't match, someone might be trying a replay attack
+      return res.status(401).json({ message: 'Security alert: Refresh token revoked.' });
+    }
 
-    const userDoc = await User.findById(payload.id)
-    const newAccess = signAccessToken(userDoc);
-    const newRefresh = signRefreshToken(userDoc, user.tokenVersion);
+    const newAccess = signAccessToken(user);
+    const newRefresh = signRefreshToken(user, user.tokenVersion);
+
     res.cookie('linkmate_rft', newRefresh, refreshCookieOpts);
     res.cookie("linkmate_at", newAccess, accessCookieOpts);
 
     return res.json({ accessToken: newAccess });
   } catch (err) {
-    console.error('Refresh error', err);
-    return res.status(401).json({ message: 'Invalid or expired refresh token' });
+    return res.status(401).json({ message: 'Invalid session.' });
   }
 });
 
-router.get('/me', authMiddleware, async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id).select('-passwordHash -tokenVersion');
-    if (!user) return res.status(404).json({ message: 'User not found' });
-
-    return res.json({ user });
-  } catch (err) {
-    console.error('Me endpoint error', err);
-    return res.status(500).json({ message: 'Server error' });
-  }
-});
-
+// --- LOGOUT ---
 router.post('/logout', async (req, res) => {
   try {
     const token = req.cookies?.linkmate_rft;
-
     if (token) {
-      try {
-        const payload = verifyRefreshToken(token);
-        if (payload?.id) {
-          await User.findByIdAndUpdate(payload.id, { $inc: { tokenVersion: 1 } });
-        }
-      } catch {}
+      const payload = verifyRefreshToken(token);
+      if (payload?.id) {
+        // Increment token version to invalidate all current refresh tokens (Security Best Practice)
+        await User.findByIdAndUpdate(payload.id, { $inc: { tokenVersion: 1 } });
+      }
     }
-
-    // use EXACT cookie opts used during creation
+  } catch (err) {
+    // Fail silently on logout token errors
+  } finally {
     res.clearCookie("linkmate_rft", refreshCookieOpts);
     res.clearCookie("linkmate_at", accessCookieOpts);
-
-    res.setHeader("Cache-Control", "no-store");
-    res.setHeader("Pragma", "no-cache");
-
-    return res.json({ message: "Logged out" });
-
-  } catch (err) {
-    console.error('Logout error', err);
-    return res.status(500).json({ message: 'Server error' });
+    return res.json({ message: "Successfully logged out. See you soon, buddy!" });
   }
 });
-
 
 export default router;

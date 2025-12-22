@@ -1,18 +1,20 @@
 import React from "react";
+import { Link } from "react-router-dom"; // <--- 1. IMPORT LINK
 import { FaArrowLeft, FaUserCircle, FaCheck, FaTimes, FaBriefcase } from "react-icons/fa";
 import { useExplore } from "../../context/exploreContext"; 
+import { useNavigate } from "react-router-dom";
 
-const BASE_URL = "http://localhost:5000";
 
 export default function RequestsPage({ onBack }) {
   const { incomingRequests, acceptRequest, ignoreRequest, loading } = useExplore();
 
+  const navigate = useNavigate();
   return (
     <div className="min-h-screen p-4 md:p-10 bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100">
       
       <div className="max-w-7xl mx-auto">
         <button
-            onClick={onBack}
+            onClick={() => navigate('/explore')}
             className="mb-8 group flex items-center gap-2 px-5 py-2.5 bg-white/60 backdrop-blur-md shadow-sm border border-white/50 text-gray-600 rounded-full font-medium hover:bg-white hover:text-indigo-600 hover:shadow-md transition-all"
         >
             <FaArrowLeft className="group-hover:-translate-x-1 transition-transform"/> Back to Explore
@@ -54,16 +56,27 @@ export default function RequestsPage({ onBack }) {
                     className="group relative p-6 bg-white/70 backdrop-blur-xl border border-white/50 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
                     >
                     <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 mb-5">
-                        <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-white shadow-md flex-shrink-0 bg-gray-50">
-                            {imgSrc ? (
-                                <img src={imgSrc} alt={user.name} className="w-full h-full object-cover" />
-                            ) : (
-                                <FaUserCircle className="text-indigo-200 text-5xl w-full h-full p-1" />
-                            )}
-                        </div>
+                        
+                        {/* ✅ 2. CLICKABLE IMAGE */}
+                        <Link to={`/profile/${user._id}`} className="flex-shrink-0">
+                            <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-white shadow-md bg-gray-50 cursor-pointer hover:scale-105 transition-transform">
+                                {imgSrc ? (
+                                    <img src={imgSrc} alt={user.name} className="w-full h-full object-cover" />
+                                ) : (
+                                    <FaUserCircle className="text-indigo-200 text-5xl w-full h-full p-1" />
+                                )}
+                            </div>
+                        </Link>
 
                         <div className="text-center sm:text-left">
-                            <h2 className="text-lg font-bold text-gray-800">{user.name}</h2>
+                            
+                            {/* ✅ 3. CLICKABLE NAME */}
+                            <Link to={`/profile/${user._id}`} className="hover:underline decoration-indigo-500 underline-offset-2">
+                                <h2 className="text-lg font-bold text-gray-800 hover:text-indigo-700 transition-colors">
+                                    {user.name}
+                                </h2>
+                            </Link>
+
                             <p className="text-sm text-indigo-600 font-medium flex items-center justify-center sm:justify-start gap-1">
                                 <FaBriefcase size={12} className="opacity-80"/> {user.role || "Student"}
                             </p>

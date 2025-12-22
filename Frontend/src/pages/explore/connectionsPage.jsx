@@ -1,20 +1,22 @@
-// src/pages/explore/ConnectionsPage.jsx
 import React from "react";
+import { Link } from "react-router-dom"; // ✅ Import Link
 import { FaArrowLeft, FaUserCircle, FaLinkedin, FaEnvelope, FaPaperPlane } from "react-icons/fa";
 import { useExplore } from "../../context/exploreContext"; 
+import { useNavigate } from "react-router-dom";
 
-// 👇 IMPORTANT: Match this with your backend port
-const BASE_URL = "http://localhost:5000";
 
-export default function ConnectionsPage({ onBack }) {
-  // Get connections from the context
+
+export default function ConnectionsPage({ onBack }) { // ✅ Accepts onBack prop
   const { connections, loading } = useExplore();
+
+  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen p-4 md:p-10 bg-gradient-to-br from-pink-50 via-white to-blue-50">
-      {/* Back button */}
+      
+      {/* BACK BUTTON */}
       <button
-        onClick={onBack}
+        onClick={() => navigate('/explore')} // ✅ Calls the function passed from Explore.jsx
         className="mb-8 flex items-center gap-2 px-5 py-2.5 bg-white/80 backdrop-blur-md shadow-sm border border-pink-100 text-pink-600 rounded-full font-medium hover:bg-white hover:shadow-md transition-all"
       >
         <FaArrowLeft /> Back to Explore
@@ -41,42 +43,40 @@ export default function ConnectionsPage({ onBack }) {
       ) : (
         <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {connections.map((user) => {
-            // Image Logic inside the loop
             const imgSrc = user.profileImage 
-                ? (user.profileImage.startsWith("http") ? user.profileImage : `${BASE_URL}${user.profileImage}`) 
+                ? (user.profileImage.startsWith("http") ? user.profileImage : `${user.profileImage}`) 
                 : null;
 
             return (
-                <div
-                key={user._id}
-                className="group relative p-6 bg-white/60 backdrop-blur-xl border border-white/40 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
-                >
+                <div key={user._id} className="group relative p-6 bg-white/60 backdrop-blur-xl border border-white/40 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
                 <div className="flex flex-col items-center">
-                    {/* Avatar */}
-                    <div className="w-24 h-24 rounded-full mb-4 overflow-hidden border-4 border-white shadow-md group-hover:border-pink-100 transition-colors">
-                        {imgSrc ? (
-                            <img src={imgSrc} alt={user.name} className="w-full h-full object-cover" />
-                        ) : (
-                            <FaUserCircle className="text-gray-300 text-6xl w-full h-full bg-gray-50" />
-                        )}
-                    </div>
-
-                    {/* Info */}
-                    <h2 className="text-xl font-bold text-gray-800 text-center mb-1">{user.name}</h2>
                     
-                    {/* Role / Headline */}
-                    <p className="text-sm text-pink-600 font-medium text-center mb-2">
-                        {user.role}
-                    </p>
+                    {/* CLICKABLE AVATAR -> /user/:id */}
+                    <Link to={`/profile/${user._id}`}>
+                        <div className="w-24 h-24 rounded-full mb-4 overflow-hidden border-4 border-white shadow-md group-hover:border-pink-100 transition-colors cursor-pointer hover:scale-105 transform duration-300">
+                            {imgSrc ? (
+                                <img src={imgSrc} alt={user.name} className="w-full h-full object-cover" />
+                            ) : (
+                                <FaUserCircle className="text-gray-300 text-6xl w-full h-full bg-gray-50" />
+                            )}
+                        </div>
+                    </Link>
 
-                    {/* College/Location (Optional fallback) */}
+                    {/* CLICKABLE NAME -> /user/:id */}
+                    <Link to={`/profile/${user._id}`} className="hover:underline decoration-pink-500 underline-offset-2">
+                        <h2 className="text-xl font-bold text-gray-800 text-center mb-1 hover:text-pink-600 transition-colors">
+                            {user.name}
+                        </h2>
+                    </Link>
+                    
+                    <p className="text-sm text-pink-600 font-medium text-center mb-2">{user.role}</p>
+
                     {(user.college || user.degree) && (
                         <p className="text-xs text-gray-500 text-center mb-3">
                             {user.degree} {user.college ? `• ${user.college}` : ""}
                         </p>
                     )}
 
-                    {/* Skills Tags */}
                     <div className="flex flex-wrap justify-center gap-1.5 mb-5 w-full">
                         {user.skills && user.skills.slice(0, 3).map((skill, index) => (
                             <span key={index} className="px-2 py-0.5 bg-gray-100 text-gray-600 text-[10px] uppercase tracking-wider font-semibold rounded-md">
@@ -85,19 +85,18 @@ export default function ConnectionsPage({ onBack }) {
                         ))}
                     </div>
 
-                    {/* Action Buttons */}
                     <div className="flex items-center justify-center gap-4 w-full pt-4 border-t border-gray-100">
                         {user.linkedin && (
-                            <a href={user.linkedin} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-600 transition-colors text-xl" title="LinkedIn">
+                            <a href={user.linkedin} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-600 transition-colors text-xl">
                                 <FaLinkedin />
                             </a>
                         )}
                         {user.email && (
-                            <a href={`mailto:${user.email}`} className="text-gray-400 hover:text-red-500 transition-colors text-xl" title="Email">
+                            <a href={`mailto:${user.email}`} className="text-gray-400 hover:text-red-500 transition-colors text-xl">
                                 <FaEnvelope />
                             </a>
                         )}
-                        <button className="text-gray-400 hover:text-pink-600 transition-colors text-xl" title="Message (Coming Soon)">
+                        <button className="text-gray-400 hover:text-pink-600 transition-colors text-xl">
                             <FaPaperPlane />
                         </button>
                     </div>

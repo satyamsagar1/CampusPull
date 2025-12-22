@@ -8,9 +8,12 @@ import AboutLinkMate from "./pages/about-link-mate";
 import ResourcesHub from "./pages/resources-hub";
 import Homepage from "./pages/homepage";
 import Profile from "./pages/profile/Profile.jsx"; 
+import PublicProfile from "./pages/profile/publicProfile.jsx";
 import Community from "./pages/community/community.jsx"; 
 import Events from "./pages/events/events.jsx";   
 import Explore from "./pages/explore/Explore.jsx";
+import ConnectionsPage from "./pages/explore/connectionsPage.jsx";
+import RequestsPage from "./pages/explore/RequestsPage.jsx";
 import Feed from "./pages/feed/Feed.jsx";  
 import Auth from "./pages/Auth/AuthPage.jsx";
 import Announcement from "./pages/Announcement/announcement.jsx";
@@ -116,6 +119,16 @@ const Routes = () => {
                   </ProtectedRoute>
                 }
               />
+                <Route
+                path="/profile/:userId"
+                element={
+                  <ProtectedRoute>
+                    <ProtectedLayout>
+                      <PublicProfile />
+                    </ProtectedLayout>
+                  </ProtectedRoute>
+                }
+              />
               <Route
                 path="/community"
                 element={
@@ -156,6 +169,26 @@ const Routes = () => {
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/connections"
+                element={
+                  <ProtectedRoute>
+                    <ProtectedLayout>
+                      <ConnectionsPage />
+                    </ProtectedLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/requests"
+                element={
+                  <ProtectedRoute>
+                    <ProtectedLayout>
+                      <RequestsPage />
+                    </ProtectedLayout>
+                  </ProtectedRoute>
+                }
+              />
               <Route
                 path="/feed"
                 element={

@@ -41,14 +41,11 @@ router.post("/upload-photo", authMiddleware, profileUpload.single("photo"), uplo
 router.post('/change-password-otp', authMiddleware, passwordChange);
 router.put('/change-password-verify', authMiddleware, verifyOtpAndChangePassword);
 
-// ---------------- 🚀 NEW ROUTES ----------------
 
 // 1. DELETE Profile Photo
-// Route: DELETE /api/profile/photo
 router.delete("/photo", authMiddleware, deleteProfilePhoto);
 
 // 2. SKILLS Routes
-// Route: POST /api/profile/skills (Add/Append skills)
 router.post("/skills", authMiddleware, updateSkills);
 
 // Route: DELETE /api/profile/skills/:skillName (Remove specific skill)
