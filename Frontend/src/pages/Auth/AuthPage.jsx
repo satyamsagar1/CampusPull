@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useAuth } from "../../context/authContext";
+import { useAuth } from "../../context/AuthContext";
 import {
   FaUser, FaEnvelope, FaLock, FaUniversity, FaCalendarAlt,
   FaPhone, FaLinkedin, FaInfoCircle, FaTools, FaBuilding,
