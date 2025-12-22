@@ -13,8 +13,6 @@ function Auth() {
   const { user, login, signup } = useAuth();
   const [role, setRole] = useState("student");
 
-  const [role, setRole] = useState("student");
-
   const [form, setForm] = useState({
     name: "", email: "", password: "", college: "ABESIT",
     degree: "", department: "", section: "", year: "",
@@ -32,9 +30,7 @@ function Auth() {
     const hasNum = /[0-9]/.test(form.password);
     const hasLen = form.password.length >= 8;
     const hasDept = !!form.department;
-    const isYearValid = role === "student" ? (form.year >= 1 && form.year <= 4) : true;
-
-   
+    const isYearValid = form.year === "" || (Number(form.year) >= 1 && Number(form.year) <= 4);
     const isPhoneValid = form.phone === "" || /^\d{10}$/.test(form.phone);
     const isBioValid = form.bio.length <= 500;
 
@@ -61,7 +57,7 @@ function Auth() {
     return;
   }
 
-    //Professional Filtering for Phone
+    // 🚀 NEW: Professional Filtering for Phone
     if (name === "phone") {
       const onlyNums = value.replace(/\D/g, ""); // Remove anything not a number
       if (onlyNums.length <= 10) {
@@ -70,7 +66,7 @@ function Auth() {
       return;
     }
 
-    //Professional Limit for Bio
+    // 🚀 NEW: Professional Limit for Bio
     if (name === "bio") {
       if (value.length <= 500) {
         setForm(prev => ({ ...prev, [name]: value }));
@@ -81,9 +77,7 @@ function Auth() {
     if (name === "skills") {
       setForm({ ...form, skills: value.split(",").map((s) => s.trim()) });
     } else if (name === "graduationYear" || name === "year") {
-    } else if (name === "graduationYear" || name === "year") {
       setForm({ ...form, [name]: Number(value) });
-    } else {
     } else {
       setForm({ ...form, [name]: value });
     }
@@ -91,7 +85,6 @@ function Auth() {
 
   useEffect(() => {
     if (!user) {
-      setForm((prev) => ({ ...prev, email: "", password: "" }));
       setForm((prev) => ({ ...prev, email: "", password: "" }));
     }
   }, [user]);
@@ -215,7 +208,6 @@ function Auth() {
               <h3 className="text-sm font-bold text-gray-400 uppercase mb-3">Academic & Professional Details</h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex items-center border rounded-lg px-3 py-2 shadow-sm bg-gray-50">
                 <div className="flex items-center border rounded-lg px-3 py-2 shadow-sm bg-gray-50">
                   <FaUniversity className="text-gray-500 mr-2" />
                   <input
