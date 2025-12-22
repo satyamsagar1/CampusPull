@@ -13,6 +13,8 @@ function Auth() {
   const { user, login, signup } = useAuth();
   const [role, setRole] = useState("student");
 
+  const [role, setRole] = useState("student");
+
   const [form, setForm] = useState({
     name: "", email: "", password: "", college: "ABESIT",
     degree: "", department: "", section: "", year: "",
@@ -79,7 +81,9 @@ function Auth() {
     if (name === "skills") {
       setForm({ ...form, skills: value.split(",").map((s) => s.trim()) });
     } else if (name === "graduationYear" || name === "year") {
+    } else if (name === "graduationYear" || name === "year") {
       setForm({ ...form, [name]: Number(value) });
+    } else {
     } else {
       setForm({ ...form, [name]: value });
     }
@@ -87,6 +91,7 @@ function Auth() {
 
   useEffect(() => {
     if (!user) {
+      setForm((prev) => ({ ...prev, email: "", password: "" }));
       setForm((prev) => ({ ...prev, email: "", password: "" }));
     }
   }, [user]);
@@ -210,6 +215,7 @@ function Auth() {
               <h3 className="text-sm font-bold text-gray-400 uppercase mb-3">Academic & Professional Details</h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex items-center border rounded-lg px-3 py-2 shadow-sm bg-gray-50">
                 <div className="flex items-center border rounded-lg px-3 py-2 shadow-sm bg-gray-50">
                   <FaUniversity className="text-gray-500 mr-2" />
                   <input
