@@ -7,7 +7,7 @@ import {
   FaUniversity, FaUser, FaEnvelope 
 } from "react-icons/fa"; 
 import api from "../../utils/api";
-import { useAuth } from "../../context/authContext"; 
+import { useAuth } from "../../context/AuthContext"; 
 import { useExplore } from "../../context/exploreContext"; 
 
 // ✅ Reusable Card Component
