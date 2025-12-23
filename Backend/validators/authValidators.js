@@ -57,6 +57,7 @@ export const signupSchema = z.object({
   linkedin: z.string().url("Invalid LinkedIn URL").optional().or(z.literal('')),
   github: z.string().url("Invalid GitHub URL").optional().or(z.literal('')),
   portfolio: z.string().url("Invalid Portfolio URL").optional().or(z.literal('')),
+  leetcode: z.string().url("Invalid LeetCode URL").optional().or(z.literal('')),
   
 }).refine((data) => {
   // PROFESSIONAL GUARD: If student, require year and section

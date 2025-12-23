@@ -1,8 +1,7 @@
 import React from "react";
-import { Link } from "react-router-dom"; // ✅ Import Link
+import { Link, useNavigate } from "react-router-dom"; // ✅ Import Link
 import { FaArrowLeft, FaUserCircle, FaLinkedin, FaEnvelope, FaPaperPlane } from "react-icons/fa";
 import { useExplore } from "../../context/exploreContext"; 
-import { useNavigate } from "react-router-dom";
 
 
 
@@ -78,8 +77,8 @@ export default function ConnectionsPage({ onBack }) { // ✅ Accepts onBack prop
                     )}
 
                     <div className="flex flex-wrap justify-center gap-1.5 mb-5 w-full">
-                        {user.skills && user.skills.slice(0, 3).map((skill, index) => (
-                            <span key={index} className="px-2 py-0.5 bg-gray-100 text-gray-600 text-[10px] uppercase tracking-wider font-semibold rounded-md">
+                        {user.skills && user.skills.slice(0, 3).map((skill) => (
+                            <span key={skill} className="px-2 py-0.5 bg-gray-100 text-gray-600 text-[10px] uppercase tracking-wider font-semibold rounded-md">
                                 {skill}
                             </span>
                         ))}

@@ -90,6 +90,13 @@ const userSchema = new mongoose.Schema({
     trim: true,
     select: false // Don't return this in API responses by default
   },
+  // Only for Alumni
+  currentCompany: {
+    type: String,
+    trim: true,
+    // You can make this required if you want to force Alumni to enter it
+    required: function() { return this.role === 'alumni'; } 
+  },
 
   // --- 3. Profile Details ---
   headline: { type: String, trim: true, default: '' }, // 🆕 "MERN Stack Developer | Final Year"
@@ -108,7 +115,7 @@ const userSchema = new mongoose.Schema({
   github: { type: String, default: '' },
   twitter: { type: String, default: '' }, // 🆕 Good for tech community
   portfolio: { type: String, default: '' }, // 🆕 Personal Website URL
-
+  leetcode: { type: String, default: '' }, // 🆕 For coding enthusiasts
   // --- 4. Arrays (Your features) ---
   skills: { type: [String], default: [] },
   projects: { type: [ProjectSchema], default: [] },

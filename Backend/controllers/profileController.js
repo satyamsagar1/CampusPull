@@ -53,7 +53,7 @@ export const updateProfile = async (req, res) => {
       name, bio, phone,
       department, section, year, // ✅ Added Academic Fields
       college, degree, graduationYear,
-      linkedin, github, twitter, portfolio, // ✅ Added Socials
+      linkedin, github, twitter, portfolio,leetcode, // ✅ Added Socials
       profileImage,
       skills,
       projects,
@@ -68,7 +68,7 @@ export const updateProfile = async (req, res) => {
       name, bio, phone,
       department, section, year,
       college, degree, graduationYear,
-      linkedin, github, twitter, portfolio,
+      linkedin, github, twitter, portfolio,leetcode,
       profileImage,
       skills,
       projects,

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from "react";
 import {
   FaGithub,
   FaLinkedin,
+  FaEnvelope,
   FaTools,
   FaPlus,
   FaMagic,
@@ -18,6 +19,8 @@ import {
   FaUser,
   FaUniversity,
   FaLock,
+  FaBuilding,
+  FaCode, // ✅ Added FaCode for LeetCode
 } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import { ProfileContext } from "../../context/profileContext";
@@ -111,11 +114,11 @@ export default function Profile() {
     removeSkill,
     addSkill,
     sendPasswordOTP,
-    verifyPasswordOTP
+    verifyPasswordOTP,
   } = useContext(ProfileContext);
 
   // --- STATE ---
-  const [passStep, setPassStep] = useState(1); 
+  const [passStep, setPassStep] = useState(1);
   const [passOtp, setPassOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [passLoading, setPassLoading] = useState(false);
@@ -134,14 +137,16 @@ export default function Profile() {
     linkedin: "",
     github: "",
     portfolio: "",
+    leetcode: "", // ✅ Added LeetCode
     college: "",
     degree: "",
     course: "",
     department: "",
-    section: "", // Note: Backend might return 'section' (lowercase) or 'Section'
+    section: "",
     year: "",
     graduationYear: "",
     designation: "",
+    currentCompany: "",
   });
 
   // --- Edit Modal State ---
@@ -176,18 +181,21 @@ export default function Profile() {
 
       setInfoForm({
         name: profile.name || "",
+        email: profile.email || "",
         phone: profile.phone || "",
         linkedin: profile.linkedin || "",
         github: profile.github || "",
         portfolio: profile.portfolio || "",
+        leetcode: profile.leetcode || "", // ✅ Sync LeetCode
         college: profile.college || "",
         degree: profile.degree || "",
         course: profile.course || "",
         department: profile.department || "",
-        section: profile.section || profile.Section || "", // Handle both casing
+        section: profile.section || profile.Section || "",
         year: profile.year || "",
         graduationYear: profile.graduationYear || "",
         designation: profile.designation || "",
+        currentCompany: profile.currentCompany || "",
       });
     }
   }, [profile]);
@@ -202,7 +210,6 @@ export default function Profile() {
   if (!profile) return <p className="p-6">No profile data</p>;
 
   // --- HANDLERS ---
-
   const handleImageUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -320,12 +327,11 @@ ${
   };
 
   const handleUpdatePassword = async () => {
-    if(!passOtp || !newPassword) return alert("Please fill all fields");
+    if (!passOtp || !newPassword) return alert("Please fill all fields");
     setPassLoading(true);
     try {
       await verifyPasswordOTP(passOtp, newPassword);
       alert("Password updated successfully!");
-      // Reset State
       setPassStep(1);
       setPassOtp("");
       setNewPassword("");
@@ -335,8 +341,6 @@ ${
       setPassLoading(false);
     }
   };
-
-
 
   // Configuration for sections
   const sections = [
@@ -441,27 +445,32 @@ ${
             <h2 className="text-2xl font-bold mt-4 text-gray-800">
               {profile.name || "User"}
             </h2>
-            <p className="text-gray-500">{profile.degree} Student</p>
+            <p className="text-gray-500">
+              {profile.role === "alumni"
+                ? "Alumni"
+                : `${profile.degree} Student`}
+            </p>
 
-            <div className="flex gap-5 mt-4 text-2xl text-gray-600">
+            {/* ✅ 1. PRIMARY CONTACTS (LinkedIn) */}
+            <div className="flex justify-center gap-3 mt-4 mb-2">
               {profile.linkedin && (
                 <a
                   href={profile.linkedin}
                   target="_blank"
                   rel="noreferrer"
-                  className="hover:text-blue-600 transition"
+                  className="flex items-center gap-2 bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full text-xs font-bold border border-blue-100 hover:bg-blue-100 transition"
                 >
-                  <FaLinkedin />
+                  <FaLinkedin /> LinkedIn
                 </a>
               )}
-              {profile.github && (
+              {profile.email && (
                 <a
-                  href={profile.github}
+                  href={`mailto:${profile.email}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="hover:text-black transition"
+                  className="flex items-center gap-2 bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full text-xs font-bold border border-blue-100 hover:bg-blue-100 transition"
                 >
-                  <FaGithub />
+                  <FaEnvelope /> Email
                 </a>
               )}
             </div>
@@ -524,10 +533,11 @@ ${
             <h3 className="text-lg font-semibold text-indigo-700 flex items-center gap-2 mb-4">
               <FaLock /> Security & Password
             </h3>
-            
+
             <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
               <p className="text-sm text-gray-600 mb-4">
-                To change your password, we will send a verification OTP to your registered email address.
+                To change your password, we will send a verification OTP to your
+                registered email address.
               </p>
 
               {passStep === 1 ? (
@@ -541,7 +551,9 @@ ${
               ) : (
                 <div className="space-y-3 max-w-sm">
                   <div className="animate-fade-in-up">
-                    <label className="text-xs font-bold text-gray-500 uppercase">Enter OTP</label>
+                    <label className="text-xs font-bold text-gray-500 uppercase">
+                      Enter OTP
+                    </label>
                     <input
                       type="text"
                       value={passOtp}
@@ -551,7 +563,9 @@ ${
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-bold text-gray-500 uppercase">New Password</label>
+                    <label className="text-xs font-bold text-gray-500 uppercase">
+                      New Password
+                    </label>
                     <input
                       type="password"
                       value={newPassword}
@@ -580,11 +594,9 @@ ${
             </div>
           </Card>
         </Card>
-        
 
         {/* ================= MAIN CONTENT ================= */}
         <div className="md:col-span-2 space-y-6">
-        
           {/* Personal & Academic Info Card */}
           <Card>
             <div className="flex justify-between items-start mb-4">
@@ -676,6 +688,21 @@ ${
                       className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-300"
                     />
                   </div>
+                  {/* ✅ LeetCode Input Added */}
+                  <div className="col-span-1 md:col-span-2">
+                    <label className="text-xs font-bold text-gray-500 uppercase flex items-center gap-1">
+                      <FaCode /> LeetCode URL
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="https://leetcode.com/..."
+                      value={infoForm.leetcode}
+                      onChange={(e) =>
+                        setInfoForm({ ...infoForm, leetcode: e.target.value })
+                      }
+                      className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-300"
+                    />
+                  </div>
                 </div>
 
                 {/* 3. Academic Info (Common) */}
@@ -719,6 +746,26 @@ ${
                         setInfoForm({
                           ...infoForm,
                           designation: e.target.value,
+                        })
+                      }
+                      className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-300"
+                    />
+                  </div>
+                )}
+
+                {isAlumni && (
+                  <div className="col-span-1 md:col-span-2">
+                    <label className="text-xs font-bold text-gray-500 uppercase flex items-center gap-1">
+                      <FaBuilding /> Current Company
+                    </label>
+                    <input
+                      type="text"
+                      value={infoForm.currentCompany}
+                      placeholder="Where are you working?"
+                      onChange={(e) =>
+                        setInfoForm({
+                          ...infoForm,
+                          currentCompany: e.target.value,
                         })
                       }
                       className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-300"
@@ -870,19 +917,20 @@ ${
                   )}
                 </div>
 
-                {/* ✅ DYNAMIC SOCIAL LINKS (Only show if added) */}
-                {(profile.linkedin || profile.github || profile.portfolio) && (
+                {isAlumni && profile.currentCompany&& (
+                  <div className="col-span-1 md:col-span-2 bg-blue-50 p-2 rounded-lg border border-blue-100">
+                    <span className="font-semibold text-blue-500 text-xs uppercase flex items-center gap-1">
+                      <FaBuilding /> Current Company
+                    </span>
+                    <span className="font-bold text-blue-900">
+                      {profile.currentCompany || "N/A"}
+                    </span>
+                  </div>
+                )}
+
+                {/* ✅ UPDATED DYNAMIC SOCIAL LINKS (Removed LinkedIn, Added LeetCode) */}
+                {(profile.github || profile.portfolio || profile.leetcode) && (
                   <div className="mt-2 pt-4 border-t border-gray-100 flex flex-wrap gap-4">
-                    {profile.linkedin && (
-                      <a
-                        href={profile.linkedin}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-blue-700 hover:text-blue-900 transition flex items-center gap-1.5 text-xs font-bold bg-blue-50 px-3 py-1.5 rounded-full border border-blue-100"
-                      >
-                        <FaLinkedin size={14} /> LinkedIn
-                      </a>
-                    )}
                     {profile.github && (
                       <a
                         href={profile.github}
@@ -901,6 +949,16 @@ ${
                         className="text-indigo-600 hover:text-indigo-800 transition flex items-center gap-1.5 text-xs font-bold bg-indigo-50 px-3 py-1.5 rounded-full border border-indigo-100"
                       >
                         <FaGlobe size={14} /> Portfolio
+                      </a>
+                    )}
+                    {profile.leetcode && (
+                      <a
+                        href={profile.leetcode}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-yellow-600 hover:text-yellow-800 transition flex items-center gap-1.5 text-xs font-bold bg-yellow-50 px-3 py-1.5 rounded-full border border-yellow-100"
+                      >
+                        <FaCode size={14} /> LeetCode
                       </a>
                     )}
                   </div>

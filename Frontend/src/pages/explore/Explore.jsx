@@ -139,9 +139,8 @@ const UserCard = ({ cardUser, sendRequest, outgoingRequestIds }) => {
   const isRequestSent = outgoingRequestIds.has(cardUser._id);
   const hasIncomingRequest = incomingRequests.some(req => req.requester._id === cardUser._id);
 
-  const imgSrc = cardUser.profileImage 
-    ? (cardUser.profileImage.startsWith("http") ? cardUser.profileImage : `${cardUser.profileImage}`) 
-    : null;
+  const profileImageUrl = cardUser.profileImage?.startsWith("http") ? cardUser.profileImage : cardUser.profileImage;
+  const imgSrc = cardUser.profileImage ? profileImageUrl : null;
 
   let buttonContent = <><FaUserPlus /> Connect</>;
   let buttonDisabled = false;
@@ -194,8 +193,8 @@ const UserCard = ({ cardUser, sendRequest, outgoingRequestIds }) => {
 
         <div className="flex flex-wrap justify-center gap-1.5 mb-6 w-full">
            {(cardUser.skills && cardUser.skills.length > 0) ? (
-             cardUser.skills.slice(0, 3).map((skill, i) => (
-                <span key={i} className="px-2.5 py-1 bg-indigo-50 text-indigo-700 text-[10px] uppercase tracking-wider font-bold rounded-lg border border-indigo-100">
+             cardUser.skills.slice(0, 3).map((skill) => (
+                <span key={skill} className="px-2.5 py-1 bg-indigo-50 text-indigo-700 text-[10px] uppercase tracking-wider font-bold rounded-lg border border-indigo-100">
                     {skill}
                 </span>
              ))
