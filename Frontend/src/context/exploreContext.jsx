@@ -1,35 +1,49 @@
 import React, { createContext, useState, useEffect, useContext, useMemo, useCallback } from "react"; 
-import { useAuth } from "./AuthContext"; // Use the hook
+import { useAuth } from "./AuthContext"; 
 import api from "../utils/api";
-import { debounce } from 'lodash'; // Import debounce (install: npm install lodash)
+import { debounce } from 'lodash'; 
 
 export const ExploreContext = createContext();
 
 export const ExploreProvider = ({ children }) => {
-  const { accessToken, user, loading: authLoading } = useAuth(); // Get user too
-  const [suggestions, setSuggestions] = useState([]); // Holds initial suggestions or search results
-  const [originalSuggestions, setOriginalSuggestions] = useState([]); // Holds the initial list
+  const { accessToken, user, loading: authLoading } = useAuth(); 
+  const [suggestions, setSuggestions] = useState([]); 
+  const [originalSuggestions, setOriginalSuggestions] = useState([]); 
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   
-  // Separate states for incoming and outgoing requests
   const [incomingRequests, setIncomingRequests] = useState([]); 
-  const [outgoingRequestIds, setOutgoingRequestIds] = useState(new Set()); // Store only IDs for quick lookup
+  const [outgoingRequestIds, setOutgoingRequestIds] = useState(new Set()); 
   const [acceptedConnectionIds, setAcceptedConnectionIds] = useState(new Set());
   const [connections, setConnections] = useState([]);
+
+  // ✅ 1. NEW: Centralized Image Helper (Exposed to all components)
+  const getImageUrl = useCallback((path) => {
+    if (!path) return null;
+    if (path.startsWith("http")) return path; // Already a full URL (Cloudinary/Google)
+    
+    // Dynamic Base URL logic (Safe for localhost & production)
+    let baseUrl = api.defaults.baseURL || "";
+    baseUrl = baseUrl.replace(/\/api\/?$/, ""); // Strip /api suffix
+    
+    // Ensure path starts with /
+    const cleanPath = path.startsWith("/") ? path : `/${path}`;
+    
+    return `${baseUrl}${cleanPath}`;
+  }, []);
 
   // --- Fetch Initial Suggestions ---
   const fetchSuggestions = useCallback(async () => {
     if (!accessToken) return;
     setLoading(true);
-    setError(""); // Clear previous errors
+    setError(""); 
     try {
       const { data } = await api.get("/connection/suggestions", {
         headers: { Authorization: `Bearer ${accessToken}` }
       });
       setSuggestions(data);
-      setOriginalSuggestions(data); // Store the initial list
+      setOriginalSuggestions(data); 
     } catch (err) {
       console.error("Fetch Suggestions Error:", err);
       setError("Failed to fetch suggestions");
@@ -46,11 +60,10 @@ export const ExploreProvider = ({ children }) => {
         headers: { Authorization: `Bearer ${accessToken}` }
       });
       
-      // Separate incoming and outgoing based on recipient/requester
       const incoming = data.filter(req => req.recipient._id === user._id);
       const outgoingIds = new Set(data
           .filter(req => req.requester._id === user._id)
-          .map(req => req.recipient._id) // Store only the ID of the person requested
+          .map(req => req.recipient._id) 
       ); 
 
       setIncomingRequests(incoming);
@@ -58,25 +71,25 @@ export const ExploreProvider = ({ children }) => {
 
     } catch (err) {
       console.error("Failed to fetch requests", err);
-      // Don't set a general error here, maybe just log
     }
   }, [accessToken, user?._id]);
 
-  // --- NEW: Fetch Accepted Connections ---
+  // --- Fetch Accepted Connections ---
   const fetchConnections = useCallback(async () => {
     if (!accessToken || !user?._id) return;
     try {
-      // Use the /connection/connections route which returns user objects
       const { data: connectedUsers } = await api.get("/connection/connections", { 
         headers: { Authorization: `Bearer ${accessToken}` }
       });
       const validConnections = connectedUsers.filter(u => u !== null && u !== undefined);
       setConnections(validConnections);
-      const ids = new Set(val.map(u => u._id));
+      
+      // ✅ 2. BUG FIX: Changed 'val.map' to 'validConnections.map'
+      const ids = new Set(validConnections.map(u => u._id));
       setAcceptedConnectionIds(ids);
     } catch (err) {
       console.error("Failed to fetch connections", err);
-      setConnections([]); // Clear on error
+      setConnections([]); 
       setAcceptedConnectionIds(new Set());
     }
   }, [accessToken, user?._id]);
@@ -90,22 +103,18 @@ export const ExploreProvider = ({ children }) => {
         { recipientId },
         { headers: { Authorization: `Bearer ${accessToken}` } }
       );
-      // Optimistically update outgoing requests
       setOutgoingRequestIds(prev => new Set(prev).add(recipientId)); 
-      // Optionally remove from current suggestions if you want immediate feedback
-      // setSuggestions(prev => prev.filter(u => u._id !== recipientId));
     } catch (err) {
       console.error("Send Request Error:", err);
       alert(err.response?.data?.message || "Failed to send request");
     }
   }, [accessToken]);
 
-
   // --- Accept Request ---
   const acceptRequest = useCallback(async (requestId) => {
     if (!accessToken) return;
     try {
-      const response = await api.post(
+      await api.post(
         "/connection/respond", 
         { requestId, action: 'accept' }, 
         { headers: { Authorization: `Bearer ${accessToken}` } }
@@ -118,14 +127,13 @@ export const ExploreProvider = ({ children }) => {
     }
   }, [accessToken, fetchRequests, fetchConnections]);
 
-
   // --- Ignore/Reject Request ---
   const ignoreRequest = useCallback(async (requestId) => {
     if (!accessToken) return;
     try {
       await api.post(
-        "/connection/respond", // Use the correct route
-        { requestId, action: 'reject' }, // Send correct payload
+        "/connection/respond", 
+        { requestId, action: 'reject' }, 
         { headers: { Authorization: `Bearer ${accessToken}` } }
       );
       fetchRequests();
@@ -133,14 +141,13 @@ export const ExploreProvider = ({ children }) => {
       console.error("Ignore Request Error:", err);
       alert(err.response?.data?.message || "Failed to ignore request");
     }
-  }, [accessToken,fetchRequests]);
-
+  }, [accessToken, fetchRequests]);
 
   // --- API Search Function ---
   const performSearch = useCallback(async (query) => {
       if (!accessToken) return;
       if (!query.trim()) {
-          setSuggestions(originalSuggestions); // Show initial suggestions if search is cleared
+          setSuggestions(originalSuggestions); 
           setLoading(false);
           return;
       }
@@ -150,28 +157,25 @@ export const ExploreProvider = ({ children }) => {
           const { data } = await api.get(`/connection/search?q=${encodeURIComponent(query)}`, {
               headers: { Authorization: `Bearer ${accessToken}` }
           });
-          setSuggestions(data); // Update suggestions with search results
+          setSuggestions(data); 
       } catch (err) {
           console.error("Search Error:", err);
           setError("Failed to perform search");
-          setSuggestions([]); // Clear suggestions on error
+          setSuggestions([]); 
       } finally {
           setLoading(false);
       }
-  }, [accessToken, originalSuggestions]); // Include originalSuggestions here
+  }, [accessToken, originalSuggestions]);
 
-  // Debounced search call
+  // Debounced search
   const debouncedSearch = useMemo(() => debounce(performSearch, 300), [performSearch]);
 
-  // Effect to trigger search when `search` state changes
   useEffect(() => {
     debouncedSearch(search);
-    // Cleanup function to cancel debounced call if component unmounts or search changes quickly
     return () => {
       debouncedSearch.cancel();
     };
   }, [search, debouncedSearch]);
-
 
   // --- Initial Data Fetch ---
   useEffect(() => {
@@ -180,25 +184,25 @@ export const ExploreProvider = ({ children }) => {
       fetchRequests();
       fetchConnections();
     }
-  }, [accessToken, fetchSuggestions, fetchRequests,fetchConnections, authLoading]);
-
+  }, [accessToken, fetchSuggestions, fetchRequests, fetchConnections, authLoading]);
 
   // --- Context Value ---
   const contextValue = useMemo(() => ({
-    suggestions, // This now contains search results or initial suggestions
+    suggestions, 
     search,
     setSearch,
     loading,
     error,
     sendRequest,
-    incomingRequests, // Pass incoming requests separately
-    outgoingRequestIds, // Pass outgoing request IDs separately
+    incomingRequests, 
+    outgoingRequestIds, 
     acceptedConnectionIds,
     connections,
     connectionCount : connections.length,
     acceptRequest,
-    ignoreRequest
-  }), [suggestions, search, loading, error, sendRequest, incomingRequests, outgoingRequestIds,acceptedConnectionIds, connections, acceptRequest, ignoreRequest]);
+    ignoreRequest,
+    getImageUrl, // ✅ Exported here!
+  }), [suggestions, search, loading, error, sendRequest, incomingRequests, outgoingRequestIds, acceptedConnectionIds, connections, acceptRequest, ignoreRequest, getImageUrl]);
 
   return (
     <ExploreContext.Provider value={contextValue}>
@@ -207,4 +211,4 @@ export const ExploreProvider = ({ children }) => {
   );
 };
 
-export const useExplore = () => useContext(ExploreContext); // Optional: create a custom hook
+export const useExplore = () => useContext(ExploreContext);
