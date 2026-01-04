@@ -1,13 +1,12 @@
 import crypto from "crypto";
-import bcrypt from "bcryptjs"; // Make sure you have this installed
-import User from "../models/user.js"; // Adjust path to your User model
+import User from "../models/user.js";
 import sendEmail from "../utils/sendEmail.js";
 
-// 1. Send OTP
+// --- 1. Send OTP (Logged In User) ---
 export const passwordChange = async (req, res) => {
   try {
-    // Since the user is logged in, we get ID from req.user
-    const user = await User.findById(req.user._id || req.user.id);
+    // req.user.id comes from your authMiddleware
+    const user = await User.findById(req.user.id);
     
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -16,28 +15,44 @@ export const passwordChange = async (req, res) => {
     // Generate 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     
-    // Hash OTP and save to DB
+    // Hash OTP and save to DB (Reusing the resetPasswordToken field is smart)
     user.resetPasswordToken = crypto.createHash('sha256').update(otp).digest('hex');
     user.resetPasswordExpire = Date.now() + 10 * 60 * 1000; // 10 mins
     
-    await user.save();
+    // We only save the specific fields modified to avoid validation errors on other fields
+    await user.save({ validateBeforeSave: false });
 
     // Send Email
-    const message = `Your OTP for password change is: ${otp}`;
-    await sendEmail({
-      email: user.email,
-      subject: 'CampusPull Password Change Verification',
-      message
-    });
+    const message = `
+      <h1>Password Change Request</h1>
+      <p>Your OTP for changing your password is:</p>
+      <h2>${otp}</h2>
+      <p>This OTP is valid for 10 minutes.</p>
+    `;
 
-    res.status(200).json({ success: true, message: "OTP sent to your email" });
+    try {
+        await sendEmail({
+        email: user.email,
+        subject: 'CampusPull - Password Change OTP',
+        message // Ensure sendEmail uses HTML!
+        });
+
+        res.status(200).json({ success: true, message: "OTP sent to your email" });
+    } catch (emailError) {
+        console.error("Email Error:", emailError);
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpire = undefined;
+        await user.save({ validateBeforeSave: false });
+        return res.status(500).json({ message: "Email could not be sent" });
+    }
+
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: error.message });
   }
 };
 
-// 2. Verify OTP & Update
+// --- 2. Verify OTP & Update Password ---
 export const verifyOtpAndChangePassword = async (req, res) => {
   try {
     const { otp, newPassword } = req.body;
@@ -47,28 +62,29 @@ export const verifyOtpAndChangePassword = async (req, res) => {
     }
 
     // 1. Find the logged-in user
-    const user = await User.findById(req.user._id || req.user.id).select('+password +resetPasswordToken +resetPasswordExpire');
+    // Note: We don't need to select '+passwordHash' unless you set it to select: false in schema.
+    // If it's visible by default, just findById is enough.
+    const user = await User.findById(req.user.id);
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Force OTP to string before hashing (Fixes Number vs String issue)
+    // 2. Hash incoming OTP to compare
     const otpString = otp.toString();
     const hashedOtp = crypto.createHash('sha256').update(otpString).digest('hex');
 
-    // 3. STRICT CHECK: Does DB hash match incoming hash? Is it expired?
+    // 3. STRICT CHECK: Token Match & Expiry
     if (user.resetPasswordToken !== hashedOtp) {
-       return res.status(400).json({ message: "Invalid OTP provided" });
+       return res.status(400).json({ message: "Invalid OTP" });
     }
 
     if (user.resetPasswordExpire < Date.now()) {
        return res.status(400).json({ message: "OTP has expired" });
     }
 
-    // 4. Update Password (Manually hash it to be safe)
-    const salt = await bcrypt.genSalt(10);
-    user.passwordHash = await bcrypt.hash(newPassword, salt);
+    // 4. Update Password using your Model's method
+    user.passwordHash = await User.hashPassword(newPassword);
     
     // 5. Clear OTP fields
     user.resetPasswordToken = undefined;
@@ -77,6 +93,7 @@ export const verifyOtpAndChangePassword = async (req, res) => {
     await user.save();
 
     res.status(200).json({ success: true, message: "Password updated successfully" });
+
   } catch (error) {
     console.error("Verification Error:", error);
     res.status(500).json({ message: error.message });

@@ -16,6 +16,10 @@ import ConnectionsPage from "./pages/explore/connectionsPage.jsx";
 import RequestsPage from "./pages/explore/RequestsPage.jsx";
 import Feed from "./pages/feed/Feed.jsx";  
 import Auth from "./pages/Auth/AuthPage.jsx";
+import CheckEmail from './pages/Auth/checkEmail.jsx';
+import VerifyEmail from './pages/Auth/VerifyEmail.jsx';
+import ForgotPassword from './pages/Auth/forgotPassword.jsx';
+import ResetPassword from './pages/Auth/resetPassword.jsx';
 import Announcement from "./pages/Announcement/announcement.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import { CommunityProvider } from "./context/communityContext.jsx";
@@ -204,6 +208,10 @@ const Routes = () => {
 
               {/* Public Auth Page (no header) */}
               <Route path="/auth" element={<Auth />} />
+              <Route path="/check-email" element={<CheckEmail />} />
+              <Route path="/verify-email/:token" element={<VerifyEmail />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password/:token" element={<ResetPassword />} />
 
               {/* Fallback */}
               <Route path="*" element={<NotFound />} />

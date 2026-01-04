@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
+import { Link, useNavigate } from "react-router-dom"; // 👈 CHANGE 1: Import Link
 import { useAuth } from "../../context/AuthContext";
-import toast, { Toaster } from "react-hot-toast"; // Professional Notifications
+import toast, { Toaster } from "react-hot-toast"; 
 import {
   FaUser, FaEnvelope, FaLock, FaUniversity, FaCalendarAlt,
   FaPhone, FaLinkedin, FaInfoCircle, FaTools, FaBuilding,
@@ -8,6 +9,8 @@ import {
 } from "react-icons/fa";
 
 function Auth() {
+  const navigate = useNavigate();
+
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const { user, login, signup } = useAuth();
@@ -20,7 +23,7 @@ function Auth() {
     phone: "", linkedin: "", bio: "", skills: [],
   });
 
-  // --- UPDATED VALIDATION GUARD ---
+  // --- VALIDATION GUARD ---
   const validations = useMemo(() => {
     if (isLogin) return { isValid: form.email && form.password.length >= 6 };
     
@@ -42,31 +45,28 @@ function Auth() {
 
   const toggleForm = () => setIsLogin(!isLogin);
 
-  // --- UPDATED HANDLECHANGE WITH FILTERING ---
+  // --- HANDLE CHANGE ---
   const handleChange = (e) => {
     const { name, value } = e.target;
 
     if (name === "year") {
-    const val = Number(value);
-    // Only allow values between 1 and 4. If empty, allow it so they can delete.
-    if (value === "" || (val >= 1 && val <= 4)) {
-      setForm(prev => ({ ...prev, [name]: value === "" ? "" : val }));
-    } else {
-      toast.error("Year must be between 1 and 4, buddy!", { id: "year-error" });
+      const val = Number(value);
+      if (value === "" || (val >= 1 && val <= 4)) {
+        setForm(prev => ({ ...prev, [name]: value === "" ? "" : val }));
+      } else {
+        toast.error("Year must be between 1 and 4, buddy!", { id: "year-error" });
+      }
+      return;
     }
-    return;
-  }
 
-    // 🚀 NEW: Professional Filtering for Phone
     if (name === "phone") {
-      const onlyNums = value.replace(/\D/g, ""); // Remove anything not a number
+      const onlyNums = value.replace(/\D/g, ""); 
       if (onlyNums.length <= 10) {
         setForm(prev => ({ ...prev, [name]: onlyNums }));
       }
       return;
     }
 
-    // 🚀 NEW: Professional Limit for Bio
     if (name === "bio") {
       if (value.length <= 500) {
         setForm(prev => ({ ...prev, [name]: value }));
@@ -89,6 +89,7 @@ function Auth() {
     }
   }, [user]);
 
+  // --- SUBMIT ---
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -106,7 +107,13 @@ function Auth() {
         toast.success("Welcome Back! 👋", { id: loadToast });
       } else {
         await signup({ ...form, role });
-        toast.success("Account Created! 🚀", { id: loadToast });
+        // Updated Message for email verification
+        toast.success("Account Created! Check your email to verify. 📧", { 
+            id: loadToast,
+            duration: 5000 
+        });
+        navigate('/check-email', { state: { email: form.email } });
+        setIsLogin(true); 
       }
     } catch (err) {
       const errorMsg = err.response?.data?.message || "Something went wrong";
@@ -192,6 +199,16 @@ function Auth() {
                   className="w-full bg-transparent focus:outline-none"
                 />
               </div>
+
+              {/* 👈 CHANGE 2: Forgot Password Link added here */}
+              {isLogin && (
+                <div className="flex justify-end mt-2">
+                    <Link to="/forgot-password" className="text-xs font-bold text-blue-500 hover:text-blue-700 transition">
+                        Forgot Password?
+                    </Link>
+                </div>
+              )}
+              
               {!isLogin && (
                 <div className="flex gap-3 mt-2 px-1">
                   <Badge label="8+ Chars" met={validations.hasLen} />
@@ -204,39 +221,24 @@ function Auth() {
 
           {!isLogin && (
             <>
+              {/* REST OF YOUR FORM FIELDS (Unchanged) */}
               <div className="border-t border-gray-200 my-4"></div>
               <h3 className="text-sm font-bold text-gray-400 uppercase mb-3">Academic & Professional Details</h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex items-center border rounded-lg px-3 py-2 shadow-sm bg-gray-50">
                   <FaUniversity className="text-gray-500 mr-2" />
-                  <input
-                    type="text"
-                    name="college"
-                    value="ABESIT" 
-                    readOnly       
-                    className="w-full focus:outline-none bg-transparent text-gray-600 font-bold cursor-not-allowed"
-                  />
+                  <input type="text" name="college" value="ABESIT" readOnly className="w-full focus:outline-none bg-transparent text-gray-600 font-bold cursor-not-allowed"/>
                 </div>
-
                 <div className="flex items-center border rounded-lg px-3 py-2 shadow-sm bg-white focus-within:ring-2 focus-within:ring-blue-400 transition-all">
                   <FaLayerGroup className="text-gray-500 mr-2" />
-                  <select
-                    name="department"
-                    onChange={handleChange}
-                    required
-                    defaultValue=""
-                    className="w-full focus:outline-none bg-transparent text-gray-700 font-medium"
-                  >
+                  <select name="department" onChange={handleChange} required defaultValue="" className="w-full focus:outline-none bg-transparent text-gray-700 font-medium">
                     <option value="" disabled>Select Department</option>
-                    {departments.map((dept) => (
-                      <option key={dept} value={dept}>{dept}</option>
-                    ))}
+                    {departments.map((dept) => (<option key={dept} value={dept}>{dept}</option>))}
                   </select>
                 </div>
               </div>
 
-              {/* ... (Keep Student/Alumni/Teacher specific fields same) ... */}
               {(role === 'student' || role === 'alumni') && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex items-center border rounded-lg px-3 py-2 shadow-sm focus-within:ring-2 focus-within:ring-blue-400 transition-all">
@@ -280,17 +282,9 @@ function Auth() {
               <div className="border-t border-gray-200 my-4"></div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* 🚀 UPDATED PHONE FIELD */}
                 <div className={`flex items-center border rounded-lg px-3 py-2 shadow-sm transition-all focus-within:ring-2 ${form.phone && !validations.isPhoneValid ? "border-red-500 ring-red-100" : "focus-within:ring-blue-400"}`}>
                   <FaPhone className="text-gray-500 mr-2" />
-                  <input
-                    type="text"
-                    name="phone"
-                    value={form.phone}
-                    placeholder="Phone (10 digits)"
-                    onChange={handleChange}
-                    className="w-full focus:outline-none"
-                  />
+                  <input type="text" name="phone" value={form.phone} placeholder="Phone (10 digits)" onChange={handleChange} className="w-full focus:outline-none" />
                 </div>
                 <div className="flex items-center border rounded-lg px-3 py-2 shadow-sm focus-within:ring-2 focus-within:ring-blue-400 transition-all">
                   <FaLinkedin className="text-gray-500 mr-2" />
@@ -298,21 +292,12 @@ function Auth() {
                 </div>
               </div>
 
-              {/* 🚀 UPDATED BIO FIELD WITH COUNTER */}
               <div className="flex flex-col">
                 <div className={`flex items-start border rounded-lg px-3 py-2 shadow-sm focus-within:ring-2 transition-all ${form.bio.length >= 500 ? "border-orange-500" : "focus-within:ring-blue-400"}`}>
                   <FaInfoCircle className="text-gray-500 mt-1 mr-2" />
-                  <textarea
-                    name="bio"
-                    value={form.bio}
-                    placeholder="Short Bio / Headline"
-                    onChange={handleChange}
-                    className="w-full focus:outline-none resize-none h-20 font-medium"
-                  />
+                  <textarea name="bio" value={form.bio} placeholder="Short Bio / Headline" onChange={handleChange} className="w-full focus:outline-none resize-none h-20 font-medium" />
                 </div>
-                <span className={`text-[10px] font-bold mt-1 self-end ${form.bio.length >= 500 ? "text-red-500 font-black" : "text-gray-400"}`}>
-                  {form.bio.length} / 500
-                </span>
+                <span className={`text-[10px] font-bold mt-1 self-end ${form.bio.length >= 500 ? "text-red-500 font-black" : "text-gray-400"}`}>{form.bio.length} / 500</span>
               </div>
 
               <div className="flex items-center border rounded-lg px-3 py-2 shadow-sm focus-within:ring-2 focus-within:ring-blue-400 transition-all">

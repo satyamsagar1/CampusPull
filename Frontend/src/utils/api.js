@@ -10,10 +10,11 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // CHECK 1: Is it a 401?
-    // CHECK 2: Have we already retried?
-    // CHECK 3 (CRITICAL): Was the failed request ITSELF a refresh attempt? 
-    // If yes, STOP. Don't retry. prevents infinite loop.
+   
+    if (originalRequest.url.includes("/auth/login")) {
+        return Promise.reject(error);
+    }
+
     if (
       error.response?.status === 401 && 
       !originalRequest._retry && 
@@ -32,8 +33,8 @@ api.interceptors.response.use(
           return api(originalRequest); // Retry the original failed request
         }
       } catch (error_) {
-        // If refresh fails, DO NOT RELOAD PAGE (window.location.href).
-        // Just throw the error so upstream can handle setting user=null.
+        // If refresh fails, just throw. 
+        // AuthContext will catch this and set user = null
         console.error("Session expired:", error_);
         throw error_;
       }

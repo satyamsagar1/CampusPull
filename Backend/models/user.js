@@ -1,8 +1,8 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 
-// --- 1. Define Sub-Schemas for the Profile Lists ---
-// These match the fields your Frontend is sending.
+
 
 const ProjectSchema = new mongoose.Schema({
   title: { type: String, trim: true },
@@ -37,19 +37,34 @@ const userSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
   passwordHash: { type: String, required: true },
+
+  //Email Verification (Did they click the link?)
+  isEmailVerified: { 
+    type: Boolean, 
+    default: false 
+  },
+  emailVerificationToken: { 
+    type: String 
+  },
+  emailVerificationTokenExpire: { 
+    type: Date 
+  },
+
+  // Password Reset
   resetPasswordToken: {
     type: String,
   },
   resetPasswordExpire: {
     type: Date,
   },
+
   role: { 
     type: String, 
     enum: ['student', 'alumni', 'admin', 'teacher'], 
     default: 'student', 
     required: true 
   },
-  isVerified: { type: Boolean, default: false }, // 🆕 Crucial for Alumni/Teachers
+  isProfileVerified: { type: Boolean, default: false }, // 🆕 Crucial for Alumni/Teachers
 
   // --- 2. Academic Info (CONDITIONAL) ---
   college: { type: String, required: true, trim: true }, // Everyone needs this
@@ -94,12 +109,11 @@ const userSchema = new mongoose.Schema({
   currentCompany: {
     type: String,
     trim: true,
-    // You can make this required if you want to force Alumni to enter it
-    required: function() { return this.role === 'alumni'; } 
+    default: ''
   },
 
   // --- 3. Profile Details ---
-  headline: { type: String, trim: true, default: '' }, // 🆕 "MERN Stack Developer | Final Year"
+  headline: { type: String, trim: true, default: '' },
   bio: { type: String, default: '' },
   profileImage: { type: String, default: '',maxlength: [500, "Bio cannot exceed 500 characters, buddy."] },
   location: { type: String, default: '' }, // 🆕 e.g., "Noida, India"
@@ -140,6 +154,19 @@ userSchema.methods.comparePassword = async function (password) {
 userSchema.statics.hashPassword = async function (password) {
   const salt = await bcrypt.genSalt(12);
   return bcrypt.hash(password, salt);
+};
+
+userSchema.methods.getResetPasswordToken = function () {
+  const resetToken = crypto.randomBytes(20).toString('hex');
+
+  this.resetPasswordToken = crypto
+    .createHash('sha256')
+    .update(resetToken)
+    .digest('hex');
+
+  this.resetPasswordExpire = Date.now() + 10 * 60 * 1000;
+
+  return resetToken;
 };
 
 export default mongoose.model('User', userSchema);

@@ -1,4 +1,11 @@
-import { createContext, useContext, useState, useEffect, useMemo, useCallback } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+} from "react";
 import api from "../utils/api";
 import { useNavigate } from "react-router-dom";
 
@@ -22,30 +29,30 @@ export const AuthProvider = ({ children }) => {
   // --- LOGIN ---
   const login = async (credentials) => {
     try {
-      const res = await api.post("/auth/login", credentials, { withCredentials: true });
+      const res = await api.post("/auth/login", credentials);
       const { user, accessToken: newToken } = res.data;
-      
+
       setAccessToken(newToken);
       setAuthHeader(newToken);
       setUser(user);
-      
+
       navigate("/homepage", { replace: true });
     } catch (err) {
+      // If error is "Please verify email", it will be thrown here
+      // and caught by your Auth.jsx component to show the Toast.
       throw err;
     }
   };
 
-  // --- SIGNUP ---
+  // --- SIGNUP (UPDATED) ---
   const signup = async (data) => {
     try {
-      const res = await api.post("/auth/signup", data, { withCredentials: true });
-      const { user, accessToken: newToken } = res.data;
+      // 🚀 CHANGED: Backend now sends an email, NOT a token.
+      // We do NOT log the user in automatically anymore.
+      await api.post("/auth/signup", data);
 
-      setAccessToken(newToken);
-      setAuthHeader(newToken);
-      setUser(user);
-      
-      navigate("/homepage", { replace: true });
+      // We do NOT setAccessToken or navigate to homepage.
+      // We simply return, so Auth.jsx can show the "Check your email" toast.
     } catch (err) {
       throw err;
     }
@@ -54,7 +61,7 @@ export const AuthProvider = ({ children }) => {
   // --- LOGOUT ---
   const logout = useCallback(async () => {
     try {
-      await api.post("/auth/logout", {}, { withCredentials: true });
+      await api.post("/auth/logout", {});
     } catch (err) {
       console.error("Logout error:", err);
     } finally {
@@ -65,31 +72,33 @@ export const AuthProvider = ({ children }) => {
     }
   }, [navigate]);
 
-// --- SILENT REFRESH LOGIC ---
+  // --- SILENT REFRESH LOGIC ---
   const refreshAuth = useCallback(async () => {
     try {
-      const res = await api.post("/auth/refresh", {}, { withCredentials: true });
+      // Check if we have a valid session cookie
+      const res = await api.post("/auth/refresh", {});
       const { accessToken: newToken } = res.data;
-      
+
       // 1. Update State
       setAccessToken(newToken);
-      
+
       // 2. Update global defaults for future calls
       setAuthHeader(newToken);
-      
+
       const userRes = await api.get("/auth/me", {
-        headers: { Authorization: `Bearer ${newToken}` }
+        headers: { Authorization: `Bearer ${newToken}` },
       });
-      
+
       setUser(userRes.data.user);
       return true;
     } catch (err) {
-      console.error("Refresh auth failed:", err.response?.data?.message || err.message);
+      // Silent fail is expected if not logged in
+      console.error("Silent refresh failed:", err);
       setAuthHeader(null);
-      setUser(null); // Ensure user is null if check fails
+      setUser(null);
       return false;
     } finally {
-      setLoading(false); 
+      setLoading(false);
     }
   }, []);
 
@@ -103,30 +112,29 @@ export const AuthProvider = ({ children }) => {
     if (!accessToken) return;
     const interval = setInterval(() => {
       refreshAuth();
-    }, 14 * 60 * 1000); 
+    }, 14 * 60 * 1000);
     return () => clearInterval(interval);
   }, [accessToken, refreshAuth]);
 
   const partialUpdateUser = (updates) => {
-    setUser(prev => prev ? { ...prev, ...updates } : null);
+    setUser((prev) => (prev ? { ...prev, ...updates } : null));
   };
 
-  const contextValue = useMemo(() => ({
-    user,
-    loading,
-    accessToken,
-    login,
-    signup,
-    logout,
-    partialUpdateUser
-  }), [user, loading, accessToken, logout]);
+  const contextValue = useMemo(
+    () => ({
+      user,
+      loading,
+      accessToken,
+      login,
+      signup,
+      logout,
+      partialUpdateUser,
+    }),
+    [user, loading, accessToken, logout]
+  );
 
   return (
-    <AuthContext.Provider value={contextValue}>
-      {/* 🚀 CHANGED BACK: Render children immediately so your existing 
-          routing logic handles the redirection correctly */}
-      {children} 
-    </AuthContext.Provider>
+    <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
   );
 };
 
