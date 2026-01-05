@@ -163,7 +163,7 @@ router.post('/login', async (req, res) => {
 });
 
 // --- 4. FORGOT PASSWORD (New Route) ---
-router.post('/forgot-password', loginLimiter, async (req, res) => { // Keep your limiter
+router.post('/forgot-password', async (req, res) => { // Keep your limiter
   console.log("1. Forgot Password Route Hit!"); // 👈 LOG 1
   
   const { email } = req.body;
