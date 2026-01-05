@@ -2,18 +2,19 @@ import nodeMailer from "nodemailer";
 
 const sendEmail = async (options) => {
   const transporter = nodeMailer.createTransport({
-    host: process.env.SMPT_HOST,
-    port: process.env.SMPT_PORT,
-    secure: true,
-    service: process.env.SMPT_SERVICE, // e.g., "gmail"
+    host: process.env.SMPT_HOST,    
+    port: process.env.SMPT_PORT,   
+    secure: false,                 
     auth: {
-      user: process.env.SMPT_MAIL,
-      pass: process.env.SMPT_PASSWORD,
+      user: process.env.SMPT_MAIL,     
+      pass: process.env.SMPT_PASSWORD, 
     },
+    connectionTimeout: 10000, 
   });
 
+  
   const mailOptions = {
-    from: process.env.SMPT_MAIL,
+    from: `"CampusPull" <${process.env.SMPT_MAIL}>`,
     to: options.email,
     subject: options.subject,
     html: options.message,
@@ -21,4 +22,5 @@ const sendEmail = async (options) => {
 
   await transporter.sendMail(mailOptions);
 };
+
 export default sendEmail;
