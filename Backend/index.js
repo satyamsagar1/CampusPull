@@ -26,6 +26,7 @@ import {initSocket}  from "./socket.js";
 
 const app = express();
 const server = http.createServer(app);
+app.set('trust proxy', 1);
 
 // -------------------- MIDDLEWARES --------------------
 app.use(helmet());
