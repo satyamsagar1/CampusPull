@@ -163,36 +163,54 @@ router.post('/login', async (req, res) => {
 });
 
 // --- 4. FORGOT PASSWORD (New Route) ---
-router.post('/forgot-password', async (req, res) => {
+router.post('/forgot-password', loginLimiter, async (req, res) => { // Keep your limiter
+  console.log("1. Forgot Password Route Hit!"); // 👈 LOG 1
+  
   const { email } = req.body;
+  console.log("2. Searching for email:", email); // 👈 LOG 2
+
   const user = await User.findOne({ email });
 
   if (user) {
+    console.log("3. User FOUND:", user._id); // 👈 LOG 3
 
-  const resetToken = user.getResetPasswordToken(); 
-  await user.save({ validateBeforeSave: false });
-
-  const resetUrl = `${process.env.CLIENT_ORIGIN}/reset-password/${resetToken}`;
-  const message = `
-    <h1>Password Reset</h1>
-    <p>Click the link below to reset your password:</p>
-    <a href="${resetUrl}" clicktracking=off>Reset Password</a>
-  `;
-
-  try {
-    await sendEmail({
-      email: user.email,
-      subject: "CampusPull Password Recovery",
-      message,
-    });
-  } catch (err) {
-    user.resetPasswordToken = undefined;
-    user.resetPasswordExpire = undefined;
+    // Generate Token
+    const resetToken = user.getResetPasswordToken(); 
     await user.save({ validateBeforeSave: false });
-    return res.status(500).json({ message: "Email could not be sent" });
+
+    // Debug the URL being generated
+    const resetUrl = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
+    console.log("4. Reset Link Generated:", resetUrl); // 👈 LOG 4
+
+    const message = `
+      <h1>Password Reset</h1>
+      <p>Click the link below to reset your password:</p>
+      <a href="${resetUrl}" clicktracking=off>${resetUrl}</a>
+    `;
+
+    try {
+      console.log("5. Attempting to send email via Nodemailer..."); // 👈 LOG 5
+      await sendEmail({
+        email: user.email,
+        subject: "CampusPull Password Recovery",
+        message,
+      });
+      console.log("6. Email sent successfully!"); // 👈 LOG 6
+    } catch (err) {
+      console.error("❌ EMAIL FAILED TO SEND:", err); // 👈 ERROR LOG
+      
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpire = undefined;
+      await user.save({ validateBeforeSave: false });
+      
+      return res.status(500).json({ message: "Email could not be sent" });
+    }
+  } else {
+    console.log("❌ User NOT FOUND in Database. Skipping email."); // 👈 LOG: MISSING USER
   }
-}
-res.status(200).json({ success: true, message: "Email sent" });
+
+  // Poker Face Response
+  res.status(200).json({ success: true, message: "If an account exists, email sent." });
 });
 
 // --- 5. RESET PASSWORD (New Route) ---
