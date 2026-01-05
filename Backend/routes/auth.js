@@ -179,7 +179,7 @@ router.post('/forgot-password', async (req, res) => { // Keep your limiter
     await user.save({ validateBeforeSave: false });
 
     // Debug the URL being generated
-    const resetUrl = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
+    const resetUrl = `${process.env.CLIENT_ORIGIN}/reset-password/${resetToken}`;
     console.log("4. Reset Link Generated:", resetUrl); // 👈 LOG 4
 
     const message = `
