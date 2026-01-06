@@ -9,6 +9,8 @@ const sendEmail = async (options) => {
       user: process.env.SMPT_LOGIN, 
       pass: process.env.SMPT_PASSWORD, 
     },
+    connectionTimeout: 20000, // 20 seconds
+  greetingTimeout: 20000,   // 20 seconds
   });
 
   const mailOptions = {
