@@ -21,6 +21,8 @@ const accessCookieOpts = { ...COOKIE_OPTIONS, maxAge: 15 * 60 * 1000 };
 
 // --- 1. SIGNUP (Updated for Verification) ---
 router.post('/signup', async (req, res) => {
+  console.log("!!! REGISTER REQUEST RECEIVED !!!"); // 👈 ADD THIS
+  console.log("Body Data:", req.body);
   try {
     req.body.college = "ABESIT";
     const parsed = signupSchema.safeParse(req.body);
@@ -72,8 +74,8 @@ router.post('/signup', async (req, res) => {
         message: "Registration successful! Please check your email to verify your account.",
       });
 
-    } catch {
-      // Rollback: Delete user if email fails
+    } catch(emailError){
+      console.error("EMAIL SENDING FAILED:", emailError);
       await User.findByIdAndDelete(userDoc._id);
       return res.status(500).json({ message: 'Email could not be sent. Please try again.' });
     }
