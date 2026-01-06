@@ -21,8 +21,6 @@ const accessCookieOpts = { ...COOKIE_OPTIONS, maxAge: 15 * 60 * 1000 };
 
 // --- 1. SIGNUP (Updated for Verification) ---
 router.post('/signup', async (req, res) => {
-  console.log("!!! REGISTER REQUEST RECEIVED !!!"); // 👈 ADD THIS
-  console.log("Body Data:", req.body);
   try {
     req.body.college = "ABESIT";
     const parsed = signupSchema.safeParse(req.body);
