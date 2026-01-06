@@ -165,16 +165,13 @@ router.post('/login', async (req, res) => {
 });
 
 // --- 4. FORGOT PASSWORD (New Route) ---
-router.post('/forgot-password', async (req, res) => { // Keep your limiter
-  console.log("1. Forgot Password Route Hit!"); // 👈 LOG 1
+router.post('/forgot-password', async (req, res) => { 
   
   const { email } = req.body;
-  console.log("2. Searching for email:", email); // 👈 LOG 2
 
   const user = await User.findOne({ email });
 
   if (user) {
-    console.log("3. User FOUND:", user._id); // 👈 LOG 3
 
     // Generate Token
     const resetToken = user.getResetPasswordToken(); 
@@ -182,12 +179,12 @@ router.post('/forgot-password', async (req, res) => { // Keep your limiter
 
     // Debug the URL being generated
     const resetUrl = `${process.env.CLIENT_ORIGIN}/reset-password/${resetToken}`;
-    console.log("4. Reset Link Generated:", resetUrl); // 👈 LOG 4
+    
 
     const message = `
       <h1>Password Reset</h1>
       <p>Click the link below to reset your password:</p>
-      <a href="${resetUrl}" clicktracking=off>${resetUrl}</a>
+      <a href="${resetUrl}" clicktracking=off>Reset Password</a>
     `;
 
     try {
@@ -197,9 +194,8 @@ router.post('/forgot-password', async (req, res) => { // Keep your limiter
         subject: "CampusPull Password Recovery",
         message,
       });
-      console.log("6. Email sent successfully!"); // 👈 LOG 6
     } catch (err) {
-      console.error("❌ EMAIL FAILED TO SEND:", err); // 👈 ERROR LOG
+      console.error("❌ EMAIL FAILED TO SEND:", err); 
       
       user.resetPasswordToken = undefined;
       user.resetPasswordExpire = undefined;
