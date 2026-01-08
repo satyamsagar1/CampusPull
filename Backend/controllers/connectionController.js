@@ -204,6 +204,18 @@ export const getPendingRequests = async (req, res) => {
         }).populate("requester", "name email college degree skills graduationYear linkedin profileImage")
           .populate("recipient", "name email college degree skills graduationYear linkedin profileImage");
 
+        // 🔍 DEBUG: detect broken populated refs
+requests.forEach(r => {
+  if (!r.requester || !r.recipient) {
+    console.log(
+      "BROKEN CONNECTION:",
+      r._id.toString(),
+      "requester:", r.requester,
+      "recipient:", r.recipient
+    );
+  }
+});
+
         res.status(200).json(requests);
     } catch (error) {
         res.status(500).json({ message: error.message });
