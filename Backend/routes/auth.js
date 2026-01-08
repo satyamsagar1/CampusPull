@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import crypto from 'crypto'; // 🆕 Needed for token generation
 import User from '../models/user.js';
-import { signupSchema, loginSchema } from '../validators/authValidators.js';
+import { signupSchema, loginSchema, resetPasswordSchema } from '../validators/authValidators.js';
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../utils/generateTokens.js';
 import { authMiddleware } from '../middleware/authMiddleware.js';
 import sendEmail from '../utils/sendEmail.js'; // 🆕 Import the utility
@@ -49,7 +49,7 @@ router.post('/signup', async (req, res) => {
       email,
       passwordHash,
       emailVerificationToken: verificationTokenHash,
-      emailVerificationTokenExpire: Date.now() + 24 * 60 * 60 * 1000, // 24 Hours
+      emailVerificationTokenExpire: Date.now() + 5 * 60 * 1000, // 5 minutes
       isEmailVerified: false
     });
 
@@ -197,6 +197,17 @@ res.status(200).json({ success: true, message: "Email sent" });
 
 // --- 5. RESET PASSWORD (New Route) ---
 router.put('/reset-password/:token', async (req, res) => {
+
+  const parsed = resetPasswordSchema.safeParse(req.body);
+    
+    if (!parsed.success) {
+      return res.status(400).json({
+        message: 'Invalid password requirements',
+        errors: parsed.error.flatten().fieldErrors,
+      });
+    }
+
+    const { password } = parsed.data;
   try {
     const resetPasswordToken = crypto.createHash("sha256").update(req.params.token).digest("hex");
 
@@ -209,15 +220,11 @@ router.put('/reset-password/:token', async (req, res) => {
       return res.status(400).json({ message: "Invalid or Expired Token" });
     }
 
-    if(req.body.password) {
-        user.passwordHash = await User.hashPassword(req.body.password);
+        user.passwordHash = await User.hashPassword(password);
         user.resetPasswordToken = undefined;
         user.resetPasswordExpire = undefined;
         await user.save();
         return res.status(200).json({ success: true, message: "Password updated! Please login." });
-    } else {
-        return res.status(400).json({ message: "Password is required" });
-    }
 
   } catch (err) {
     return res.status(500).json({ message: err.message });

@@ -1,5 +1,11 @@
 import { z } from 'zod';
 
+export const passwordValidation = z.string()
+  .min(8, "Password must be at least 8 characters")
+  .regex(/[A-Z]/, "Password needs at least one uppercase letter")
+  .regex(/[0-9]/, "Password needs at least one number")
+  .regex(/[\W_]/, "Password needs at least one special character");
+
 export const signupSchema = z.object({
   // --- 1. Identity & Auth ---
   name: z.string()
@@ -10,10 +16,7 @@ export const signupSchema = z.object({
     .trim()
     .email("Invalid email format")
     .lowercase(),
-  password: z.string()
-    .min(8, "Password must be at least 8 characters")
-    .regex(/[A-Z]/, "Password needs at least one uppercase letter")
-    .regex(/[0-9]/, "Password needs at least one number"),
+  password: passwordValidation,
   role: z.enum(['student', 'alumni', 'teacher', 'admin'], {
     errorMap: () => ({ message: "Please select a valid role" }),
   }),
@@ -73,4 +76,8 @@ export const signupSchema = z.object({
 export const loginSchema = z.object({
   email: z.string().trim().email("Invalid email format").lowercase(),
   password: z.string().min(1, "Password is required"),
+});
+
+export const resetPasswordSchema = z.object({
+  password: passwordValidation,
 });

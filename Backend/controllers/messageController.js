@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import Message from "../models/message.js";
 import Connection from "../models/connectionModel.js";
 import { encryptText, decryptText  } from "../utils/encrypt.js";
-import { onlineUsers } from "../socket.js";
+import { onlineUsers } from "../socketStore.js";
 
 // --- Send a new message ---
 export const sendMessage = async (req, res) => {

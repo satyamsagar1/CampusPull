@@ -17,6 +17,7 @@ import RequestsPage from "./pages/explore/RequestsPage.jsx";
 import Feed from "./pages/feed/Feed.jsx";  
 import Auth from "./pages/Auth/AuthPage.jsx";
 import CheckEmail from './pages/Auth/checkEmail.jsx';
+import NotificationPage from "pages/notifiaction/notifiactionPage.jsx";
 import VerifyEmail from './pages/Auth/VerifyEmail.jsx';
 import ForgotPassword from './pages/Auth/forgotPassword.jsx';
 import ResetPassword from './pages/Auth/resetPassword.jsx';
@@ -28,6 +29,9 @@ import ProtectedRoute from "./components/ProtectedRoute.jsx";  
 import { ExploreProvider } from "./context/exploreContext.jsx";
 import { ProfileProvider } from "./context/profileContext.jsx";
 import { ChatProvider } from "./context/chatContext.jsx";
+import { SocketProvider } from "context/socketContext.jsx";
+import { NotificationProvider } from "./context/notificationContext.jsx";
+import { ToastContainer } from "react-toastify";
 import ChatPage from "./pages/chat/chatPage.jsx";  
 import Header from "./components/ui/Header.jsx";  
 import { FeedProvider } from "./context/feedContext.jsx";
@@ -45,11 +49,14 @@ const ProtectedLayout = ({ children }) => {
   );
 };
 
+
+
 const Routes = () => {
   return (
     <BrowserRouter>
       <AuthProvider>
-        {/* 🚀 All providers moved here, ensuring EventProvider is wrapped by AuthProvider */}
+        <SocketProvider>  
+        <NotificationProvider>
         <EventProvider> 
         <CommunityProvider>
         <ExploreProvider>
@@ -73,6 +80,16 @@ const Routes = () => {
                   </ProtectedRoute>
                 }
               />
+              <Route 
+                path="/notifications" 
+                element={
+                <ProtectedRoute>
+                  <ProtectedLayout>
+                    <NotificationPage />
+                  </ProtectedLayout>
+                </ProtectedRoute>
+                 } 
+              />
               <Route
                 path="/homepage"
                 element={
@@ -216,6 +233,7 @@ const Routes = () => {
               {/* Fallback */}
               <Route path="*" element={<NotFound />} />
             </RouterRoutes>
+            <ToastContainer />
           </ErrorBoundary>
         </ChatProvider>
         </AnnouncementProvider>
@@ -225,6 +243,8 @@ const Routes = () => {
         </ExploreProvider>
         </CommunityProvider>
         </EventProvider>
+        </NotificationProvider>
+      </SocketProvider>
       </AuthProvider>
     </BrowserRouter>
   );

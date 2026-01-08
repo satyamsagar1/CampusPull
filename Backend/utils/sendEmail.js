@@ -4,15 +4,15 @@ const sendEmail = async (options) => {
   const transporter = nodeMailer.createTransport({
     host: process.env.SMPT_HOST,
     port: process.env.SMPT_PORT,
-    service: process.env.SMPT_SERVICE, // e.g., "gmail"
+    secure: true, 
     auth: {
-      user: process.env.SMPT_MAIL,
-      pass: process.env.SMPT_PASSWORD,
+      user: process.env.SMPT_LOGIN, 
+      pass: process.env.SMPT_PASSWORD, 
     },
   });
 
   const mailOptions = {
-    from: process.env.SMPT_MAIL,
+    from: `"CampusPull" <${process.env.SMPT_MAIL}>`, 
     to: options.email,
     subject: options.subject,
     html: options.message,
@@ -20,4 +20,5 @@ const sendEmail = async (options) => {
 
   await transporter.sendMail(mailOptions);
 };
+
 export default sendEmail;

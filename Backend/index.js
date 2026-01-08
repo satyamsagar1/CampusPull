@@ -5,10 +5,16 @@ import "dotenv/config";
 import express from "express";
 import mongoSanitize from "express-mongo-sanitize";
 import cors from "cors";
-import { loginLimiter, signupRateLimiter } from "./middleware/rateLimiter.js";
-import cookieParser from "cookie-parser";
-import { conectDB } from "./config/db.js";
 import helmet from "helmet";
+import http from "node:http";
+import cookieParser from "cookie-parser";
+
+// --- CONFIG & UTILS ---
+import { connectDB } from "./config/db.js";
+import { loginLimiter, signupRateLimiter } from "./middleware/rateLimiter.js";
+import { initSocket } from "./socket.js"; // ✅ CLEAN IMPORT
+
+// --- ROUTES ---
 import authRoutes from "./routes/auth.js";
 import feedRoutes from "./routes/feed.js";
 import communityRoutes from "./routes/community.js";
@@ -18,37 +24,37 @@ import messageRoutes from "./routes/message.js";
 import profileRoutes from "./routes/profile.js";
 import resourceRoutes from "./routes/resource.js";
 import announcementRoutes from './routes/announcement.js';
+import notificationRoutes from "./routes/notification.js";
 import adminRoutes from './routes/admin.js';
 import { passwordChange } from './controllers/passwordChange.js';
-import http from "node:http";
-import {initSocket}  from "./socket.js";
-
 
 const app = express();
 const server = http.createServer(app);
 
 // -------------------- MIDDLEWARES --------------------
 app.use(helmet());
-app.use(cors({ origin: process.env.CLIENT_ORIGIN || "*", credentials: true }));
+app.use(cors({ origin: process.env.CLIENT_ORIGIN, credentials: true }));
 app.use(express.json());
+app.use(cookieParser());
+
+// Sanitize inputs
 app.use((req, res, next) => {
   mongoSanitize.sanitize(req.body);
   mongoSanitize.sanitize(req.params);
   next();
 });
-app.use(cookieParser());
 
-const io=initSocket(server);
-app.set("io", io); // make io accessible in routes/controllers via req.app.get("io")
-
+// Health Check
 app.get("/health", (_, res) => res.json({ ok: true, ts: Date.now() }));
 
-// Authentication routes
+// -------------------- INITIALIZE SOCKET --------------------
+initSocket(server); 
+
+// -------------------- API ROUTES --------------------
 app.use("/api/auth/login", loginLimiter);
 app.use("/api/auth/signup", signupRateLimiter);
 app.use("/api/auth", authRoutes);
-
-// Other routes
+app.use("/api/notifications", notificationRoutes);
 app.use("/api/feed", feedRoutes);
 app.use("/api/community", communityRoutes);
 app.use("/api/event", eventRoutes);
@@ -61,25 +67,18 @@ app.use('/api/admin', adminRoutes);
 app.post('/api/password-change', passwordChange);
 
 // -------------------- START SERVER --------------------
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 4005; 
 
-try {
-  await conectDB();
+const startServer = async () => {
+  try {
+    await connectDB();
+    server.listen(PORT, () => {
+      console.log(`✅ Server running on port ${PORT}`);
+    });
+  } catch (err) {
+    console.error("❌ Failed to connect to the database", err);
+    process.exit(1);
+  }
+};
 
-  server.listen(PORT, () => {
-    console.log(`✅ Server running on port ${PORT}`);
-  });
-
-  // Handle port already in use
-  server.on("error", (err) => {
-    if (err.code === "EADDRINUSE") {
-      console.error(`❌ Port ${PORT} is already in use. Please stop the other process or change PORT in .env`);
-      process.exit(1);
-    } else {
-      console.error("❌ Server error:", err);
-    }
-  });
-} catch (err) {
-  console.error("❌ Failed to connect to the database", err);
-  process.exit(1);
-}
+startServer();

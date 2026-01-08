@@ -1,54 +1,52 @@
 import Connection from "../models/connectionModel.js";
-import user from "../models/user.js";
+import User from "../models/user.js";
+import sendNotificationToUser from "../socket.js";
 
-//Suggest Users to Connect
-
+// Suggest Users to Connect
 export const getSuggestedUsers = async (req, res) => {
-    try{
-    const userId = req.user.id;
+    try {
+        const userId = req.user.id;
 
-    const existingConnections = await Connection.find({
-        $or: [
-            { requester: userId },
-            { recipient: userId }
-        ]
-    });
+        const existingConnections = await Connection.find({
+            $or: [
+                { requester: userId },
+                { recipient: userId }
+            ]
+        });
 
-    const excludeIds = existingConnections.map(conn => 
-        conn.requester.toString() === userId ? conn.recipient : conn.requester
-    );
-    excludeIds.push(userId);
+        const excludeIds = existingConnections.map(conn =>
+            conn.requester.toString() === userId ? conn.recipient : conn.requester
+        );
+        excludeIds.push(userId);
 
-    const page = parseInt(req.query.page) || 1;
-    const perPage = parseInt(req.query.perPage) || 20;
+        const page = parseInt(req.query.page) || 1;
+        const perPage = parseInt(req.query.perPage) || 20;
 
-    const suggestedUsers = await user.find({
-         _id: { $nin: excludeIds },
-        role: { $in: ['student', 'teacher', 'alumni'] }
-      })
-        .select("-password")
-        .skip((page - 1) * perPage)
-        .limit(perPage);
+        const suggestedUsers = await User.find({
+            _id: { $nin: excludeIds },
+            role: { $in: ['student', 'teacher', 'alumni'] }
+        })
+            .select("-password")
+            .skip((page - 1) * perPage)
+            .limit(perPage);
         res.json(suggestedUsers);
-    }catch(error){
-        res.status(500).json({message:error.message});
+    } catch (error) {
+        res.status(500).json({ message: error.message });
     }
 };
 
 // 🔎 Search users
 export const searchUsers = async (req, res) => {
-  try {
-    const query = req.query.q;
+    try {
+        const query = req.query.q;
 
-    // Safety check for empty query
-    if (!query || typeof query !== "string" || query.trim() === "") {
-      return res.json([]); // Return empty array instead of error if search is empty
-    }
+        if (!query || typeof query !== "string" || query.trim() === "") {
+            return res.json([]);
+        }
 
-    // Create a standardized Regex (Case Insensitive)
-    const searchRegex = new RegExp(query, "i");
+        const searchRegex = new RegExp(query, "i");
 
-    const users = await user.find({
+        const users = await User.find({
             $and: [
                 {
                     $or: [
@@ -57,17 +55,17 @@ export const searchUsers = async (req, res) => {
                         { skills: { $in: [searchRegex] } }
                     ]
                 },
-                { role: { $in: ['student', 'teacher', 'alumni'] } } // STRICT FILTER ADDED
+                { role: { $in: ['student', 'teacher', 'alumni'] } }
             ]
         })
-    .select("-passwordHash -tokenVersion");  
+            .select("-passwordHash -tokenVersion");
 
-    res.json(users);
+        res.json(users);
 
-  } catch (err) {
-    console.error("Search Error:", err);
-    res.status(500).json({ message: "Error searching users", error: err.message });
-  }
+    } catch (err) {
+        console.error("Search Error:", err);
+        res.status(500).json({ message: "Error searching users", error: err.message });
+    }
 };
 
 // Send connection request
@@ -77,44 +75,71 @@ export const sendConnectionRequest = async (req, res) => {
         const requesterId = req.user.id;
 
         if (requesterId === recipientId) {
-             return res.status(400).json({ message: "You cannot connect with yourself." });
+            return res.status(400).json({ message: "You cannot connect with yourself." });
         }
 
         const existingConnection = await Connection.findOne({
             $or: [
                 { requester: requesterId, recipient: recipientId },
-                { requester: recipientId, recipient: requesterId } 
+                { requester: recipientId, recipient: requesterId }
             ]
         });
 
         if (existingConnection) {
             if (existingConnection.status === 'accepted') {
                 return res.status(400).json({ message: "Already connected" });
-            } 
-            
-            if (existingConnection.status === 'pending') {
-                 if (existingConnection.requester.toString() === requesterId) {
-                    return res.status(400).json({ message: "Request already sent" });
-                 } else {
-                    return res.status(400).json({ message: "User already sent you a request. Check your inbox." });
-                 }
             }
 
-            // ✅ CRITICAL FIX: If status is 'rejected', UPDATE the existing doc. Do not create a new one.
+            if (existingConnection.status === 'pending') {
+                if (existingConnection.requester.toString() === requesterId) {
+                    return res.status(400).json({ message: "Request already sent" });
+                } else {
+                    return res.status(400).json({ message: "User already sent you a request. Check your inbox." });
+                }
+            }
+
             if (existingConnection.status === 'rejected') {
                 existingConnection.status = 'pending';
-                existingConnection.requester = requesterId; // Reset who is asking
+                existingConnection.requester = requesterId;
                 existingConnection.recipient = recipientId;
                 await existingConnection.save();
+
+                // --- NOTIFICATION TRIGGER (RE-SEND) ---
+                const senderDetails = await User.findById(requesterId).select("name profileImage"); 
+
+                await sendNotificationToUser({
+                    recipientId: recipientId,
+                    senderId: requesterId,
+                    type: "connection_request",
+                    message: `${senderDetails.name} sent you a connection request`,
+                    data: {
+                        relatedId: null, // Connection requests usually don't need a link, or link to profile
+                        senderData: senderDetails // <--- CRITICAL: Pass full object for Frontend
+                    }
+                });
+              
+
                 return res.status(200).json(existingConnection);
             }
         }
 
-        // Create new only if absolutely no relationship exists
         const connection = await Connection.create({
             requester: requesterId,
             recipient: recipientId,
             status: 'pending'
+        });
+
+        // --- NOTIFICATION TRIGGER (NEW) ---
+        const senderDetails = await User.findById(requesterId).select("name profileImage"); 
+
+        await sendNotificationToUser({
+            recipientId: recipientId,
+            senderId: requesterId,
+            type: "connection_request",
+            message: `${senderDetails.name} sent you a connection request`,
+            data: {
+                senderData: senderDetails // <--- Ensures live alert has the Avatar
+            }
         });
 
         res.status(201).json(connection);
@@ -127,101 +152,114 @@ export const sendConnectionRequest = async (req, res) => {
 export const respondToConnectionRequest = async (req, res) => {
     try {
         const { requestId, action } = req.body;
-        const userId = req.user.id;
-        
+        const userId = req.user.id; // The person ACCEPTING the request
 
         const connection = await Connection.findOne({
             _id: requestId,
             recipient: userId,
             status: 'pending'
         });
+
         if (!connection) {
             return res.status(404).json({ message: "Connection request not found" });
         }
+
         if (action === 'accept') {
             connection.status = 'accepted';
-        } 
+            
+            // --- NOTIFICATION TRIGGER (ACCEPTED) ---
+            const accepter = await User.findById(userId).select("name profileImage");
+            
+            await sendNotificationToUser({
+                recipientId: connection.requester,
+                senderId: userId,
+                type: "connection_accepted",
+                message: `${accepter.name} accepted your connection request`,
+                data: {
+                    senderData: accepter
+                }
+            });
+        }
+
         if (action === 'reject') {
             connection.status = 'rejected';
         }
+
         await connection.save();
         res.status(200).json(connection);
     } catch (error) {
         res.status(500).json({ message: error.message });
-    }       
+    }
 };
 
 export const getPendingRequests = async (req, res) => {
-  try {
+    try {
+        const userId = req.user.id;
 
-    const userId = req.user.id;
+        const requests = await Connection.find({
+            $or: [
+                { recipient: userId, status: "pending" }, 
+                { requester: userId, status: "pending" }  
+            ]
+        }).populate("requester", "name email college degree skills graduationYear linkedin profileImage")
+          .populate("recipient", "name email college degree skills graduationYear linkedin profileImage");
 
-    const requests = await Connection.find({
-      $or: [
-    { recipient: userId, status: "pending" }, // incoming
-    { requester: userId, status: "pending" }  // outgoing
-  ]
-}).populate("requester", "name email college degree skills graduationYear linkedin profileImage")
- .populate("recipient", "name email college degree skills graduationYear linkedin profileImage");
-    // populate requester details to show in UI
-
-    res.status(200).json(requests);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+        res.status(200).json(requests);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
 };
-
 
 // Get user's connections
 export const getConnections = async (req, res) => {
-  try {
-    const userId = req.user.id;
+    try {
+        const userId = req.user.id;
 
-    const connections = await Connection.find({
-      $or: [
-        { requester: userId, status: "accepted" },
-        { recipient: userId, status: "accepted" }
-      ]
-    }).populate("requester", "name email role profileImage year skills college degree graduationYear linkedin ")
-    .populate("recipient", "name email role profileImage year skills college degree graduationYear linkedin ");
+        const connections = await Connection.find({
+            $or: [
+                { requester: userId, status: "accepted" },
+                { recipient: userId, status: "accepted" }
+            ]
+        }).populate("requester", "name email role profileImage year skills college degree graduationYear linkedin ")
+          .populate("recipient", "name email role profileImage year skills college degree graduationYear linkedin ");
 
-    const connectedUsers = connections.map((conn) => {
-      return conn.requester._id.toString() === userId
-        ? conn.recipient
-        : conn.requester;
-    });
+        const connectedUsers = connections.map((conn) => {
+            return conn.requester._id.toString() === userId
+                ? conn.recipient
+                : conn.requester;
+        });
 
-    res.json(connectedUsers);
-  } catch (err) {
-    res.status(500).json({ message: "Error fetching connections", error: err.message });
-  }
+        res.json(connectedUsers);
+    } catch (err) {
+        res.status(500).json({ message: "Error fetching connections", error: err.message });
+    }
 };
 
 // Get total connection count
 export const getConnectionCount = async (req, res) => {
-  try {
-    const userId = req.user.id; // or pass in req.params.userId if checking for another user
+    try {
+        const userId = req.user.id; 
 
-    const count = await Connection.countDocuments({
-      $or: [
-        { requester: userId },
-        { recipient: userId }
-      ],
-      status: "accepted"
-    });
+        const count = await Connection.countDocuments({
+            $or: [
+                { requester: userId },
+                { recipient: userId }
+            ],
+            status: "accepted"
+        });
 
-    res.json({ totalConnections: count });
-  } catch (error) {
-    res.status(500).json({ message: "Error counting connections", error: error.message });
-  }
+        res.json({ totalConnections: count });
+    } catch (error) {
+        res.status(500).json({ message: "Error counting connections", error: error.message });
+    }
 };
+
 export const getUserProfile = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // Find user by ID but exclude sensitive info
-        const userProfile = await user.findById(id)
-            .select("-password -passwordHash -tokenVersion"); 
+        const userProfile = await User.findById(id)
+            .select("-password -passwordHash -tokenVersion");
 
         if (!userProfile) {
             return res.status(404).json({ message: "User not found" });

@@ -1,23 +1,26 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import Icon from '../AppIcon';
 import Button from './Button';
 import { useAuth } from '../../context/AuthContext';
+import { useNotification } from '../../context/notificationContext';
 
-// --- 1. Define Role Permissions ---
+// --- Define Role Permissions ---
 const roleFeatures = {
   admin: ['Home', 'Feed', 'Resources Hub', 'About CampusPull', 'Community', 'Events', 'Announcement', 'Profile', 'Explore', 'Chat'],
   student: ['Home', 'Feed', 'Resources Hub', 'About CampusPull', 'Community', 'Events', 'Announcement', 'Profile', 'Explore', 'Chat'],
   alumni: ['Home', 'Feed', 'Resources Hub', 'About CampusPull', 'Community', 'Events', 'Profile', 'Explore', 'Chat', 'Announcement'],
   teacher: ['Home', 'Feed', 'Resources Hub', 'About CampusPull', 'Events', 'Announcement', 'Profile', 'Explore', 'Chat'],
 };
-// --- End Role Permissions ---
 
 const Header = () => {
   const { user, logout } = useAuth();
+  // 2. GET UNREAD COUNT
+  const { unreadCount } = useNotification(); 
+  
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
-  const menuRef = useRef(null); // Ref for clicking outside to close
+  const menuRef = useRef(null);
 
   const allNavigationItems = [
     { name: 'Home', path: '/homepage', icon: 'Home' },
@@ -32,25 +35,17 @@ const Header = () => {
     { name: 'About CampusPull', path: '/about-link-mate', icon: 'Info' },
   ];
 
-  // --- 2. Filter Navigation Based on Role ---
   const allowedFeatures = roleFeatures[user?.role] || [];
   const authorizedItems = allNavigationItems.filter(item =>
     allowedFeatures.includes(item.name)
   );
 
-  // --- 3. Split Items: Main Bar vs Hamburger Menu ---
-  // Items designated for the Hamburger Menu
   const hamburgerItemNames = ['Profile', 'About CampusPull'];
-
-  // Left side: Everything authorized EXCEPT the hamburger items
   const mainNavItems = authorizedItems.filter(item => !hamburgerItemNames.includes(item.name));
-
-  // Right side (Menu): Only the authorized hamburger items
   const menuNavItems = authorizedItems.filter(item => hamburgerItemNames.includes(item.name));
 
   const isActivePath = (path) => location?.pathname === path;
   
-  // Close menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
@@ -86,7 +81,7 @@ const Header = () => {
             </Link>
           </div>
 
-          {/* Desktop Navigation (Main Links Only) */}
+          {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center space-x-1">
             {mainNavItems.map((item) => (
               <Link
@@ -108,24 +103,60 @@ const Header = () => {
             ))}
           </nav>
 
-          {/* Hamburger Button (Visible on ALL screens now) */}
-          <div className="relative" ref={menuRef}>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="text-wisdom-charcoal hover:text-academic-blue ml-2"
-            >
-              <Icon name={isMenuOpen ? 'X' : 'Menu'} size={24} />
-            </Button>
+          {/* Right Side Actions (Notifications + Hamburger) */}
+          <div className="flex items-center gap-2" ref={menuRef}>
 
-            {/* Dropdown Menu (Contains Profile, About, Logout) */}
-            {isMenuOpen && (
-              <div className="absolute top-12 right-0 w-64 bg-white border border-slate-200 rounded-xl shadow-brand-lg overflow-hidden py-2 animate-in fade-in zoom-in-95 duration-200">
-                
-                {/* Mobile-only: Main items list (In case screen is small and they aren't on top bar) */}
-                <div className="lg:hidden border-b border-slate-100 pb-2 mb-2">
-                   {mainNavItems.map((item) => (
+            {/* 3. NOTIFICATION BELL ICON */}
+            <Link 
+              to="/notifications" 
+              className="relative p-2 rounded-full text-wisdom-charcoal hover:bg-slate-100 transition-colors mr-1"
+            >
+              <Icon name="Bell" size={24} />
+              
+              {/* The Red Badge Logic */}
+              {unreadCount > 0 && (
+                <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-[10px] font-bold text-white ring-2 ring-white">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
+            </Link>
+
+            {/* Hamburger Button */}
+            <div className="relative">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="text-wisdom-charcoal hover:text-academic-blue"
+              >
+                <Icon name={isMenuOpen ? 'X' : 'Menu'} size={24} />
+              </Button>
+
+              {/* Dropdown Menu */}
+              {isMenuOpen && (
+                <div className="absolute top-12 right-0 w-64 bg-white border border-slate-200 rounded-xl shadow-brand-lg overflow-hidden py-2 animate-in fade-in zoom-in-95 duration-200">
+                  
+                  {/* Mobile-only: Main items list */}
+                  <div className="lg:hidden border-b border-slate-100 pb-2 mb-2">
+                     {mainNavItems.map((item) => (
+                      <Link
+                        key={item.path}
+                        to={item.path}
+                        onClick={() => setIsMenuOpen(false)}
+                        className={`flex items-center space-x-3 px-4 py-3 text-sm font-inter font-medium transition-colors ${
+                          isActivePath(item.path)
+                            ? 'bg-blue-50 text-academic-blue'
+                            : 'text-wisdom-charcoal hover:bg-slate-50'
+                        }`}
+                      >
+                        <Icon name={item.icon} size={18} />
+                        <span>{item.name}</span>
+                      </Link>
+                    ))}
+                  </div>
+
+                  {/* Hamburger Only Items */}
+                  {menuNavItems.map((item) => (
                     <Link
                       key={item.path}
                       to={item.path}
@@ -140,40 +171,23 @@ const Header = () => {
                       <span>{item.name}</span>
                     </Link>
                   ))}
-                </div>
 
-                {/* The Requested "Hamburger Only" Items */}
-                {menuNavItems.map((item) => (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    onClick={() => setIsMenuOpen(false)}
-                    className={`flex items-center space-x-3 px-4 py-3 text-sm font-inter font-medium transition-colors ${
-                      isActivePath(item.path)
-                        ? 'bg-blue-50 text-academic-blue'
-                        : 'text-wisdom-charcoal hover:bg-slate-50'
-                    }`}
+                  <div className="h-px bg-slate-100 my-1 mx-4"></div>
+
+                  {/* Logout */}
+                  <button
+                    onClick={() => {
+                      logout();
+                      setIsMenuOpen(false);
+                    }}
+                    className="w-full flex items-center space-x-3 px-4 py-3 text-sm font-inter font-medium text-red-600 hover:bg-red-50 transition-colors"
                   >
-                    <Icon name={item.icon} size={18} />
-                    <span>{item.name}</span>
-                  </Link>
-                ))}
-
-                <div className="h-px bg-slate-100 my-1 mx-4"></div>
-
-                {/* Logout Button */}
-                <button
-                  onClick={() => {
-                    logout();
-                    setIsMenuOpen(false);
-                  }}
-                  className="w-full flex items-center space-x-3 px-4 py-3 text-sm font-inter font-medium text-red-600 hover:bg-red-50 transition-colors"
-                >
-                  <Icon name="LogOut" size={18} />
-                  <span>Logout</span>
-                </button>
-              </div>
-            )}
+                    <Icon name="LogOut" size={18} />
+                    <span>Logout</span>
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
         </div>
