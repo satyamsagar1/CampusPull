@@ -204,18 +204,6 @@ export const getPendingRequests = async (req, res) => {
         }).populate("requester", "name email college degree skills graduationYear linkedin profileImage")
           .populate("recipient", "name email college degree skills graduationYear linkedin profileImage");
 
-        // 🔍 DEBUG: detect broken populated refs
-requests.forEach(r => {
-  if (!r.requester || !r.recipient) {
-    console.log(
-      "BROKEN CONNECTION:",
-      r._id.toString(),
-      "requester:", r.requester,
-      "recipient:", r.recipient
-    );
-  }
-});
-
         res.status(200).json(requests);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -224,7 +212,6 @@ requests.forEach(r => {
 
 // Get user's connections
 export const getConnections = async (req, res) => {
-  console.log("REQ.USER:", req.user);
 
   try {
     const userId = req.user.id;
@@ -247,18 +234,7 @@ export const getConnections = async (req, res) => {
     const connectedUsers = [];
 
     for (const conn of connections) {
-      // 🔥 THIS IS WHERE YOU LOG BROKEN IDS
-      if (!conn.requester || !conn.recipient) {
-        console.log(
-          "BROKEN ACCEPTED CONNECTION ID:",
-          conn._id.toString(),
-          {
-            requester: conn.requester,
-            recipient: conn.recipient
-          }
-        );
-        continue; // skip broken record safely
-      }
+      if (!conn.requester || !conn.recipient) continue;
 
       if (String(conn.requester._id) === String(userId)) {
         connectedUsers.push(conn.recipient);
@@ -268,9 +244,8 @@ export const getConnections = async (req, res) => {
     }
 
     res.status(200).json(connectedUsers);
-  } catch (err) {
-    console.error("🔥 GET CONNECTIONS CRASH:", err);
-    console.error("🔥 STACK:", err.stack);
+  } catch (err) catch (err) {
+    console.error("Get Connections Error:", err);
     res.status(500).json({
       message: "Error fetching connections",
       error: err.message
