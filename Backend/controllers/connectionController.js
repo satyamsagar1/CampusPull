@@ -244,7 +244,7 @@ export const getConnections = async (req, res) => {
     }
 
     res.status(200).json(connectedUsers);
-  } catch (err) catch (err) {
+  } catch (err) {
     console.error("Get Connections Error:", err);
     res.status(500).json({
       message: "Error fetching connections",
