@@ -224,6 +224,7 @@ requests.forEach(r => {
 
 // Get user's connections
 export const getConnections = async (req, res) => {
+    console.log("REQ.USER:", req.user);
     try {
         const userId = req.user.id;
 
