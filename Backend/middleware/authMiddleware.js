@@ -18,7 +18,8 @@ export const authMiddleware = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
-    req.user = decoded; 
+    req.user = {...decoded,
+    id: decoded.id || decoded._id}; 
     next();
   } catch (err) {
     console.log("JWT Error:", err.name);
@@ -33,7 +34,10 @@ export const refreshAuthMiddleware = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
-    req.user = decoded;
+    req.user ={
+  ...decoded,
+  id: decoded.id || decoded._id
+};
     console.log('[authMiddleware] Authentication successful for user:', req.user?.id);
     next();
   } catch (err) {
