@@ -30,6 +30,7 @@ import { passwordChange } from './controllers/passwordChange.js';
 
 const app = express();
 const server = http.createServer(app);
+app.set('trust proxy', 1);
 
 // -------------------- MIDDLEWARES --------------------
 app.use(helmet());
