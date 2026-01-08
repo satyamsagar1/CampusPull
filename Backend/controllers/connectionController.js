@@ -240,6 +240,11 @@ export const getConnections = async (req, res) => {
                 ? conn.recipient
                 : conn.requester;
         });
+        connections.forEach(conn => {
+  if (!conn.requester || !conn.recipient) {
+    console.log("BROKEN ACCEPTED CONNECTION:", conn._id);
+  }
+});
 
         res.json(connectedUsers);
     } catch (err) {
