@@ -255,6 +255,7 @@ export const getConnections = async (req, res) => {
     message: "Error fetching connections",
     error: err.message
   });
+    }      
 };
 
 // Get total connection count
