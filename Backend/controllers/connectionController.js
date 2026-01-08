@@ -249,8 +249,12 @@ export const getConnections = async (req, res) => {
 
         res.json(connectedUsers);
     } catch (err) {
-        res.status(500).json({ message: "Error fetching connections", error: err.message });
-    }
+  console.error("🔥 GET CONNECTIONS CRASH:", err);
+  console.error("🔥 STACK:", err.stack);
+  res.status(500).json({
+    message: "Error fetching connections",
+    error: err.message
+  });
 };
 
 // Get total connection count
