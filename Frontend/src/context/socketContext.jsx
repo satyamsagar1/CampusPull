@@ -19,13 +19,11 @@ export const SocketProvider = ({ children }) => {
       if (!socket.connected) {
         socket.io.opts.query = { userId: user._id };
         socket.connect();
-        console.log(">> [SocketProvider] Connected");
       }
     } else {
       // ONLY disconnect if we are currently connected
       if (socket.connected) {
         socket.disconnect();
-        console.log(">> [SocketProvider] Logged out - Disconnected");
       }
     }
   }, [user?._id, loading]);

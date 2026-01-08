@@ -1,6 +1,6 @@
 import { createContext, useContext, useCallback, useEffect, useMemo, useState } from "react";
 // CHANGED: We now get the socket from our Context, not directly from the file
-import { useSocket } from "./SocketContext"; 
+import { useSocket } from "./socketContext"; 
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useAuth } from "./AuthContext"; 
