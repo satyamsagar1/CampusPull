@@ -233,28 +233,47 @@ export const getPendingRequests = async (req, res) => {
 
 // Get user's connections
 export const getConnections = async (req, res) => {
-    try {
-        const userId = req.user.id;
 
-        const connections = await Connection.find({
-            $or: [
-                { requester: userId, status: "accepted" },
-                { recipient: userId, status: "accepted" }
-            ]
-        }).populate("requester", "name email role profileImage year skills college degree graduationYear linkedin ")
-          .populate("recipient", "name email role profileImage year skills college degree graduationYear linkedin ");
+  try {
+    const userId = req.user.id;
 
-        const connectedUsers = connections.map((conn) => {
-            return conn.requester._id.toString() === userId
-                ? conn.recipient
-                : conn.requester;
-        });
+    const connections = await Connection.find({
+      $or: [
+        { requester: userId, status: "accepted" },
+        { recipient: userId, status: "accepted" }
+      ]
+    })
+      .populate(
+        "requester",
+        "name email role profileImage year skills college degree graduationYear linkedin"
+      )
+      .populate(
+        "recipient",
+        "name email role profileImage year skills college degree graduationYear linkedin"
+      );
 
-        res.json(connectedUsers);
-    } catch (err) {
-        res.status(500).json({ message: "Error fetching connections", error: err.message });
+    const connectedUsers = [];
+
+    for (const conn of connections) {
+      if (!conn.requester || !conn.recipient) continue;
+
+      if (String(conn.requester._id) === String(userId)) {
+        connectedUsers.push(conn.recipient);
+      } else {
+        connectedUsers.push(conn.requester);
+      }
     }
+
+    res.status(200).json(connectedUsers);
+  } catch (err) {
+    console.error("Get Connections Error:", err);
+    res.status(500).json({
+      message: "Error fetching connections",
+      error: err.message
+    });
+  }
 };
+
 
 // Get total connection count
 export const getConnectionCount = async (req, res) => {
