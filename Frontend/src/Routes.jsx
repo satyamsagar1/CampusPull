@@ -22,6 +22,9 @@ import VerifyEmail from './pages/Auth/VerifyEmail.jsx';
 import ForgotPassword from './pages/Auth/forgotPassword.jsx';
 import ResetPassword from './pages/Auth/resetPassword.jsx';
 import Announcement from "./pages/Announcement/announcement.jsx";
+import Help from "./pages/Support/help.jsx";
+import Contact from "./pages/Support/contact.jsx";
+import Feedback from "./pages/Support/feedback.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import { CommunityProvider } from "./context/communityContext.jsx";
 import { EventProvider } from "./context/eventContext.jsx"; 
@@ -120,6 +123,37 @@ const Routes = () => {
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/help"
+                element={
+                  <ProtectedRoute>
+                    <ProtectedLayout>
+                      <Help />
+                    </ProtectedLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/contact"
+                element={
+                  <ProtectedRoute>
+                    <ProtectedLayout>
+                      <Contact />
+                    </ProtectedLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/feedback"
+                element={
+                  <ProtectedRoute>
+                    <ProtectedLayout>
+                      <Feedback />
+                    </ProtectedLayout>
+                  </ProtectedRoute>
+                }
+              />
+
               <Route
                 path="/resources-hub"
                 element={

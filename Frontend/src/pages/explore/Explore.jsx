@@ -8,7 +8,8 @@ import {
   FaUserPlus,
   FaUsers,
   FaCheck,
-  FaBriefcase
+  FaBriefcase,
+  FaArrowDown
 } from "react-icons/fa";
 import { useExplore } from "../../context/exploreContext"; 
 import { useAuth } from "../../context/AuthContext"; 
@@ -20,14 +21,25 @@ export default function Explore() {
     search, 
     setSearch, 
     loading, 
+    loadingMore, 
+    hasMore,     
+    loadMoreSuggestions,
     error, 
     sendRequest, 
     incomingRequests, 
     outgoingRequestIds, 
-    connectionCount
+    connectionCount,
+    activeRole,
+    setActiveRole
   } = useExplore();
 
-  const navigate = useNavigate(); // 
+  const navigate = useNavigate(); 
+  
+  const handleFilterClick = (role) => {
+    setActiveRole(role);
+  };
+
+  const roles = ["all", "student", "teacher", "alumni"];
 
   const displayedUsers = suggestions;
 
@@ -88,6 +100,22 @@ export default function Explore() {
             />
         </div>
       </div>
+      {/* --- FILTER BAR (NEW SECTION) --- */}
+      <div className="max-w-7xl mx-auto flex flex-wrap justify-center gap-3 mb-10">
+        {roles.map((role) => (
+          <button
+            key={role}
+            onClick={() => handleFilterClick(role)}
+            className={`px-6 py-2 rounded-full font-bold capitalize transition-all duration-300 border-2 ${
+              activeRole === role
+                ? "bg-indigo-600 text-white border-indigo-600 shadow-lg scale-105"
+                : "bg-white/50 text-indigo-600 border-white/20 hover:bg-white hover:border-indigo-300"
+            }`}
+          >
+            {role === "all" ? "🌍 Everyone" : role}
+          </button>
+        ))}
+      </div>
 
       {/* --- GRID --- */}
       <div className="max-w-7xl mx-auto">
@@ -105,23 +133,43 @@ export default function Explore() {
         {error && <p className="text-center text-red-500 mt-6 bg-red-50 p-4 rounded-xl border border-red-100">{error}</p>}
 
         {!loading && !error && (
-            <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {displayedUsers.length > 0 ? (
-                displayedUsers.map((user) => (
-                <UserCard 
-                    key={user._id} 
-                    cardUser={user} 
-                    sendRequest={sendRequest} 
-                    outgoingRequestIds={outgoingRequestIds} 
-                />
-                ))
-            ) : (
-                <div className="col-span-full text-center py-20 bg-white/40 backdrop-blur-md rounded-3xl border border-dashed border-gray-300">
-                    <p className="text-gray-500 text-xl font-medium">No profiles found.</p>
-                    <p className="text-gray-400 mt-2">Try searching for something else!</p>
+            <>
+              <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {displayedUsers.length > 0 ? (
+                  displayedUsers.map((user) => (
+                  <UserCard 
+                      key={user._id} 
+                      cardUser={user} 
+                      sendRequest={sendRequest} 
+                      outgoingRequestIds={outgoingRequestIds} 
+                  />
+                  ))
+              ) : (
+                  <div className="col-span-full text-center py-20 bg-white/40 backdrop-blur-md rounded-3xl border border-dashed border-gray-300">
+                      <p className="text-gray-500 text-xl font-medium">No profiles found.</p>
+                      <p className="text-gray-400 mt-2">Try searching for something else!</p>
+                  </div>
+              )}
+              </div>
+
+              {/* ✅ LOAD MORE BUTTON SECTION */}
+              {hasMore && (
+                <div className="mt-12 flex justify-center pb-10">
+                  <button
+                    onClick={loadMoreSuggestions}
+                    disabled={loadingMore}
+                    className="flex items-center gap-2 px-8 py-3 bg-white border border-indigo-200 text-indigo-600 font-bold rounded-2xl shadow-sm hover:bg-indigo-50 hover:border-indigo-400 transition-all disabled:opacity-50"
+                  >
+                    {loadingMore ? (
+                      <div className="animate-spin h-5 w-5 border-2 border-indigo-600 border-t-transparent rounded-full"></div>
+                    ) : (
+                      <FaArrowDown />
+                    )}
+                    {loadingMore ? "Loading..." : "Load More Suggestions"}
+                  </button>
                 </div>
-            )}
-            </div>
+              )}
+            </>
         )}
       </div>
     </div>

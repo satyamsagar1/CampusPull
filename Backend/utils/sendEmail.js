@@ -1,26 +1,33 @@
-import nodeMailer from "nodemailer";
+import SibApiV3Sdk from "sib-api-v3-sdk";
+
+const client = SibApiV3Sdk.ApiClient.instance;
+
+
+client.authentications["api-key"].apiKey = process.env.BREVO_API_KEY;
+
+const emailApi = new SibApiV3Sdk.TransactionalEmailsApi();
 
 const sendEmail = async (options) => {
-  const transporter = nodeMailer.createTransport({
-    host: process.env.SMPT_HOST,
-    port: process.env.SMPT_PORT,
-    secure: false, 
-    auth: {
-      user: process.env.SMPT_LOGIN, 
-      pass: process.env.SMPT_PASSWORD, 
-    },
-    connectionTimeout: 20000, // 20 seconds
-  greetingTimeout: 20000,   // 20 seconds
-  });
-
-  const mailOptions = {
-    from: `"CampusPull" <${process.env.SMPT_MAIL}>`, 
-    to: options.email,
-    subject: options.subject,
-    html: options.message,
-  };
-
-  await transporter.sendMail(mailOptions);
+  try {
+    await emailApi.sendTransacEmail({
+      sender: {
+        email: process.env.FROM_MAIL ,
+        name: "CampusPull",
+      },
+      to: [
+        {
+          email: options.email,
+        },
+      ],
+      subject: options.subject,
+      htmlContent: options.message,
+    });
+  } catch (error) {
+    console.error(
+      "EMAIL SENDING FAILED (BREVO API)",
+      error.response?.body || error
+    );
+  }
 };
 
 export default sendEmail;

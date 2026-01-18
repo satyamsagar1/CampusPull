@@ -6,6 +6,7 @@ import sendNotificationToUser from "../socket.js";
 export const getSuggestedUsers = async (req, res) => {
     try {
         const userId = req.user.id;
+        const { role } = req.query;
 
         const existingConnections = await Connection.find({
             $or: [
@@ -20,16 +21,30 @@ export const getSuggestedUsers = async (req, res) => {
         excludeIds.push(userId);
 
         const page = parseInt(req.query.page) || 1;
-        const perPage = parseInt(req.query.perPage) || 20;
+        const limit = parseInt(req.query.limit) || 20;
+        const skip = (page - 1) * limit;
 
-        const suggestedUsers = await User.find({
-            _id: { $nin: excludeIds },
-            role: { $in: ['student', 'teacher', 'alumni'] }
-        })
-            .select("-password")
-            .skip((page - 1) * perPage)
-            .limit(perPage);
-        res.json(suggestedUsers);
+        const queryFilter = {
+            _id: { $nin: excludeIds }
+        };
+        if (role && role !== 'all') {
+            queryFilter.role = role;
+        } else {
+            queryFilter.role = { $in: ['student', 'teacher', 'alumni'] };
+        }
+
+        const totalSuggested = await User.countDocuments(queryFilter);
+
+        const suggestedUsers = await User.find(queryFilter)
+            .select("-password -passwordHash -tokenVersion")
+            .skip(skip)
+            .limit(limit);
+
+        res.json({
+            users: suggestedUsers,
+            hasMore: skip + suggestedUsers.length < totalSuggested,
+            total: totalSuggested
+        });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -38,33 +53,39 @@ export const getSuggestedUsers = async (req, res) => {
 // 🔎 Search users
 export const searchUsers = async (req, res) => {
     try {
-        const query = req.query.q;
+        const { q, role } = req.query;
 
-        if (!query || typeof query !== "string" || query.trim() === "") {
-            return res.json([]);
+        if (!q || q.trim() === "") return res.json([]);
+
+        const searchRegex = new RegExp(q, "i");
+
+        // 1. Define the role criteria first
+        let roleCriteria;
+        if (role && role !== 'all') {
+            roleCriteria = role;
+        } else {
+            roleCriteria = { $in: ['student', 'teacher', 'alumni'] };
         }
 
-        const searchRegex = new RegExp(query, "i");
-
+        // 2. Combine everything into one query object
+        // This finds users who match the role AND (name OR skills)
         const users = await User.find({
-            $and: [
-                {
-                    $or: [
-                        { name: searchRegex },
-                        { role: searchRegex },
-                        { skills: { $in: [searchRegex] } }
-                    ]
-                },
-                { role: { $in: ['student', 'teacher', 'alumni'] } }
+            role: roleCriteria,
+            $or: [
+                { name: searchRegex },
+                { skills: searchRegex } // Simplified: Mongoose handles regex in arrays automatically
             ]
         })
-            .select("-passwordHash -tokenVersion");
+        .select("-passwordHash -tokenVersion")
+        .limit(20);
 
         res.json(users);
 
     } catch (err) {
-        console.error("Search Error:", err);
-        res.status(500).json({ message: "Error searching users", error: err.message });
+        // --- THIS IS CRITICAL ---
+        // Look at your Node.js console/terminal. What does it say here?
+        console.error("SEARCH CRASH LOG:", err.message); 
+        res.status(500).json({ message: "Server Error", error: err.message });
     }
 };
 

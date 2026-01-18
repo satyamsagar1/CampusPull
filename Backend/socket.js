@@ -68,9 +68,9 @@ export const sendNotificationToUser = async ({ recipientId, senderId, type, mess
     // C. Delivery
     if (recipientSocketId && io) {
       io.to(recipientSocketId).emit("receive_notification", newNotification);
-      console.log(`>> [Socket] 🔔 Notification sent live to ${recipientId}`);
+      // console.log(`>> [Socket] 🔔 Notification sent live to ${recipientId}`);
     } else {
-      console.log(`>> [Socket] 💤 User ${recipientId} is offline. Saved to DB.`);
+      // console.log(`>> [Socket] 💤 User ${recipientId} is offline. Saved to DB.`);
     }
   } catch (error) {
     console.error(">> [Socket] ❌ Notification Error:", error);
