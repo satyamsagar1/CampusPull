@@ -3,7 +3,14 @@ import { Server } from "socket.io";
 import { onlineUsers } from "./socketStore.js"; // Singleton Map
 import Notification from "./models/notifications.js"; // ✅ Import your Model
 
-let io; // ✅ Module-level variable to store the instance
+let io;
+
+export const getIO = () => {
+  if (!io) {
+    throw new Error("Socket.io not initialized");
+  }
+  return io;
+};
 
 export const initSocket = (server) => {
   io = new Server(server, {
