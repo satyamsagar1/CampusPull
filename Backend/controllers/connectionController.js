@@ -52,42 +52,41 @@ export const getSuggestedUsers = async (req, res) => {
 
 // 🔎 Search users
 export const searchUsers = async (req, res) => {
-    try {
-        const { q, role } = req.query;
+  try {
+    const { q, role } = req.query;
 
-        if (!q || q.trim() === "") return res.json([]);
+    if (!q || q.trim() === "") return res.json([]);
 
-        const searchRegex = new RegExp(q, "i");
+    const escapeRegex = (text) =>
+      text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-        // 1. Define the role criteria first
-        let roleCriteria;
-        if (role && role !== 'all') {
-            roleCriteria = role;
-        } else {
-            roleCriteria = { $in: ['student', 'teacher', 'alumni'] };
-        }
+    const safeQuery = escapeRegex(q);
+    const searchRegex = new RegExp(safeQuery, "i");
 
-        // 2. Combine everything into one query object
-        // This finds users who match the role AND (name OR skills)
-        const users = await User.find({
-            role: roleCriteria,
-            $or: [
-                { name: searchRegex },
-                { skills: searchRegex } // Simplified: Mongoose handles regex in arrays automatically
-            ]
-        })
-        .select("-passwordHash -tokenVersion")
-        .limit(20);
-
-        res.json(users);
-
-    } catch (err) {
-        // --- THIS IS CRITICAL ---
-        // Look at your Node.js console/terminal. What does it say here?
-        console.error("SEARCH CRASH LOG:", err.message); 
-        res.status(500).json({ message: "Server Error", error: err.message });
+    let roleCriteria;
+    if (role && role !== "all") {
+      roleCriteria = role;
+    } else {
+      roleCriteria = { $in: ["student", "teacher", "alumni"] };
     }
+
+    const users = await User.find({
+      role: roleCriteria,
+      $or: [
+        { name: searchRegex },
+        { skills: searchRegex }
+      ]
+    })
+      .select("-passwordHash -tokenVersion")
+      .limit(20);
+
+    res.json(users);
+  } catch (err) {
+    console.error("SEARCH CRASH LOG:", err.message);
+    res.status(500).json({ message: "Server Error" });
+  }
 };
+
 
 // Send connection request
 export const sendConnectionRequest = async (req, res) => {

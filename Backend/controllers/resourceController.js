@@ -214,7 +214,7 @@ export const updateRoadmap = async (req, res) => {
     }
 
     // 2. Security Check: Verify ownership
-    if (roadmap.uploadedBy.toString() !== userId.toString()) {
+    if (req.user.role !== "admin" && roadmap.uploadedBy.toString() !== userId.toString()) {
       return res.status(403).json({ error: "User not authorized to edit this resource" });
     }
 
@@ -271,7 +271,7 @@ export const updateNote = async (req, res) => {
       return res.status(404).json({ error: "Note not found" });
     }
 
-    if (note.uploadedBy.toString() !== userId.toString()) {
+    if (req.user.role !== "admin" && note.uploadedBy.toString() !== userId.toString()) {
       return res.status(403).json({ error: "User not authorized" });
     }
 
@@ -308,7 +308,7 @@ export const updatePYQ = async (req, res) => {
       return res.status(404).json({ error: "PYQ not found" });
     }
 
-    if (pyq.uploadedBy.toString() !== userId.toString()) {
+    if (req.user.role !== "admin" && pyq.uploadedBy.toString() !== userId.toString()) {
       return res.status(403).json({ error: "User not authorized" });
     }
 
