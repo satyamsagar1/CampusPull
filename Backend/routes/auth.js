@@ -38,6 +38,7 @@ router.post("/signup", async (req, res) => {
 
     if (!parsed.success) {
       console.error("SIGNUP ZOD ERROR:", parsed.error.errors);
+      console.error("SIGNUP ZOD ISSUES:", parsed.error.issues);
 
       return res.status(400).json({
         message: "Invalid input",
