@@ -32,6 +32,7 @@ function Auth() {
     const hasCap = /[A-Z]/.test(form.password);
     const hasNum = /[0-9]/.test(form.password);
     const hasSpcial = /[\W_]/.test(form.password);
+    const hasNocap = /[a-z]/.test(form.password);
     const hasLen = form.password.length >= 8;
     const hasDept = !!form.department;
     const isYearValid = form.year === "" || (Number(form.year) >= 1 && Number(form.year) <= 4);
@@ -39,8 +40,8 @@ function Auth() {
     const isBioValid = form.bio.length <= 500;
 
     return {
-      hasName, hasEmail, hasCap, hasNum, hasLen, hasSpcial, hasDept, isPhoneValid, isBioValid, isYearValid,
-      isValid: hasName && hasEmail && hasCap && hasNum && hasLen && hasSpcial && hasDept && isPhoneValid && isBioValid && isYearValid
+      hasName, hasEmail, hasCap, hasNocap, hasNum, hasLen, hasSpcial, hasDept, isPhoneValid, isBioValid, isYearValid,
+      isValid: hasName && hasEmail && hasCap && hasNocap && hasNum && hasLen && hasSpcial && hasDept && isPhoneValid && isBioValid && isYearValid
     };
   }, [form, isLogin]);
 
@@ -216,6 +217,7 @@ function Auth() {
                   <Badge label="A-Z" met={validations.hasCap} />
                   <Badge label="0-9" met={validations.hasNum} />
                   <Badge label="@#$!" met={validations.hasSpcial} />
+                  <Badge label="a-z" met={validations.hasNocap} />
                 </div>
               )}
             </div>
