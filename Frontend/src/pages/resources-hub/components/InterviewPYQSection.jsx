@@ -4,12 +4,15 @@ import Image from "../../../components/AppImage";
 import Button from "../../../components/ui/Button";
 import { ResourceContext } from "../../../context/resourceContext";
 
-const InterviewPYQSection = ({ pyqs, viewMode = "grid", onEditClick }) => {
+const InterviewPYQSection = ({ pyqs, viewMode = "grid", onEditClick, onDeleteClick }) => {
   const { user } = useContext(ResourceContext);
   const [selectedCompany, setSelectedCompany] = useState("all");
   const [selectedDifficulty, setSelectedDifficulty] = useState("all");
   const [showAllCompanies, setShowAllCompanies] = useState(false);
   const VISIBLE_COMPANY_COUNT = 8;
+
+  // Check if current user is admin
+  const isAdmin = user?.role === "admin";
 
   // --- Helpers ---
   const difficultyLevels = [
@@ -162,6 +165,9 @@ const InterviewPYQSection = ({ pyqs, viewMode = "grid", onEditClick }) => {
         }
       >
         {filteredPYQs?.map((pyq) => {
+          const isOwner = user?._id === pyq?.uploadedBy?._id;
+          const showActions = isOwner || isAdmin;
+
           // ==========================================
           // LIST VIEW ITEM
           // ==========================================
@@ -172,7 +178,6 @@ const InterviewPYQSection = ({ pyqs, viewMode = "grid", onEditClick }) => {
                 className="group bg-white/70 backdrop-blur-xl border border-white/50 rounded-2xl p-5 hover:shadow-xl transition-all duration-300"
               >
                 <div className="flex flex-col sm:flex-row items-start gap-5">
-                  {/* Thumbnail/Icon */}
                   <div className="flex-shrink-0 w-16 h-16 bg-white rounded-xl shadow-sm border border-gray-100 flex items-center justify-center overflow-hidden p-2 group-hover:scale-105 transition-transform">
                     {pyq.thumbnail ? (
                       <Image
@@ -185,7 +190,6 @@ const InterviewPYQSection = ({ pyqs, viewMode = "grid", onEditClick }) => {
                     )}
                   </div>
 
-                  {/* Content */}
                   <div className="flex-1 w-full">
                     <div className="flex justify-between items-start mb-2">
                       <div>
@@ -207,7 +211,6 @@ const InterviewPYQSection = ({ pyqs, viewMode = "grid", onEditClick }) => {
                       {pyq.description || "No description provided."}
                     </p>
 
-                    {/* Tags */}
                     <div className="flex flex-wrap gap-2 mb-4">
                       {pyq.tags?.slice(0, 5).map((tag, i) => (
                         <span
@@ -219,7 +222,6 @@ const InterviewPYQSection = ({ pyqs, viewMode = "grid", onEditClick }) => {
                       ))}
                     </div>
 
-                    {/* Footer */}
                     <div className="flex items-center justify-between pt-3 border-t border-gray-100/50">
                       <div className="flex items-center gap-2">
                         <Image
@@ -231,15 +233,26 @@ const InterviewPYQSection = ({ pyqs, viewMode = "grid", onEditClick }) => {
                         </span>
                       </div>
                       <div className="flex gap-2">
-                        {user?._id === pyq?.uploadedBy?._id && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            iconName="Edit"
-                            onClick={() => onEditClick(pyq)}
-                          >
-                            Edit
-                          </Button>
+                        {showActions && (
+                          <>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              iconName="Edit"
+                              onClick={() => onEditClick(pyq)}
+                            >
+                              Edit
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              iconName="Trash2"
+                              className="text-red-500 border-red-100 hover:bg-red-50 hover:border-red-200"
+                              onClick={() => onDeleteClick(pyq)}
+                            >
+                              Delete
+                            </Button>
+                          </>
                         )}
                         <Button
                           variant="default"
@@ -265,7 +278,6 @@ const InterviewPYQSection = ({ pyqs, viewMode = "grid", onEditClick }) => {
               key={pyq?._id}
               className="group bg-white/70 backdrop-blur-xl border border-white/50 rounded-2xl p-6 hover:shadow-xl transition-all duration-300 flex flex-col h-full"
             >
-              {/* Banner */}
               <div className="relative h-32 rounded-xl overflow-hidden mb-4">
                 {pyq.thumbnail ? (
                   <>
@@ -274,14 +286,12 @@ const InterviewPYQSection = ({ pyqs, viewMode = "grid", onEditClick }) => {
                       alt={pyq.company}
                       className="absolute inset-0 w-full h-full object-cover"
                     />
-                    {/* Overlay */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent" />
                   </>
                 ) : (
                   <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600" />
                 )}
 
-                {/* Banner Content */}
                 <div className="relative z-10 p-4 h-full flex flex-col justify-end">
                   <div className="flex items-center justify-between">
                     <div>
@@ -303,14 +313,12 @@ const InterviewPYQSection = ({ pyqs, viewMode = "grid", onEditClick }) => {
                 </div>
               </div>
 
-              {/* Description */}
               <div className="bg-white/50 p-3 rounded-xl border border-white/50 mb-4 flex-1">
                 <p className="text-gray-600 text-sm leading-relaxed line-clamp-3">
                   {pyq?.description || "No description provided."}
                 </p>
               </div>
 
-              {/* Tags */}
               <div className="flex flex-wrap gap-1.5 mb-5">
                 {pyq?.tags?.length > 0 ? (
                   pyq.tags.slice(0, 4).map((topic, index) => (
@@ -333,7 +341,6 @@ const InterviewPYQSection = ({ pyqs, viewMode = "grid", onEditClick }) => {
                 )}
               </div>
 
-              {/* Footer */}
               <div className="flex items-center justify-between pt-4 border-t border-gray-100/50 mt-auto">
                 <div className="flex items-center space-x-2">
                   <Image
@@ -349,16 +356,27 @@ const InterviewPYQSection = ({ pyqs, viewMode = "grid", onEditClick }) => {
                   )}
                 </div>
                 <div className="flex space-x-2">
-                  {user?._id === pyq?.uploadedBy?._id && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      iconName="Edit"
-                      className="border-gray-200 hover:border-indigo-300 hover:text-indigo-600"
-                      onClick={() => onEditClick(pyq)}
-                    >
-                      Edit
-                    </Button>
+                  {showActions && (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        iconName="Edit"
+                        className="border-gray-200 hover:border-indigo-300 hover:text-indigo-600"
+                        onClick={() => onEditClick(pyq)}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        iconName="Trash2"
+                        className="border-red-100 text-red-500 hover:bg-red-50 hover:border-red-200"
+                        onClick={() => onDeleteClick(pyq)}
+                      >
+                        Delete
+                      </Button>
+                    </>
                   )}
                   <Button
                     variant="default"
@@ -366,7 +384,7 @@ const InterviewPYQSection = ({ pyqs, viewMode = "grid", onEditClick }) => {
                     className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md hover:shadow-lg hover:from-indigo-700 hover:to-purple-700 border-none"
                     onClick={() => window.open(pyq?.link, "_blank")}
                   >
-                    Access PYQ
+                    Access
                   </Button>
                 </div>
               </div>
