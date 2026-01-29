@@ -15,27 +15,27 @@ const FeedbackPage = () => {
         {
             _id: 'm1',
             message: "Building CampusPull was about more than just code; it was about creating a bridge for every student at ABESIT to reach their potential. Knowledge should have no boundaries. Keep grinding, the hustle pays off!",
-            userId: { name: "Satyam", branch: "CSE", currentCompany: "CampusPull (Founder)" }
+            userId: { name: "Satyam", branch: "DS", currentCompany: "CampusPull (Founder)" }
         },
         {
             _id: 'm2',
             message: "The technical workshops and faculty support were vital. Contevolve looks for strong logic, and college gave me the platform to sharpen mine. CampusPull is the perfect way to give back!",
-            userId: { name: "Riya Sharma", branch: "CSE", currentCompany: "Contevolve" }
+            userId: { name: "Riya Sharma", branch: "DS", currentCompany: "Contevolve" }
         },
         {
             _id: 'm3',
             message: "Getting into Antino required a deep dive into the MERN stack. Grateful to my mentors for the guidance. Juniors, stay focused on your projects!",
-            userId: { name: "Prithvee Ojha", branch: "CSE", currentCompany: "Antino" }
+            userId: { name: "Prithvee Ojha", branch: "DS", currentCompany: "Antino" }
         },
         {
             _id: 'm4',
             message: "The mock interviews at college gave me the confidence to crack Erasmith. It's great to have a portal where we can now guide the next batch directly.",
-            userId: { name: "Aashiya Rana", branch: "CS", currentCompany: "Erasmith" }
+            userId: { name: "Aashiya Rana", branch: "DS", currentCompany: "Erasmith" }
         },
         {
             _id: 'm5',
             message: "Adlertech values problem-solving. My journey was made smoother by the constant encouragement from our HOD. Keep pushing your limits!",
-            userId: { name: "Parkhi", branch: "IT", currentCompany: "Adlertech" }
+            userId: { name: "Parkhi", branch: "DS", currentCompany: "Adlertech" }
         },
         {
             _id: 'm6',
