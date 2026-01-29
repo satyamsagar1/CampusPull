@@ -100,7 +100,7 @@ const FeedbackPage = () => {
             {/* Placeholder for non-alumni or missing company */}
             {!canPost && user && (
                 <div className="fixed bottom-6 right-6 w-72 bg-gray-100 p-4 rounded-xl border border-gray-300 text-xs text-gray-600 shadow-md">
-                   Update your profile to 'Alumni' and add your 'Current Company' to share feedback.
+                   You have to be Placed to share feedback with juniors.
                 </div>
             )}
         </div>

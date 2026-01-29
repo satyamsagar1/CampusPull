@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext } from 'react';
-import axios from 'axios';
+import api from '../utils/api'; // Centralized Axios instance
 
 const FeedbackContext = createContext();
 
@@ -9,29 +9,32 @@ export const FeedbackProvider = ({ children }) => {
 
     // Fetch all feedback
     const getAllFeedbacks = async () => {
-    setLoading(true);
-    try {
-        const res = await axios.get('/api/feedback/all');
-        // Safety check: Ensure we only set an array
-        if (Array.isArray(res.data)) {
-            setFeedbacks(res.data);
-        } else {
-            console.error("Expected an array but got:", typeof res.data);
-            setFeedbacks([]); // Fallback to empty array
+        setLoading(true);
+        try {
+            // Using 'api' instance instead of raw axios
+            const res = await api.get('/api/feedback/all');
+            
+            // Safety check for production stability
+            if (Array.isArray(res.data)) {
+                setFeedbacks(res.data);
+            } else {
+                console.error("Expected an array but got:", typeof res.data);
+                setFeedbacks([]); 
+            }
+        } catch (err) {
+            console.error("Error fetching feedbacks:", err);
+            setFeedbacks([]); 
+        } finally {
+            setLoading(false);
         }
-    } catch (err) {
-        console.error("Error fetching feedbacks:", err);
-        setFeedbacks([]); // Prevents .map error on failure
-    } finally {
-        setLoading(false);
-    }
-};
+    };
 
     // Submit new feedback
     const addFeedback = async (message) => {
         try {
-            const res = await axios.post('/api/feedback/submit', { message });
-            // Refresh the list after successful submission
+            const res = await api.post('/api/feedback/submit', { message });
+            
+            // Refresh the list so the new post appears immediately
             if (res.data.success) {
                 getAllFeedbacks();
             }
@@ -49,5 +52,4 @@ export const FeedbackProvider = ({ children }) => {
     );
 };
 
-// Custom hook for easy access
 export const useFeedback = () => useContext(FeedbackContext);
