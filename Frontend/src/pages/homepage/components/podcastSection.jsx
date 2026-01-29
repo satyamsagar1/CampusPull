@@ -8,44 +8,54 @@ const API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;
 const CHANNEL_ID = import.meta.env.VITE_YOUTUBE_CHANNEL_ID;
 
 const PodcastSection = () => {
-  const navigate = useNavigate();
   const [episodes, setEpisodes] = useState([]);
   const [activeEpisode, setActiveEpisode] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchLatestEpisodes = async () => {
-      try {
-        const response = await fetch(
-          `https://www.googleapis.com/youtube/v3/search?key=${API_KEY}&channelId=${CHANNEL_ID}&part=snippet,id&order=date&maxResults=5&type=video`
-        );
-        const data = await response.json();
+  const fetchLatestEpisodes = async () => {
+    try {
+      // Step 1: Get the last 15 video IDs from the channel
+      const searchRes = await fetch(
+        `https://www.googleapis.com/youtube/v3/search?key=${API_KEY}&channelId=${CHANNEL_ID}&part=id&order=date&maxResults=15&type=video`
+      );
+      const searchData = await searchRes.json();
+      const videoIds = searchData.items.map(item => item.id.videoId).join(',');
 
-        if (data.items) {
-          const formatted = data.items.map((item) => ({
-            id: item.id.videoId,
-            title: item.snippet.title,
-            guest: item.snippet.title.split("|")[2]?.trim() || "Guest",
-            date: new Date(item.snippet.publishedAt).toLocaleDateString(),
-            youtubeId: item.id.videoId,
-            thumbnail:
-              item.snippet.thumbnails.maxres?.url ||
-              item.snippet.thumbnails.high.url,
-            description: item.snippet.description,
-            tags: ["Podcast", "CampusPull"],
-          }));
-          setEpisodes(formatted.slice(0, 5));
-        }
-        setIsLoading(false);
-      } catch (error) {
-        console.error("Failed to fetch episodes:", error);
-        setIsLoading(false);
+      // Step 2: Get the DURATION for all those IDs
+      const detailRes = await fetch(
+        `https://www.googleapis.com/youtube/v3/videos?key=${API_KEY}&id=${videoIds}&part=snippet,contentDetails`
+      );
+      const detailData = await detailRes.json();
+
+      if (detailData.items) {
+        const longForm = detailData.items.filter(item => {
+          const duration = item.contentDetails.duration;
+          return duration.includes('M') || duration.includes('H'); 
+        });
+
+        const formatted = longForm.map((item) => ({
+          id: item.id,
+          title: item.snippet.title,
+          guest: item.snippet.title.split("|")[2]?.trim() || "Alumni Talk",
+          date: new Date(item.snippet.publishedAt).toLocaleDateString(),
+          youtubeId: item.id,
+          thumbnail: item.snippet.thumbnails.maxres?.url || item.snippet.thumbnails.high.url,
+          description: item.snippet.description,
+        }));
+
+        setEpisodes(formatted.slice(0, 5));
       }
-    };
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Failed to fetch episodes:", error);
+      setIsLoading(false);
+    }
+  };
 
-    fetchLatestEpisodes();
-  }, []);
+  fetchLatestEpisodes();
+}, []);
 
   const handleEpisodeClick = (index) => {
     setActiveEpisode(index);
