@@ -27,6 +27,8 @@ import announcementRoutes from './routes/announcement.js';
 import notificationRoutes from "./routes/notification.js";
 import adminRoutes from './routes/admin.js';
 import { passwordChange } from './controllers/passwordChange.js';
+import feedback from './routes/feedback.js';
+
 
 const app = express();
 const server = http.createServer(app);
@@ -66,6 +68,7 @@ app.use("/api/resources", resourceRoutes);
 app.use('/api/announcements', announcementRoutes);
 app.use('/api/admin', adminRoutes);
 app.post('/api/password-change', passwordChange);
+app.use('/api/feedback', feedback);
 
 // -------------------- START SERVER --------------------
 const PORT = process.env.PORT || 4005; 

@@ -38,6 +38,8 @@ import { ToastContainer } from "react-toastify";
 import ChatPage from "./pages/chat/chatPage.jsx";  
 import Header from "./components/ui/Header.jsx";  
 import { FeedProvider } from "./context/feedContext.jsx";
+import { FeedbackProvider } from "./context/feedbackContext.jsx";
+import FeedbackPage from "pages/feedback/feedbackPage.jsx";
 import { ResourceProvider } from "./context/resourceContext.jsx"; 
 import { AnnouncementProvider } from "./context/announcementContext.jsx"; 
 import AdminDashboard from './pages/Admin/adminDashboard';
@@ -68,6 +70,7 @@ const Routes = () => {
         <ResourceProvider>
         <AnnouncementProvider>
         <ChatProvider>
+        <FeedbackProvider>
           <ErrorBoundary>
             <ScrollToTop />
 
@@ -92,6 +95,16 @@ const Routes = () => {
                   </ProtectedLayout>
                 </ProtectedRoute>
                  } 
+              />
+              <Route
+                path="/feedback"
+                element={
+                  <ProtectedRoute>
+                    <ProtectedLayout>
+                      <FeedbackPage />
+                    </ProtectedLayout>
+                  </ProtectedRoute>
+                }
               />
               <Route
                 path="/homepage"
@@ -269,6 +282,7 @@ const Routes = () => {
             </RouterRoutes>
             <ToastContainer />
           </ErrorBoundary>
+        </FeedbackProvider>
         </ChatProvider>
         </AnnouncementProvider>
         </ResourceProvider>

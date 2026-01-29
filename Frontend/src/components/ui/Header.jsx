@@ -7,10 +7,10 @@ import { useNotification } from '../../context/notificationContext';
 
 // --- Define Role Permissions ---
 const roleFeatures = {
-  admin: ['Home', 'Feed', 'Resources Hub', 'About CampusPull', 'Community', 'Events', 'Announcement', 'Profile', 'Explore', 'Chat'],
-  student: ['Home', 'Feed', 'Resources Hub', 'About CampusPull', 'Community', 'Events', 'Announcement', 'Profile', 'Explore', 'Chat'],
-  alumni: ['Home', 'Feed', 'Resources Hub', 'About CampusPull', 'Community', 'Events', 'Profile', 'Explore', 'Chat', 'Announcement'],
-  teacher: ['Home', 'Feed', 'Resources Hub', 'About CampusPull', 'Events', 'Announcement', 'Profile', 'Explore', 'Chat'],
+  admin: ['Home', 'Feed', 'Resources Hub', 'About CampusPull', 'Community', 'Events', 'Announcement', 'Profile', 'Explore', 'Chat', 'Alumni Stories'],
+  student: ['Home', 'Feed', 'Resources Hub', 'About CampusPull', 'Community', 'Events', 'Announcement', 'Profile', 'Explore', 'Chat', 'Alumni Stories'],
+  alumni: ['Home', 'Feed', 'Resources Hub', 'About CampusPull', 'Community', 'Events', 'Profile', 'Explore', 'Chat', 'Announcement', 'Alumni Stories'],
+  teacher: ['Home', 'Feed', 'Resources Hub', 'About CampusPull', 'Events', 'Announcement', 'Profile', 'Explore', 'Chat', 'Alumni Stories'],
 };
 
 const Header = () => {
@@ -31,6 +31,7 @@ const Header = () => {
     { name: 'Announcement', path: '/announcements', icon: 'Megaphone' },
     { name: 'Events', path: '/events', icon: 'Calendar' },
     { name: 'Chat', path: '/chatPage', icon: 'MessageSquare' },
+    { name: 'Alumni Stories', path: '/feedback', icon: 'Quote' },
     { name: 'Profile', path: '/profile', icon: 'User' },
     { name: 'About CampusPull', path: '/about-link-mate', icon: 'Info' },
   ];
@@ -40,7 +41,7 @@ const Header = () => {
     allowedFeatures.includes(item.name)
   );
 
-  const hamburgerItemNames = ['Profile', 'About CampusPull'];
+  const hamburgerItemNames = [ 'Profile', 'About CampusPull'];
   const mainNavItems = authorizedItems.filter(item => !hamburgerItemNames.includes(item.name));
   const menuNavItems = authorizedItems.filter(item => hamburgerItemNames.includes(item.name));
 
